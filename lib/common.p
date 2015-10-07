@@ -183,29 +183,42 @@ pfClass
     }
   }
 
-#----- Private -----
-
 @_abstractMethod[]
   ^pfAssert:fail[Не реализовано. Вызов абстрактного метода.]
 
-#----- Serialize -----
 
-## Подробности в файле pf/TECHNOTES
+#--------------------------------------------------------------------------------------------------
 
-#@__asString[]
-#@__fromString[aString]
-#@__asXML[aOptions]
-#@__fromXML[aXML;aOptions]
+@CLASS
+pfMixin
 
+## Базовый класс миксина.
+## Объект донор доступен через переменную this миксина.
 
+@static:mixin[aContainer;aOptions][obj]
+## aContainer[$caller.self] — если передали миксиним в объект, иначе берем self из caller'а.
+## aOptions — параметры, которые передаются инициалищатору миксина
+  $result[]
+  $obj[^reflection:create[$CLASS_NAME;__init__;^if(def $aContainer){$aContainer}{$caller.self};$aOptions]]
+
+@__init__[aThis;aOptions][locals]
+## Инициализатор миксина. Используется вместо конструктора.
+## aOptions.export[$.method1[] $.method2[]]
+  $self.this[$aThis]
+  $self.this.[__${CLASS_NAME}__][$self]
+  $lMethods[^if(def $aOptions.export){$aOptions.export}{^reflection:methods[$CLASS_NAME]}]
+  ^lMethods.foreach[m;_]{
+    ^if(!def $aOptions.export && (^m.left(1) eq "_" || $m eq "mixin")){^continue[]}
+    ^if(!($this.[$m] is junction)){$this.[$m][$self.[$m]]}
+  }
+
+#--------------------------------------------------------------------------------------------------
 
 @CLASS
 pfAssert
 
 @OPTIONS
 static
-
-#----- Static constructor -----
 
 @auto[]
   $_isEnabled(true)
