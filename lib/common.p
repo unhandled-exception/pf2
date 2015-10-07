@@ -58,16 +58,6 @@ pfClass
   ^defProperty[$aPropertyName;$aVarName;full]
   $result[]
 
-@contains[aName][lFields]
-## Проверяет есть ли у объекта поле с именем aName.
-  $lFields[^reflection:fields[^if(^reflection:dynamical[]){$self}{$CLASS}]]
-  $result(^lFields.contains[$aName])
-
-@foreach[aKeyName;aValueName;aCode;aSeparator][lFields;lKey;lValue]
-## Обходит все поля объекта.
-  $lFields[^reflection:fields[^if(^reflection:dynamical[]){$self}{$CLASS}]]
-  $result[^lFields.foreach[lKey;lValue]{$caller.[$aKeyName][$lKey]$caller.[$aValueName][$lValue]$aCode}[$aSeparator]]
-
 @alias[aAliasName;aMethod]
 ## Создает алиас aAliasName для метода aMethod.
 ## aMethod — ссылка на функцию.
@@ -146,6 +136,29 @@ pfMixin
     ^if(!def $aOptions.export && (^m.left(1) eq "_" || $m eq "mixin")){^continue[]}
     ^if(!($this.[$m] is junction)){$this.[$m][$self.[$m]]}
   }
+
+#--------------------------------------------------------------------------------------------------
+
+@CLASS
+pfHashMixin
+
+## Добавляет объекту интерфейс хеша
+
+@BASE
+pfMixin
+
+@__init__[aThis;aOptions]
+  ^BASE::__init__[$aThis;$aOptions]
+
+@contains[aName][locals]
+## Проверяет есть ли у объекта поле с именем aName.
+  $lFields[^reflection:fields[$this]]
+  $result(^lFields.contains[$aName])
+
+@foreach[aKeyName;aValueName;aCode;aSeparator][locals]
+## Обходит все поля объекта.
+  $lFields[^reflection:fields[$this]]
+  $result[^lFields.foreach[lKey;lValue]{$caller.[$aKeyName][$lKey]$caller.[$aValueName][$lValue]$aCode}[$aSeparator]]
 
 #--------------------------------------------------------------------------------------------------
 
