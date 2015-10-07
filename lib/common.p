@@ -2,7 +2,7 @@
 # Module: common.p
 
 @auto[aFilespec]
-  $MAIN:[__PFROOT__][^aFilespec.match[^^(?:^taint[regex][$request:document-root])(.*?)(/lib/common.p)^$][]{$match.1}]
+  $MAIN:[__PF_ROOT__][^aFilespec.match[^^(?:^taint[regex][$request:document-root])(.*?)(/lib/common.p)^$][]{$match.1}]
 
 
 @CLASS
@@ -70,44 +70,6 @@ pfClass
 ## В случае ошибки может дополнительно выполнить aCatchCode.
   $result[^try{$aCode}{$exception.handled(true)$aCatchCode}]
 
-#----- Декораторы -----
-
-@decorateMethod[aFunctionName;aDecoratorFunction;aObject][locals]
-## Назначает декоратор для метода/функции
-## aFunctionName — имя функции, которую мы декорируем
-## aDecoratorFunction — ссылка на функцию-декоратор (junction, а не строка с именем)
-##   Сигнатура функции-декоратора:
-##     @wrap_function[aFunction;aArgs;aOptions]
-##       aFunction — ссылка на оригинальную функцию
-##       aArgs — аргументы с которыми фнукцию вызвали (аналогично *aArgs)
-##       aOptions.object — ссылка на объект, содержащий задекорированную функцию
-##       aOptions.functionName — имя задекорированной функции
-## aObject — контекст функции, которую мы декорируем (объект или класс; если не задан, то $self)
-  $result[]
-  $obj[^if(def $aObject){$aObject}{$self}]
-  ^if(!($obj.[$aFunctionName] is junction)){^throw[pfClass.decorate.fail;Функция $aFunctionName не найдена.]}
-  ^if(!($aDecoratorFunction is junction)){^throw[pfClass.decorate.fail;Фукция-декоратор для $aFunctionName имеет тип $aDecoratroFunction.CLASS_NAME]}
-  $wrapperName[DECORATOR_$aFunctionName_^math:uid64[]]
-  $obj.[${wrapperName}_FUNCTION][$aDecoratorFunction]
-  $obj.[${wrapperName}_ORIGINAL][^reflection:method[$obj;$aFunctionName]]
-  ^process[$obj]{@${aFunctionName}[*args]
-    ^$result[^^self.[${wrapperName}_FUNCTION][^$self.[${wrapperName}_ORIGINAL]^;^$args^;^$.object[^$self] ^$.functionName[$aFunctionName]]]
-  }
-
-@regexpDecorateMethod[aFunctionRegexp;aDecoratorFunction;aObject][locals]
-## Декорирует все функции, подпадающие под регулярное выражение.
-## aFunctionRegexp — регулярное выражение для поиска функций.
-## Остальные параметры аналогично decorateMethod.
-  $result[]
-  $obj[^if(def $aObject){$aObject}{$self}]
-  $m[^reflection:methods[$obj.CLASS_NAME]]
-  $lForeach[^reflection:method[$m;foreach]]
-  ^lForeach[k;v]{
-    ^if(^k.match[$aFunctionRegexp]){
-      ^obj.decorateMethod[$k;$aDecoratorFunction;$obj]
-    }
-  }
-
 @_abstractMethod[]
   ^pfAssert:fail[Не реализовано. Вызов абстрактного метода.]
 
@@ -129,12 +91,15 @@ pfMixin
 @__init__[aThis;aOptions][locals]
 ## Инициализатор миксина. Используется вместо конструктора.
 ## aOptions.export[$.method1[] $.method2[]]
+  $aOptions[^hash::create[$aOptions]]
   $self.this[$aThis]
-  $self.this.[__${CLASS_NAME}__][$self]
-  $lMethods[^if(def $aOptions.export){$aOptions.export}{^reflection:methods[$CLASS_NAME]}]
-  ^lMethods.foreach[m;_]{
+  $self.mixinName[__${CLASS_NAME}__]
+  $self.this.[$mixinName][$self]
+  $lMethods[^if($aOptions.export){$aOptions.export}{^reflection:methods[$CLASS_NAME]}]
+  $lForeach[^reflection:method[$lMethods;foreach]]
+  ^lForeach[m;_]{
     ^if(!def $aOptions.export && (^m.left(1) eq "_" || $m eq "mixin")){^continue[]}
-    ^if(!($this.[$m] is junction)){$this.[$m][$self.[$m]]}
+    ^if(!($this.[$m] is junction)){$this.[$m][^reflection:method[$self;$m]]}
   }
 
 #--------------------------------------------------------------------------------------------------
@@ -148,22 +113,30 @@ pfHashMixin
 pfMixin
 
 @__init__[aThis;aOptions]
-  ^BASE::__init__[$aThis;$aOptions]
+## aOptions.includeJunctionFields.bool(false) — включать junction-поля.
+  ^BASE:__init__[$aThis;$aOptions]
+  $self._includeJunctionFields(^aOptions.includeJunctionFields.bool(false))
 
 @contains[aName][locals]
 ## Проверяет есть ли у объекта поле с именем aName.
   $lFields[^reflection:fields[$this]]
   $result(^lFields.contains[$aName])
+  ^if($result && !$_includeJunctionFields && $lFields.[$aName] is junction){
+    $result(false)
+  }
 
 @foreach[aKeyName;aValueName;aCode;aSeparator][locals]
 ## Обходит все поля объекта.
   $lFields[^reflection:fields[$this]]
-  $result[^lFields.foreach[lKey;lValue]{$caller.[$aKeyName][$lKey]$caller.[$aValueName][$lValue]$aCode}[$aSeparator]]
+  $lForeach[^reflection:method[$lFields;foreach]]
+  $result[^lForeach[lKey;lValue]{^if(!$_includeJunctionFields && $lValue is junction){^continue[]}$caller.[$aKeyName][$lKey]$caller.[$aValueName][$lValue]$aCode}[$aSeparator]]
 
 #--------------------------------------------------------------------------------------------------
 
 @CLASS
 pfAssert
+
+## Ассерты. Статический класс.
 
 @OPTIONS
 static
@@ -173,15 +146,11 @@ static
   $_exceptionName[assert.fail]
   $_passExceptionName[assert.pass]
 
-#----- Properties -----
-
 @GET_enabled[]
   $result($_isEnabled)
 
 @SET_enabled[aValue]
   $_isEnabled($aValue)
-
-#----- Public -----
 
 @isTrue[aCondition;aComment][result]
   ^if($enabled && !$aCondition){
