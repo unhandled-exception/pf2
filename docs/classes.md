@@ -15,6 +15,7 @@ find . -name "*.p" -exec grep "@CLASS" -A 1 -H {} \; | awk '$0 !~ /(--|@CLASS)/{
 * pfValidate
 * pfCFile
 * pfRuntime
+* pfOS
 
 ### ./net/curl_file.p
 * pfCurlFile

@@ -35,14 +35,14 @@
 ### ./cache/pfCache.p
 * pfCache
 
-### ./debug/pfRuntime.p
+### ./debug/pfRuntime.p +
 + pfRuntime
 
-### ./io/
+### ./io/ +
 + pfCFile
 + pfConsole
 + pfCurlFile
-* pfOS
++ pfOS
 
 
 ### ./modules/
@@ -87,10 +87,10 @@
 * pfTempleParserEngine
 * pfTempleParserPattern
 
-### ./tests/
+### ./tests/ +
 + pfAssert
 
-### ./types/
+### ./types/ +
 + pfClass
 + pfString
 + pfValidate
