@@ -6,7 +6,7 @@
 + pfZipArchiver
 
 ### ./api/mobile/sms/
-* pfZagruzkaSMSGate
++ pfZagruzkaSMSGate
 
 ### ./api/office/excel/
 * pfTableToXLS

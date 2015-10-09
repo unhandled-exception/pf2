@@ -23,5 +23,8 @@ find . -name "*.p" -exec grep "@CLASS" -A 1 -H {} \; | awk '$0 !~ /(--|@CLASS)/{
 ### ./api/archives/zip.p
 * pfZipArchiver
 
+### ./api/mobile/sms/zagruzka.p
+* pfZagruzkaSMSGate
+
 ### ./console/console.p
 * pfConsole
