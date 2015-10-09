@@ -2,8 +2,7 @@
 # Module: common.p
 
 @auto[aFilespec]
-  $MAIN:[__PF_ROOT__][^aFilespec.match[^^(?:^taint[regex][$request:document-root])(.*?)(/lib/common.p)^$][]{$match.1}]
-
+  ^aFilespec.match[^^(?:^taint[regex][$request:document-root])(.+?)(?:/common.p)^$][]{$MAIN:[__PF_ROOT__][$match.1]}
 
 @CLASS
 pfClass

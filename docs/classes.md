@@ -13,3 +13,6 @@ find . -name "*.p" -exec grep "@CLASS" -A 1 -H {} \; | awk '$0 !~ /(--|@CLASS)/{
 * pfAssert
 * pfString
 * pfValidate
+
+### ./net/curl_file.p
+* pfCurlFile
