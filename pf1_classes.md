@@ -3,7 +3,7 @@
 Большие подсистемы (sql, авторизация) переносим как есть, только распределяем по пакетам и убираем ненужные use. После этого уже делаем рефакторинг.
 
 ### ./api/archives/
-* pfZipArchiver
++ pfZipArchiver
 
 ### ./api/mobile/sms/
 * pfZagruzkaSMSGate
