@@ -1,7 +1,7 @@
 #!../../../cgi-bin/parser3.cgi
 
 @USE
-../lib/common.p
+pf2/lib/common.p
 
 @main[][locals]
   ^test_hash_mixin[]

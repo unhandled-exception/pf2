@@ -1,7 +1,7 @@
 # PF2 Library
 
 @USE
-../common.p
+pf2/lib/common.p
 
 @CLASS
 pfCurlFile

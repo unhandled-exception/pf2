@@ -1,7 +1,7 @@
 #!../../../cgi-bin/parser3.cgi
 
 @USE
-../lib/net/curl_file.p
+pf2/lib/net/curl_file.p
 
 @main[][locals]
   Тест для net/curl_file.p@pfCurlFile:

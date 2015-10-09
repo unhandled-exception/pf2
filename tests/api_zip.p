@@ -1,7 +1,10 @@
 #!../../../cgi-bin/parser3.cgi
 
+@conf[]
+  $CLASS_PATH[/../../]
+
 @USE
-../lib/api/archives/zip.p
+pf2/lib/api/archives/zip.p
 
 @main[][locals]
   Test zip unarchiver.

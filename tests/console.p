@@ -1,7 +1,7 @@
 #!../../../cgi-bin/parser3.cgi
 
 @USE
-../lib/console/console.p
+pf2/lib/console/console.p
 
 @main[][locals]
   Test!
