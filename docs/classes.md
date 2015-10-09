@@ -12,3 +12,4 @@ find . -name "*.p" -exec grep "@CLASS" -A 1 -H {} \; | awk '$0 !~ /(--|@CLASS)/{
 * pfHashMixin
 * pfAssert
 * pfString
+* pfValidate
