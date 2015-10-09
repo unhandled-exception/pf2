@@ -21,22 +21,22 @@ PF2 — веб-фреймворк для Parser 3
 * Переписать sql-классы, добавит подднржку диалектов sql, для orm’а. Вместо sql-классов — коннекторы.
 * Делаем класс для форматирования дат и времени. dtf.p нам не нужен.
 
-# Новый pfAuth 2:
-  ## Переводим на работу с  request/response в вебфреймворке.
-** БД-стораджи через pfSQLTable. Сторадж — модель с допинтерфейсом для проверки паролей.
-** Единый авторизационный токен. Зашифрованная key-value строка с подписью sha512+hmac. Токен можно передавать через http-заголовок, куку или form.
-** pfAnitiFlood переделываем в «csrf protection». Посмотреть какие еще варианты защиты можно добавить: проверка реферера, других заголовков и пр. https://docs.djangoproject.com/en/1.8/topics/security/, http://laravel.com/docs/5.1/routing#csrf-protection
-** ^can[…]{if true}{else} - метод с блоком, чтобы обойтись без ифа. (@can[permission;true_code;false_code]) [from the Laravel]
+### Новый pfAuth 2:
+* Переводим на работу с  request/response в вебфреймворке.
+* БД-стораджи через pfSQLTable. Сторадж — модель с допинтерфейсом для проверки паролей.
+* Единый авторизационный токен. Зашифрованная key-value строка с подписью sha512+hmac. Токен можно передавать через http-заголовок, куку или form.
+* pfAnitiFlood переделываем в «csrf protection». Посмотреть какие еще варианты защиты можно добавить: проверка реферера, других заголовков и пр. https://docs.djangoproject.com/en/1.8/topics/security/, http://laravel.com/docs/5.1/routing#csrf-protection
+* ^can[…]{if true}{else} - метод с блоком, чтобы обойтись без ифа. (`@can[permission;true_code;false_code]`) [from the Laravel]
 
-* Удаляем из библиотеки старые и неподдерживаемые классы:
-** Юнит-тесты. Нужен полноценный фреймворк.
-** Wiki. Переносим класс pfURLTranslit в моудуль web.
-** Коллекции: хеш умеет все, что нужно.
-** Management. Пишем новый консольный фреймворк (generator.p и т.п.)
-** Highlighters.
-** images. Надо новый api-класс над IM сделать.
-** another.
-** deprecated. pfScroller делаем полноценным классом вместо обвязки над scroll.p.
-** io/pfCurlFile.p [Возможно, что его и стоит оставить как пару к pfCFile.]
-** pf/sql/generics. pfSQLSettings переводим на ORM.
+### Удаляем из библиотеки старые и неподдерживаемые классы:
+* Юнит-тесты. Нужен полноценный фреймворк.
+* Wiki. Переносим класс pfURLTranslit в моудуль web.
+* Коллекции: хеш умеет все, что нужно.
+* Management. Пишем новый консольный фреймворк (generator.p и т.п.)
+* Highlighters.
+* images. Надо новый api-класс над IM сделать.
+* another.
+* deprecated. pfScroller делаем полноценным классом вместо обвязки над scroll.p.
+* io/pfCurlFile.p [Возможно, что его и стоит оставить как пару к pfCFile.]
+* pf/sql/generics. pfSQLSettings переводим на ORM.
 * Пишем документацию. Markdown. :)
