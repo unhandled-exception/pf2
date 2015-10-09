@@ -473,27 +473,25 @@ pfValidate
      && ^aString.match[^^$validEmailRegex^$])
   )
 
-@isValidURL[aString;aOnlyHTTP]
+@isValidURL[aString;aOptions]
 ## Строка содержит синтаксически-правильный URL.
-## aOnlyHTTP - строка может содержать только URL с протоколом http
+## aOptions.onlyHTTP(false) - строка может содержать только URL с протоколом http
   $result(def $aString && ^aString.match[^^$validURLRegex^$][n])
-  ^if($result && (($aOnlyHTTP is bool && $aOnlyHTTP) || ^aOnlyHTTP.int(0))){
+  ^if($result && ^aOptions.onlyHTTP.bool(false)){
     $result(^aString.match[^^http://])
   }
 
-@isExistingURL[aString][lFile]
+@isExistingURL[aString][locals]
 ## Строка содержит работающий http-url.
   $result(false)
-  ^if(^isValidURL[$aString](true)){
+  ^if(^isValidURL[$aString]){
     ^try{
-      $lFile[^file::load[text;^untaint[as-is]{$aString}][
-        $.method[HEAD]
-        $.any-status(true)
+      $lFile[^curl:load[
+        $.url[^untaint[as-is]{$aString}]
         $.charset[utf-8]
-        $.headers[
-           $.Accept-Charset[utf-8]
-           $.Connection[close]
-        ]
+        $.ssl_verifypeer(0)
+#       HEAD
+        $.nobody(1)
       ]]
       $result($lFile.status eq "200" || $lFile.status eq "401" || $lFile.status eq "301" || $lFile.status eq "302")
     }{
@@ -501,7 +499,7 @@ pfValidate
      }
   }
 
-@isWellFormedXML[aString][lDoc]
+@isWellFormedXML[aString][locals]
 ## Строка содержит валидный XML.
   $result(false)
   ^if(def $aString){
@@ -519,7 +517,7 @@ pfValidate
     <root>$aString</root>
   ])
 
-@isValidANSIDatetime[aString][lDate]
+@isValidANSIDatetime[aString][locals]
 ## Строка содержит дату в ANSI-формате, допустимую в Парсере.
   $result(false)
   ^if(def $aString){
