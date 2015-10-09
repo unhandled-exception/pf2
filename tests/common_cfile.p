@@ -1,13 +1,13 @@
 #!../../../cgi-bin/parser3.cgi
 
 @USE
-../lib/net/curl_file.p
+../lib/common.p
 
 @main[][locals]
-  Тест для net/curl_file.p@pfCurlFile:
+  Тест для common.p@pfCFile:
 
   $lURL[https://google.com]
-  $f[^pfCurlFile::load[text;$lURL]]
+  $f[^pfCFile::load[text;$lURL]]
   $lURL is loaded. Status — ${f.status}. Body is starting from:
   ^f.body.left(100)
 
