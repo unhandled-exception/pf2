@@ -723,3 +723,96 @@ pfCFile
   $result[^aTable.menu{$aName=^taint[uri][$aTable.[$lFieldName]]}[^if(def $aSeparator){$aSeparator}{&}]]
 
 #--------------------------------------------------------------------------------------------------
+
+@CLASS
+pfRuntime
+
+## Статический класс для управления памятью, отладки и профилирования кода.
+
+@OPTIONS
+static
+
+@auto[]
+  $_memoryLimit(4096)
+  $_lastMemorySize($status:memory.used)
+  $_compactsCount(0)
+  $_maxMemoryUsage(0)
+
+  $_profiled[$.last[] $.all[^hash::create[]]]
+# Нужно ли накапливать статистику профилировщика
+  $_enableProfilerLog(true)
+
+@GET_memoryLimit[]
+  $result($_memoryLimit)
+
+@SET_memoryLimit[aMemoryLimit]
+  $_memoryLimit($aMemoryLimit)
+
+@GET_compactsCount[]
+  $result($_compactsCount)
+
+@GET_maxMemoryUsage[]
+  $result(^if($_maxMemoryUsage > $status:memory.used){$_maxMemoryUsage}{$status:memory.used})
+
+@GET_profiled[]
+  $result[$_profiled]
+
+@GET_enableProfilerLog[]
+  $result($_enableProfilerLog)
+
+@SET_enableProfilerLog[aCond]
+  $_enableProfilerLog($aCond)
+
+@compact[aOptions]
+## Выполняет сборку мусора, если c момента последней сборки мусора было выделено
+## больше $memoryLimit килобайт.
+## aOptions.isForce(false)
+  $result[]
+  ^if($_maxMemoryUsage < $status:memory.used){
+    $_maxMemoryUsage($status:memory.used)
+  }
+  ^if(!($aOptions is hash)){$aOptions[^hash::create[]]}
+  ^if(^aOptions.isForce.bool(false) || ($status:memory.used - $_lastMemorySize) > $memoryLimit){
+     ^memory:compact[]
+     $_lastMemorySize($status:memory.used)
+     ^_compactsCount.inc[]
+  }
+
+@resources[]
+## Возвращает хеш с информацией о времени и памяти, затраченных на данный момент
+  $result[
+    $.time($status:rusage.tv_sec + $status:rusage.tv_usec/1000000.0)
+    $.utime($status:rusage.utime)
+    $.stime($status:rusage.stime)
+
+    $.allocated($status:memory.ever_allocated_since_start)
+    $.compacts($compactsCount)
+    $.used($status:memory.used)
+    $.free($status:memory.free)
+  ]
+
+@profile[aCode;aComment][lResult]
+## Выполняет код и сохраняет ресурсы, затраченные на его исполнение.
+  $lResult[$.before[^resources[]] $.comment[$aComment]]
+  ^try{
+    $result[$aCode]
+  }{
+#   pass exceptions
+  }{
+     $lResult.after[^resources[]]
+     $lResult.time($lResult.after.time - $lResult.before.time)
+     $lResult.utime($lResult.after.utime - $lResult.before.utime)
+     $lResult.stime($lResult.after.stime - $lResult.before.stime)
+
+     $lResult.allocated($lResult.after.allocated - $lResult.before.allocated)
+     $lResult.compacts($lResult.after.compacts - $lResult.before.compacts)
+     $lResult.used($lResult.after.used - $lResult.before.used)
+     $lResult.free($lResult.after.free - $lResult.before.free)
+
+     $_profiled.last[$lResult]
+     ^if($enableProfilerLog){
+       $_profiled.all.[^_profiled.all._count[]][$lResult]
+     }
+   }
+
+#--------------------------------------------------------------------------------------------------
