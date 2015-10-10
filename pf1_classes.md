@@ -12,10 +12,10 @@
 + pfTableToXLS
 
 ### ./api/pdf/pdfkit/
-* pfPDFKit
++ pfPDFKit
 
 ### ./api/qiwi/wallet/
-* pfQiwiWallet
++ pfQiwiWallet
 
 ### ./api/yandex/speechkit/
 * pfYandexSpeechKit

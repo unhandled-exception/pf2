@@ -83,8 +83,6 @@ pfClass
   ^pfAssert:isTrue(-f $aStylesheet){${CLASS_NAME}: Не найдена таблица стилей "$aStylesheet".}
   $_stylesheets.[^eval($_stylesheets + 1)][$aStylesheet]
 
-#----- Private -----
-
 @_exec[aInpFile;aOutFile;aArgs;aStdin][locals]
   $result[^file::exec[binary;$_binPath;$.stdin[$aStdin] $.charset[$aArgs.encoding];^_makeArgs[$aArgs];$aInpFile;$aOutFile]]
   ^if($result.status > 0){

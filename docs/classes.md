@@ -29,5 +29,11 @@ find . -name "*.p" -exec grep "@CLASS" -A 1 -H {} \; | awk '$0 !~ /(--|@CLASS)/{
 ### ./api/office/excel.p
 * pfTableToXLS
 
+### ./api/pdf/pdfkit.p
+* pfPDFKit
+
+### ./api/qiwi/wallet.p
+* pfQiwiWallet
+
 ### ./console/console.p
 * pfConsole
