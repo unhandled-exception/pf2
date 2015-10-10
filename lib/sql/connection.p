@@ -30,7 +30,7 @@ pfClass
   $_connectString[$aConnectString]
   $_transactionsCount(0)
 
-  $_serverType[SQL Generic]
+  $_serverType[^aConnectString.left(^aConnectString.pos[:])]
 
   $isCaching(^if(def $aOptions.isCaching){$aOptions.isCaching}{0})
   ^if(def $aOptions.cache){
@@ -57,7 +57,7 @@ pfClass
       $.size(0)
       $.usage(0)
     ]
-    $.queries[^pfList::create[]]
+    $.queries[^hash::create[]]
     $.queriesTime(0)
   ]
 
@@ -91,7 +91,7 @@ pfClass
   $result($_transactionsCount > 0)
 
 @GET_serverType[]
-  $result[$_severType]
+  $result[$_serverType]
 
 @GET_isNaturalTransactions[]
 ## Возвращает true, если включен резим "натуральной транзакции".
@@ -269,7 +269,7 @@ pfClass
   $_stat.queriesTime($_stat.queriesTime + ($lEnd-$lStart))
   ^_stat.queriesCount.inc[]
   ^if($_enableQueriesLog){
-    ^_stat.queries.add[
+    $_stat.queries.[^_stat.queries._count[]][
       $.type[$aType]
       $.query[^taint[$aOptions.query]]
       $.time($lEnd-$lStart)

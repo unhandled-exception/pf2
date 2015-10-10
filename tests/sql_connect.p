@@ -4,23 +4,39 @@
 pf2/lib/sql/connection.p
 
 @main[][locals]
-  SQL connection test!
+SQL connection test!
 
   $dbFile[assets/sql/test.sqlite]
   ^try{
-#    $db[^pfSQLConnection::create[sqlite://${dbFile}]]
+    $db[^pfSQLConnection::create[sqlite://${dbFile};$.enableQueriesLog(true)]]
+    Type: $db.serverType
+
+    ^create_tables[$db]
+    ^insert_data[$db]
+    $t[^db.table{select * from users}]
+    ^json:string[$t]
+
+    $h[^db.hash{select * from users order by id desc}]
+    ^json:string[$h]
+
+    $i[^db.int{select count(*) from users}]
+    ^json:string[$i]
 
   }{}{
     ^if(-f $dbFile){
       ^file:delete[$dbFile]
     }
+Queries:
+^db.stat.queries.foreach[k;v]{${k}: $v.query ^#0A}
   }
-  Finish tests.^#0A
+Finish tests.^#0A
 
-@print_fields[aObj][locals]
-  $f[^reflection:fields[$aObj]]
-  ^f.foreach[k;v]{
-    $k - $v.CLASS_NAME ^if($v is string){— $v}
+@create_tables[aDB]
+  $result[]
+  ^aDB.void{create table users(id integer primary key autoincrement, name varchar unique, uuid varchar)}
+
+@insert_data[aDB][locals]
+  $result[]
+  ^for[i](1;20){
+    ^aDB.void{insert into users (name, uuid) values ("User $i", "^math:uuid[]")}
   }
-
-

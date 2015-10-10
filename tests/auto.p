@@ -8,7 +8,7 @@
 	$SQL[
 		$.drivers[^table::create{protocol	driver	client
 mysql	$sqldriversdir/libparser3mysql.so	libmysqlclient.so
-sqlite	$sqldriversdir/libparser3sqlite.so	sqlite3.so
+sqlite	$sqldriversdir/libparser3sqlite.so	libsqlite3.so
 #pgsql	$sqldriversdir/libparser3pgsql.so	libpq.so
 }]]
 
