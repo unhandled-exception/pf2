@@ -9,7 +9,7 @@
 + pfZagruzkaSMSGate
 
 ### ./api/office/excel/
-* pfTableToXLS
++ pfTableToXLS
 
 ### ./api/pdf/pdfkit/
 * pfPDFKit

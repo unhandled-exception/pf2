@@ -26,5 +26,8 @@ find . -name "*.p" -exec grep "@CLASS" -A 1 -H {} \; | awk '$0 !~ /(--|@CLASS)/{
 ### ./api/mobile/sms/zagruzka.p
 * pfZagruzkaSMSGate
 
+### ./api/office/excel.p
+* pfTableToXLS
+
 ### ./console/console.p
 * pfConsole

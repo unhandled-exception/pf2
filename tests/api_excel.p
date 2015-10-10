@@ -1,13 +1,16 @@
 #!../../../cgi-bin/parser3.cgi
 
 @USE
-pf2/lib/api/archives/zip.p
+pf2/lib/api/office/excel.p
 
 @main[][locals]
-  Test zip unarchiver.
+  Test an axcel table generator.
+  $t[^table::create{one	two
+value 1	value2
+value 3	value4}]
 
-  $zip[^pfZipArchiver::create[]]
-  ^json:string[^zip.list[assets/api/zip/pf1_zip.zip]]
+  $e[^pfTableToXLS::create[]]
+  ^e.convert[$t]
 
   Finish tests.^#0A
 
