@@ -174,6 +174,19 @@ pfClass
 ## Реализует абстракцию insert ... on duplicate key update, которая нативно реализована не во всех СУБД.
   $result[^try{$aInsertCode}{^if($exception.type eq "sql.execute" && ^exception.comment.match[$_duplicateKeyExceptionRegex][]){$exception.handled(true)$aExistsCode}}]
 
+@lastInsertID[][locals]
+## Возвращает идентификатор последней вставленной записи.
+## Способ получения зависит от типа сервера.
+  $result[]
+  $lQuery[^switch[$_serverType]{
+    ^case[sqlite]{select last_insert_rowid()}
+    ^case[mysql]{select last_insert_id()}
+    ^case[pgsql]{select lastval()}
+  }]
+  ^if(def $lQuery){
+    $result[^string{$lQuery}[$.limit(1)][$.force(true)]]
+  }
+
 @_processMemoryCache[aCode;aOptions][lKey;lResult;lIsIM]
 ## Возвращает результат запроса из коллекции объектов.
 ## Если объект не найден, то выполняет запрос и добавляет его результат в коллекцию.

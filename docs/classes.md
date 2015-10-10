@@ -38,5 +38,9 @@ find . -name "*.p" -exec grep "@CLASS" -A 1 -H {} \; | awk '$0 !~ /(--|@CLASS)/{
 ### ./sql/connection.p
 * pfSQLConnection
 
+### ./sql/models/sql_table.p
+* pfSQLTable
+* pfSQLBuilder
+
 ### ./console/console.p
 * pfConsole

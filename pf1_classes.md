@@ -65,8 +65,8 @@
 * pfSQLCTCountersModel
 
 ### ./sql/orm/pfSQLTable.p
-* pfSQLTable
-* pfSQLBuilder
++ pfSQLTable
++ pfSQLBuilder
 
 ### ./sql/orm/service/
 * pfTableControllerGenerator
