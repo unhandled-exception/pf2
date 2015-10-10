@@ -13,14 +13,26 @@ SQL connection test!
 
     ^create_tables[$db]
     ^insert_data[$db]
+
+    ^try{
+      ^db.transaction{
+        ^insert_data[$db]
+        ^throw[stop]
+      }
+    }{
+       $exception.handled($exception.type eq "stop")
+    }
+
     $t[^db.table{select * from users}]
-    ^json:string[$t]
+#    ^json:string[$t]
 
     $h[^db.hash{select * from users order by id desc}]
-    ^json:string[$h]
+#    ^json:string[$h]
 
     $i[^db.int{select count(*) from users}]
-    ^json:string[$i]
+#    ^json:string[$i]
+
+    ^drop_tables[$db]
 
   }{}{
     ^if(-f $dbFile){
@@ -33,7 +45,11 @@ Finish tests.^#0A
 
 @create_tables[aDB]
   $result[]
-  ^aDB.void{create table users(id integer primary key autoincrement, name varchar unique, uuid varchar)}
+  ^aDB.void{create table users(id integer primary key autoincrement, name varchar, uuid varchar)}
+
+@drop_tables[aDB]
+  $result[]
+  ^aDB.void{drop table users}
 
 @insert_data[aDB][locals]
   $result[]

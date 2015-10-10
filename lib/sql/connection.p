@@ -12,22 +12,18 @@ pfSQLConnection
 pfClass
 
 @create[aConnectString;aOptions]
-## aOptions.isNatural(false) - выполнять транзакции средствами SQL-сервера (режим "натуральной транзакции").
-## aOptions.isNaturalTransactions(false) - deprecated (алиас для isNatural).
 ## aOptions.enableIdentityMap(false) - включить добавление результатов запросов в коллекцию объектов.
 ## aOptions.enableQueriesLog(false) - включить логирование sql-запросов.
-
   ^cleanMethodArgument[]
   ^pfAssert:isTrue(def $aConnectString)[Не задана строка соединения.]
 
   ^BASE:create[]
 
   $_connectString[$aConnectString]
+  $_connectionsCount(0)
   $_transactionsCount(0)
 
   $_serverType[^aConnectString.left(^aConnectString.pos[:])]
-
-  $_isNaturalTransactions[^if(^aOptions.contains[isNatural]){^aOptions.isNatural.bool(false)}{^aOptions.isNaturalTransactions.bool(false)}]
 
   $_enableIdentityMap[^aOptions.enableIdentityMap.bool(false)]
   $_identityMap[]
@@ -43,11 +39,17 @@ pfClass
     $.queriesTime(0)
   ]
 
-# Регулярное вражение, которое проверят эксепшн при дублировании записейв safeInsert.
+# Регулярное вражение, которое проверят эксепшн при дублировании записей в safeInsert.
   $_duplicateKeyExceptionRegex[^regex::create[duplicate entry][i]]
 
 @GET_connectString[]
   $result[$_connectString]
+
+@GET_isConnected[]
+  $result($_connectionsCount)
+
+@GET_isTransaction[]
+  $result($_transactionsCount)
 
 @GET_identityMap[]
   ^if(!def $_identityMap){
@@ -55,109 +57,98 @@ pfClass
   }
   $result[$_identityMap]
 
-@GET_transactionsCount[]
-  $result($_transactionsCount)
-
-@GET_isTransaction[]
-## Возвращает true, если идет транзакция.
-  $result($_transactionsCount > 0)
-
 @GET_serverType[]
   $result[$_serverType]
-
-@GET_isNaturalTransactions[]
-## Возвращает true, если включен резим "натуральной транзакции".
-  $result($_isNaturalTransactions)
 
 @GET_stat[]
 ## Возвращает статистику по запросам
   $result[$_stat]
 
-@transaction[aCode;aOptions][lQL]
+@connect[aCode]
+## Выполняет соединение с сервером и выполняет код, если оно еще не установлено.
+## Выполняется автоматически при попытке отправить запрос или открыть транзакцию.
+  ^if($_connectionsCount){
+    $result[$aCode]
+  }{
+     ^MAIN:connect[$_connectString]{
+       ^_connectionsCount.inc[]
+       ^try{
+         $result[$aCode]
+       }{}{
+         ^_connectionsCount.dec[]
+       }
+     }
+   }
+
+@transaction[aCode;aOptions][locals]
 ## Организует транзакцию, обеспечивая возможность отката.
-## aOptions.isNatural - принудительно устанавливает режим "натуральной транзакции".
 ## aOptions.disableQueriesLog(false) - отключить лог на время работы транзакции
   ^cleanMethodArgument[]
   $result[]
-  ^connect[$connectString]{
+  ^self.connect{
+    $lIsEnabledQueryLog($_enableQueriesLog)
+    ^if(^aOptions.disableQueriesLog.bool(false)){$self._enableQueriesLog(false)}
+    ^self._transactionsCount.inc(1)
+
+    ^startTransaction[]
     ^try{
-      $lQL($_enableQueriesLog)
-      ^if(^aOptions.disableQueriesLog.bool(false)){$_enableQueriesLog(false)}
-      ^_transactionsCount.inc(1)
-      ^setServerEnvironment[]
-      ^if($_transactionsCount == 1 && ($isNaturalTransactions || $aOptions.isNatural)){
-        ^startTransaction[$.isNatural(true)]
-        $result[$aCode]
-        ^commit[$.isNatural(true)]
-      }{
-         $result[$aCode]
-       }
+      $result[$aCode]
+      ^commit[]
     }{
        ^rollback[]
     }{
-       ^_transactionsCount.dec(1)
-       $_enableQueriesLog($lQL)
+       ^self._transactionsCount.dec(1)
+       $self._enableQueriesLog($lIsEnabledQueryLog)
      }
   }
 
-@naturalTransaction[aCode;aOptions]
-## Принудительно вызывает "натуральную транзацию". Алиас на transaction.
-  $result[^transaction{$aCode}[^hash::create[$aOptions] $.isNatural(true)]]
+@startTransaction[]
+## Открывает транзакцию.
+  $result[]
+  ^void{begin}
+
+@commit[]
+## Комитит транзакцию.
+  $result[]
+  ^void{commit}
 
 @rollback[]
 ## Откатывает текущую транзакцию.
   $result[]
-  ^if($isTransaction && $isNaturalTransactions){
-    ^void{rollback}
-  }
+  ^void{rollback}
 
-@startTransaction[aOptions]
-## Открывает транзакцию.
-## aOptions.isNatural
-  $result[]
-  ^void{start transaction}
 
-@commit[aOptions]
-## Комитит транзакцию.
-## aOptions.isNatural
-  $result[]
-  ^void{commit}
-
-@setServerEnvironment[]
-## Устанавливает переменные окружения сервера.
-## Вызывается перед транзакцией
-
-@table[aQuery;aSQLOptions;aOptions][lQuery;lOptions]
+@table[aQuery;aSQLOptions;aOptions][locals]
   $lQuery[$aQuery]
   $lOptions[^_getOptions[$lQuery;table;$aSQLOptions;$aOptions]]
   $result[^_processIdentityMap{^_sql[table]{^table::sql{$lQuery}[$aSQLOptions]}[$lOptions]}[$lOptions]]
 
-@hash[aQuery;aSQLOptions;aOptions][lQuery;lOptions]
+@hash[aQuery;aSQLOptions;aOptions][locals]
   $lQuery[$aQuery]
   $lOptions[^_getOptions[$lQuery;hash;$aSQLOptions;$aOptions]]
   $result[^_processIdentityMap{^_sql[hash]{^hash::sql{$lQuery}[$aSQLOptions]}[$lOptions]}[$lOptions]]
 
-@file[aQuery;aSQLOptions;aOptions][lQuery;lOptions]
+@file[aQuery;aSQLOptions;aOptions][locals]
   $lQuery[$aQuery]
   $lOptions[^_getOptions[$lQuery;file;$aSQLOptions;$aOptions]]
   $result[^_processIdentityMap{^_sql[file]{^file::sql{$lQuery}[$aSQLOptions]}[$lOptions]}[$lOptions]]
 
-@string[aQuery;aSQLOptions;aOptions][lQuery;lOptions]
+@string[aQuery;aSQLOptions;aOptions][locals]
   $lQuery[$aQuery]
   $lOptions[^_getOptions[$lQuery;string;$aSQLOptions;$aOptions]]
   $result[^_processIdentityMap{^_sql[string]{^string:sql{$lQuery}[$aSQLOptions]}[$lOptions]}[$lOptions]]
 
-@double[aQuery;aSQLOptions;aOptions][lQuery;lOptions]
+@double[aQuery;aSQLOptions;aOptions][locals]
   $lQuery[$aQuery]
   $lOptions[^_getOptions[$lQuery;double;$aSQLOptions;$aOptions]]
   $result(^_processIdentityMap{^_sql[double]{^double:sql{$lQuery}[$aSQLOptions]}[$lOptions]}[$lOptions])
 
-@int[aQuery;aSQLOptions;aOptions][lQuery;lOptions]
+@int[aQuery;aSQLOptions;aOptions][locals]
   $lQuery[$aQuery]
   $lOptions[^_getOptions[$lQuery;int;$aSQLOptions;$aOptions]]
   $result(^_processIdentityMap{^_sql[int]{^int:sql{$lQuery}[$aSQLOptions]}[$lOptions]}[$lOptions])
 
-@void[aQuery;aSQLOptions;aOptions][lQuery;lOptions]
+@void[aQuery;aSQLOptions;aOptions][locals]
   $lQuery[$aQuery]
   $lOptions[^_getOptions[$lQuery;int;$aSQLOptions;$aOptions]]
   $result[^_sql[void]{^void:sql{$lQuery}[$aSQLOptions]}[^hash::create[$lOptions] $.isForce(true)]]
@@ -213,15 +204,13 @@ pfClass
   }
 
 @_sql[aType;aCode;aOptions][locals]
-## Возвращает результат запроса. Если нужно оранизует транзакцию.
+## Выполняет запрос и сохраняет статистику
   ^cleanMethodArgument[]
-   $result[^if($isTransaction){^_exec[$aType]{$aCode}[$aOptions]}{^transaction{^_exec[$aType]{$aCode}[$aOptions]}}]
-
-@_exec[aType;aCode;aOptions][locals]
-## Выполняет sql-запрос и сохраняет статистику
   $lMemStart($status:memory.used)
   $lStart($status:rusage.tv_sec + $status:rusage.tv_usec/1000000.0)
-  $result[$aCode]
+
+  $result[^self.connect{$aCode}]
+
   $lEnd($status:rusage.tv_sec + $status:rusage.tv_usec/1000000.0)
   $lMemEnd($status:memory.used)
 
