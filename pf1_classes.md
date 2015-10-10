@@ -76,9 +76,10 @@
 * pfTableModelGenerator
 
 ### ./sql/
-* pfMySQL
-* pfSQL
-* pfSQLite
++ pfSQL -> pfSQLConnection
+
+Классы pfMySQL и pfSQLite похоже не нужны совсем. Может быть понадобится сделать класс pfSQLDialect, которые использовать в орме.
+
 
 ### ./templet/pfTemple.p
 * pfTemple

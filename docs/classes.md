@@ -35,5 +35,8 @@ find . -name "*.p" -exec grep "@CLASS" -A 1 -H {} \; | awk '$0 !~ /(--|@CLASS)/{
 ### ./api/qiwi/wallet.p
 * pfQiwiWallet
 
+### ./sql/connection.p
+* pfSQLConnection
+
 ### ./console/console.p
 * pfConsole
