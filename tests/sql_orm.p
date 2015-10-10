@@ -29,7 +29,7 @@ SQL connection test!
 
     ^users.modify[2;$.name[User 2 (modified)] $.uuid[]]
 
-    $t[^users.all[]]
+    $t[^users.all[$.[id >][3]]]
     ^json:string[$t]
 
     ^drop_tables[$db]
