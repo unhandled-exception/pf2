@@ -1,4 +1,5 @@
-# PF library
+# PF2 Library
+
 @CLASS
 pfTableToXLS
 

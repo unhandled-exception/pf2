@@ -14,7 +14,7 @@ pf2/lib/common.p
 pfClass
 
 @auto[aFilespec]
-  $[__^CLASS_NAME.upper[]_FILESPEC__][^aFilespec.match[^^(^taint[regex][$request:document-root])][][]]
+  $[__PFZIPARCHIVER_FILESPEC__][^aFilespec.match[^^(^taint[regex][$request:document-root])][][]]
 
 @create[aOptions]
 ## aOptions.unzipPath[] - путь к unzip
