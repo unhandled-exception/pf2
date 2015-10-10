@@ -12,11 +12,6 @@ pfSQLConnection
 pfClass
 
 @create[aConnectString;aOptions]
-## aOptions.cache - объект класса pfCache (если не найден, то используем базовый класс)
-## aOptions.isCaching(false) - принудительно включить кеширование для всех запросов
-## aOptions.cacheLifetime(60) - время кеширования в секундах
-## aOptions.cacheDir[] - путь к папке с кешем (если не передали объект cache)
-## aOptions.cacheKeyPrefix[sql/] - префикс для ключа кеширования
 ## aOptions.isNatural(false) - выполнять транзакции средствами SQL-сервера (режим "натуральной транзакции").
 ## aOptions.isNaturalTransactions(false) - deprecated (алиас для isNatural).
 ## aOptions.enableIdentityMap(false) - включить добавление результатов запросов в коллекцию объектов.
@@ -31,19 +26,6 @@ pfClass
   $_transactionsCount(0)
 
   $_serverType[^aConnectString.left(^aConnectString.pos[:])]
-
-  $isCaching(^if(def $aOptions.isCaching){$aOptions.isCaching}{0})
-  ^if(def $aOptions.cache){
-    ^if($aOptions.cache is pfCache){
-      $_CACHE[$aOptions.cache]
-    }{
-       ^throw[pfSQL.create;Cache must be child of pfCache.]
-     }
-  }
-
-  $_cacheDir[$aOptions.cacheDir]
-  $_cacheLifetime(^aOptions.cacheLifetime.int(60))
-  $_cacheKeyPrefix[^if(def $aOptions.cacheKeyPrefix){$aOptions.cacheKeyPrefix}{sql/}]
 
   $_isNaturalTransactions[^if(^aOptions.contains[isNatural]){^aOptions.isNatural.bool(false)}{^aOptions.isNaturalTransactions.bool(false)}]
 
@@ -64,7 +46,6 @@ pfClass
 # Регулярное вражение, которое проверят эксепшн при дублировании записейв safeInsert.
   $_duplicateKeyExceptionRegex[^regex::create[duplicate entry][i]]
 
-#----- Properties -----
 @GET_connectString[]
   $result[$_connectString]
 
@@ -74,20 +55,11 @@ pfClass
   }
   $result[$_identityMap]
 
-@GET_CACHE[]
-  ^if(!def $_CACHE){
-     ^use[pf/cache/pfCache.p]
-     $_CACHE[^pfCache::create[
-       $.cacheDir[$_cacheDir]
-     ]]
-  }
-  $result[$_CACHE]
-
 @GET_transactionsCount[]
   $result($_transactionsCount)
 
 @GET_isTransaction[]
-## Возвращает true, если идет  транзакция.
+## Возвращает true, если идет транзакция.
   $result($_transactionsCount > 0)
 
 @GET_serverType[]
@@ -233,33 +205,20 @@ pfClass
   $result[^hash::create[$aOptions]]
   ^result.add[$aSQLOptions]
   $result.type[$aType]
-  ^if(!$aOptions.isForce && ($_enableIdentityMap || $isCaching)){
+  ^if(!$aOptions.isForce && $_enableIdentityMap){
     $result.queryKey[^_makeQueryKey[$aQuery;$aType;$aSQLOptions]]
   }
   ^if($_enableQueriesLog){
     $result.query[$aQuery]
   }
 
-@_sql[aType;aCode;aOptions][lResult;lCacheKey]
+@_sql[aType;aCode;aOptions][locals]
 ## Возвращает результат запроса. Если нужно оранизует транзакцию.
-## aOptions.isCaching(false) - принудительно включает кеширование
-## aOptions.isForce(false) - принудительно отменяет кеширование (если оно включено глобально)
-## aOptions.cacheKey[] - ключ кеширования
-## aOptions.cacheTime[секунды|дата окончания]
-## aOptions.queryKey
   ^cleanMethodArgument[]
-  ^if(($isCaching || $aOptions.isCaching)
-      && (def $aOptions.cacheKey || def $aOptions.queryKey)
-      && !^aOptions.isForce.bool(false)){
-    ^if(!def $aOptions.cacheTime){$aOptions.cacheTime[$_cacheLifetime]}
-    $lCacheKey[^if(def $aOptions.cacheKey){$aOptions.cacheKey}{$aOptions.queryKey}]
-    $result[^CACHE.data[${_cacheKeyPrefix}$lCacheKey][$aOptions.cacheTime][$aType]{^if($isTransaction){^_exec[$aType]{$aCode}[$aOptions]}{^transaction{^_exec[$aType]{$aCode}[$aOptions]}}}]
-  }{
-     $result[^if($isTransaction){^_exec[$aType]{$aCode}[$aOptions]}{^transaction{^_exec[$aType]{$aCode}[$aOptions]}}]
-   }
+   $result[^if($isTransaction){^_exec[$aType]{$aCode}[$aOptions]}{^transaction{^_exec[$aType]{$aCode}[$aOptions]}}]
 
-@_exec[aType;aCode;aOptions][lStart;lEnd;lMemStart;lMemEnd]
-## Выполняет sql-запрос.
+@_exec[aType;aCode;aOptions][locals]
+## Выполняет sql-запрос и сохраняет статистику
   $lMemStart($status:memory.used)
   $lStart($status:rusage.tv_sec + $status:rusage.tv_usec/1000000.0)
   $result[$aCode]
