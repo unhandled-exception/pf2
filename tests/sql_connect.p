@@ -8,7 +8,10 @@ SQL connection test!
 
   $dbFile[assets/sql/test.sqlite]
   ^try{
-    $db[^pfSQLConnection::create[sqlite://${dbFile};$.enableQueriesLog(true)]]
+    $db[^pfSQLConnection::create[sqlite://${dbFile};
+      $.enableQueriesLog(true)
+      $.enableMemoryCache(true)
+    ]]
     Type: $db.serverType
 
     ^create_tables[$db]
@@ -23,6 +26,9 @@ SQL connection test!
        $exception.handled($exception.type eq "stop")
     }
 
+    $t[^db.table{select * from users}]
+    $t[^db.table{select * from users}[][$.cacheKey[sel from u]]]
+    $t[^db.table{select * from users}[][$.force(true)]]
     $t[^db.table{select * from users}]
 #    ^json:string[$t]
 
@@ -39,8 +45,12 @@ SQL connection test!
       ^file:delete[$dbFile]
     }
 Queries:
-^db.stat.queries.foreach[k;v]{${k}: $v.query ^#0A}
+^db.stat.queries.foreach[k;v]{${k}: $v.query [$v.type]^#0A}
   }
+
+Memory cache: ^db.memoryCache._count[]
+
+
 Finish tests.^#0A
 
 @create_tables[aDB]

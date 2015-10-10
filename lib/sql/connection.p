@@ -12,7 +12,7 @@ pfSQLConnection
 pfClass
 
 @create[aConnectString;aOptions]
-## aOptions.enableIdentityMap(false) - включить добавление результатов запросов в коллекцию объектов.
+## aOptions.enableMemoryCache(false) - добавлять результаты выборок из БД в кеш в памяти.
 ## aOptions.enableQueriesLog(false) - включить логирование sql-запросов.
   ^cleanMethodArgument[]
   ^pfAssert:isTrue(def $aConnectString)[Не задана строка соединения.]
@@ -25,13 +25,13 @@ pfClass
 
   $_serverType[^aConnectString.left(^aConnectString.pos[:])]
 
-  $_enableIdentityMap[^aOptions.enableIdentityMap.bool(false)]
-  $_identityMap[]
+  $_enableMemoryCache[^aOptions.enableMemoryCache.bool(false)]
+  $_memoryCache[]
 
   $_enableQueriesLog(^aOptions.enableQueriesLog.bool(false))
   $_stat[
     $.queriesCount(0)
-    $.identityMap[
+    $.memoryCache[
       $.size(0)
       $.usage(0)
     ]
@@ -51,11 +51,11 @@ pfClass
 @GET_isTransaction[]
   $result($_transactionsCount)
 
-@GET_identityMap[]
-  ^if(!def $_identityMap){
-    ^clearIdentityMap[]
+@GET_memoryCache[]
+  ^if(!def $_memoryCache){
+    ^clearMemoryCache[]
   }
-  $result[$_identityMap]
+  $result[$_memoryCache]
 
 @GET_serverType[]
   $result[$_serverType]
@@ -119,68 +119,78 @@ pfClass
 
 
 @table[aQuery;aSQLOptions;aOptions][locals]
+## aOptions.force — отключить кеширование в памяти
+## aOptions.cacheKey — ключ для кешироапния. Если не задан, то вычисляется автоматически.
   $lQuery[$aQuery]
   $lOptions[^_getOptions[$lQuery;table;$aSQLOptions;$aOptions]]
-  $result[^_processIdentityMap{^_sql[table]{^table::sql{$lQuery}[$aSQLOptions]}[$lOptions]}[$lOptions]]
+  $result[^_processMemoryCache{^_sql[table]{^table::sql{$lQuery}[$aSQLOptions]}[$lOptions]}[$lOptions]]
 
 @hash[aQuery;aSQLOptions;aOptions][locals]
+## aOptions.force — отключить кеширование в памяти
+## aOptions.cacheKey — ключ для кешироапния. Если не задан, то вычисляется автоматически.
   $lQuery[$aQuery]
   $lOptions[^_getOptions[$lQuery;hash;$aSQLOptions;$aOptions]]
-  $result[^_processIdentityMap{^_sql[hash]{^hash::sql{$lQuery}[$aSQLOptions]}[$lOptions]}[$lOptions]]
+  $result[^_processMemoryCache{^_sql[hash]{^hash::sql{$lQuery}[$aSQLOptions]}[$lOptions]}[$lOptions]]
 
 @file[aQuery;aSQLOptions;aOptions][locals]
+## aOptions.force — отключить кеширование в памяти
+## aOptions.cacheKey — ключ для кешироапния. Если не задан, то вычисляется автоматически.
   $lQuery[$aQuery]
   $lOptions[^_getOptions[$lQuery;file;$aSQLOptions;$aOptions]]
-  $result[^_processIdentityMap{^_sql[file]{^file::sql{$lQuery}[$aSQLOptions]}[$lOptions]}[$lOptions]]
+  $result[^_processMemoryCache{^_sql[file]{^file::sql{$lQuery}[$aSQLOptions]}[$lOptions]}[$lOptions]]
 
 @string[aQuery;aSQLOptions;aOptions][locals]
+## aOptions.force — отключить кеширование в памяти
+## aOptions.cacheKey — ключ для кешироапния. Если не задан, то вычисляется автоматически.
   $lQuery[$aQuery]
   $lOptions[^_getOptions[$lQuery;string;$aSQLOptions;$aOptions]]
-  $result[^_processIdentityMap{^_sql[string]{^string:sql{$lQuery}[$aSQLOptions]}[$lOptions]}[$lOptions]]
+  $result[^_processMemoryCache{^_sql[string]{^string:sql{$lQuery}[$aSQLOptions]}[$lOptions]}[$lOptions]]
 
 @double[aQuery;aSQLOptions;aOptions][locals]
+## aOptions.force — отключить кеширование в памяти
+## aOptions.cacheKey — ключ для кешироапния. Если не задан, то вычисляется автоматически.
   $lQuery[$aQuery]
   $lOptions[^_getOptions[$lQuery;double;$aSQLOptions;$aOptions]]
-  $result(^_processIdentityMap{^_sql[double]{^double:sql{$lQuery}[$aSQLOptions]}[$lOptions]}[$lOptions])
+  $result(^_processMemoryCache{^_sql[double]{^double:sql{$lQuery}[$aSQLOptions]}[$lOptions]}[$lOptions])
 
 @int[aQuery;aSQLOptions;aOptions][locals]
+## aOptions.force — отключить кеширование в памяти
+## aOptions.cacheKey — ключ для кешироапния. Если не задан, то вычисляется автоматически.
   $lQuery[$aQuery]
   $lOptions[^_getOptions[$lQuery;int;$aSQLOptions;$aOptions]]
-  $result(^_processIdentityMap{^_sql[int]{^int:sql{$lQuery}[$aSQLOptions]}[$lOptions]}[$lOptions])
+  $result(^_processMemoryCache{^_sql[int]{^int:sql{$lQuery}[$aSQLOptions]}[$lOptions]}[$lOptions])
 
 @void[aQuery;aSQLOptions;aOptions][locals]
   $lQuery[$aQuery]
   $lOptions[^_getOptions[$lQuery;int;$aSQLOptions;$aOptions]]
-  $result[^_sql[void]{^void:sql{$lQuery}[$aSQLOptions]}[^hash::create[$lOptions] $.isForce(true)]]
+  $result[^_sql[void]{^void:sql{$lQuery}[$aSQLOptions]}[^hash::create[$lOptions]]]
 
-@clearIdentityMap[]
-  $_identityMap[^hash::create[]]
-  $_stat.identityMap.size($_identityMap)
+@clearMemoryCache[]
+  $_memoryCache[^hash::create[]]
+  $_stat.memoryCache.size($_memoryCache)
 
 @safeInsert[aInsertCode;aExistsCode]
 ## Выполняет aInsertCode, если в нем произошел exception on duplicate, то выполняет aExistsCode.
 ## Реализует абстракцию insert ... on duplicate key update, которая нативно реализована не во всех СУБД.
   $result[^try{$aInsertCode}{^if($exception.type eq "sql.execute" && ^exception.comment.match[$_duplicateKeyExceptionRegex][]){$exception.handled(true)$aExistsCode}}]
 
-@_processIdentityMap[aCode;aOptions][lKey;lResult;lIsIM]
+@_processMemoryCache[aCode;aOptions][lKey;lResult;lIsIM]
 ## Возвращает результат запроса из коллекции объектов.
-## Если объект не найден, то запускает запрос и добавляет его результат в коллекцию.
-## aOptions.isForce(false) - принудительно отменяет кеширование
-## aOptions.identityMapKey[] - ключ для коллекции (по-умолчанию MD5 на aQuery).
+## Если объект не найден, то выполняет запрос и добавляет его результат в коллекцию.
   $result[]
-  $lIsIM($_enableIdentityMap && !^aOptions.isForce.bool(false))
-  $lKey[^if(def $aOptions.identityMapKey){$aOptions.identityMapKey}{$aOptions.queryKey}]
+  $lIsIM($_enableMemoryCache && !^aOptions.force.bool(false))
+  $lKey[^if(def $aOptions.cacheKey){$aOptions.cacheKey}{$aOptions.queryKey}]
 
-  ^if($lIsIM && ^identityMap.contains[$lKey]){
-    $result[$identityMap.[$lKey]]
-    ^_stat.identityMap.usage.inc[]
+  ^if($lIsIM && ^memoryCache.contains[$lKey]){
+    $result[$memoryCache.[$lKey]]
+    ^_stat.memoryCache.usage.inc[]
   }{
      $result[$aCode]
      ^if($lIsIM){
-       $identityMap.[$lKey][$result]
+       $memoryCache.[$lKey][$result]
      }
    }
-   $_stat.identityMap.size($_identityMap)
+   $_stat.memoryCache.size($_memoryCache)
 
 @_makeQueryKey[aQuery;aType;aSQLOptions]
 ## Формирует ключ для запроса
@@ -196,7 +206,7 @@ pfClass
   $result[^hash::create[$aOptions]]
   ^result.add[$aSQLOptions]
   $result.type[$aType]
-  ^if(!$aOptions.isForce && $_enableIdentityMap){
+  ^if(!$aOptions.force && $_enableMemoryCache){
     $result.queryKey[^_makeQueryKey[$aQuery;$aType;$aSQLOptions]]
   }
   ^if($_enableQueriesLog){
