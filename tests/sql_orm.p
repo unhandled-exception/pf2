@@ -4,7 +4,7 @@
 pf2/lib/sql/models/sql_table.p
 
 @main[][locals]
-SQL connection test!
+SQL Table  test!
 
   $dbFile[assets/sql/sql_table.sqlite]
   ^try{
