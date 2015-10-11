@@ -56,24 +56,24 @@
 * pfSQLSettings
 
 ### ./sql/orm/generics/queue/
-* pfSQLQueue
++ pfSQLQueue
 
 ### ./sql/orm/generics/tagging/
-* pfTagging
-* pfSQLCTTagsModel
-* pfSQLCTContentModel
-* pfSQLCTCountersModel
++ pfTagging
++ pfSQLCTTagsModel
++ pfSQLCTContentModel
++ pfSQLCTCountersModel
 
 ### ./sql/orm/pfSQLTable.p
 + pfSQLTable
 + pfSQLBuilder
 
 ### ./sql/orm/service/
-* pfTableControllerGenerator
-* pfTableFormGenerator
-* pfTableFormGeneratorBootstrap2Widgets
-* pfTableFormGeneratorBootstrap3Widgets
-* pfTableModelGenerator
++ pfTableControllerGenerator
++ pfTableFormGenerator
++ pfTableFormGeneratorBootstrap2Widgets
++ pfTableFormGeneratorBootstrap3Widgets
++ pfTableModelGenerator
 
 ### ./sql/
 + pfSQL -> pfSQLConnection
