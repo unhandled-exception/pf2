@@ -17,6 +17,11 @@ sqlite	$sqldriversdir/libparser3sqlite.so	libsqlite3.so
 #    $.windows-1251[$charsetsdir/windows-1251.cfg]
 #  ]
 
+  ^if(^env:PARSER_VERSION.pos[darwin] >= 0){
+#   Подключаем libcurl на маке, установленный через homebrew.
+    ^curl:options[$.library[/usr/local/opt/curl/lib/libcurl.dylib]]
+  }
+
 @unhandled_exception[exception;stack]
 Unhandled Exception
 
