@@ -18,7 +18,7 @@
 + pfQiwiWallet
 
 ### ./api/yandex/speechkit/
-* pfYandexSpeechKit
++ pfYandexSpeechKit
 
 ### ./auth/
 * pfAuthApache
