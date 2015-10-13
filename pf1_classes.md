@@ -44,11 +44,6 @@
 + pfCurlFile
 + pfOS
 
-
-### ./modules/
-* pfModule
-* pfRouter
-
 ### ./security/
 * pfSecurityCrypt
 
@@ -102,6 +97,10 @@
 * pfAntiFloodHashStorage
 * pfAntiFloodDBStorage
 
+### ./modules/
+* pfModule
+* pfRouter
+
 ### ./web/
 * pfHTTPRequest
 * pfHTTPRequestMeta
@@ -122,7 +121,7 @@
 * pfSiteModule
 
 ### ./wiki/pfURLTranslit.p
-* pfURLTranslit
++ pfURLTranslit
 
 
 
