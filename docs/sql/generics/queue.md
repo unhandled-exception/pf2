@@ -33,6 +33,7 @@ pfSQLQueue
       $messages[^messagesTable::create[messages;$.sql[$sql]]]
 
     # Очередь
+      ^use[pf2/lib/sql/models/generics/queue/sql_queue.p]
       $queue[^pfSQLQueue::create[queue;$.sql[$sql]]]
 
 Добавляем сообщение и ставим его в очередь:

@@ -20,21 +20,6 @@
 ### ./api/yandex/speechkit/
 + pfYandexSpeechKit
 
-### ./auth/
-* pfAuthApache
-* pfAuthBase
-* pfAuthCookie
-* pfAuthDBStorage
-* pfAuthSecurity
-* pfAuthStorage
-
-### ./auth/roles/
-* pfAuthDBRolesSecurity
-* pfAuthDBRolesStorage
-
-### ./cache/pfCache.p
-* pfCache
-
 ### ./debug/pfRuntime.p +
 + pfRuntime
 
@@ -44,11 +29,8 @@
 + pfCurlFile
 + pfOS
 
-### ./security/
-* pfSecurityCrypt
-
 ### ./sql/generics/settings/
-* pfSQLSettings
++ pfSQLSettings
 
 ### ./sql/orm/generics/queue/
 + pfSQLQueue
@@ -75,6 +57,23 @@
 
 Классы pfMySQL и pfSQLite похоже не нужны совсем. Может быть понадобится сделать класс pfSQLDialect, которые использовать в орме.
 
+### ./security/
+* pfSecurityCrypt
+
+### ./auth/
+* pfAuthApache
+* pfAuthBase
+* pfAuthCookie
+* pfAuthDBStorage
+* pfAuthSecurity
+* pfAuthStorage
+
+### ./auth/roles/
+* pfAuthDBRolesSecurity
+* pfAuthDBRolesStorage
+
+### ./cache/pfCache.p
+* pfCache
 
 ### ./templet/pfTemple.p
 * pfTemple

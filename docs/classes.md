@@ -54,6 +54,9 @@ find . -name "*.p" | sort | xargs grep "^@CLASS" -A 1 -H | awk '$0 !~ /(--|@CLAS
 ### ./sql/models/generics/queue/sql_queue.p
 * pfSQLQueue
 
+### ./sql/models/generics/settings/sql_settings.p
+* pfSQLSettings
+
 ### ./sql/models/generics/tagging/sql_tagging.p
 * pfTagging
 * pfSQLCTTagsModel
