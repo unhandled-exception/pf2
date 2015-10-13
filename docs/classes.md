@@ -64,5 +64,11 @@ find . -name "*.p" | sort | xargs grep "^@CLASS" -A 1 -H | awk '$0 !~ /(--|@CLAS
 * pfSQLTable
 * pfSQLBuilder
 
+### ./web/helpers/antiflood.p
+* pfAntiFlood
+* pfAntiFloodStorage
+* pfAntiFloodHashStorage
+* pfAntiFloodDBStorage
+
 ### ./web/helpers/translit.p
-+ pfURLTranslit
+* pfURLTranslit

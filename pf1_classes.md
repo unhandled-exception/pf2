@@ -92,10 +92,10 @@
 + pfValidate
 
 ### ./web/helpers/
-* pfAntiFlood
-* pfAntiFloodStorage
-* pfAntiFloodHashStorage
-* pfAntiFloodDBStorage
++ pfAntiFlood
++ pfAntiFloodStorage
++ pfAntiFloodHashStorage
++ pfAntiFloodDBStorage
 
 ### ./modules/
 * pfModule
