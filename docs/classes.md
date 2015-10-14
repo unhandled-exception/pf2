@@ -70,6 +70,16 @@ find . -name "*.p" | sort | xargs grep "^@CLASS" -A 1 -H | awk '$0 !~ /(--|@CLAS
 * pfSQLTable
 * pfSQLBuilder
 
+### ./web/auth.p
+* pfAuthBase
+* pfAuthStorage
+* pfAuthSecurity
+* pfAuthApache
+* pfAuthCookie
+* pfAuthDBStorage
+* pfAuthDBRolesStorage
+* pfAuthDBRolesSecurity
+
 ### ./web/helpers/antiflood.p
 * pfAntiFlood
 * pfAntiFloodStorage

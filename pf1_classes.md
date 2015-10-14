@@ -69,16 +69,16 @@
 + pfSecurityCrypt -> pfSQLSecurityCrypt.
 
 ### ./auth/
-* pfAuthApache
-* pfAuthBase
-* pfAuthCookie
-* pfAuthDBStorage
-* pfAuthSecurity
-* pfAuthStorage
++ pfAuthApache
++ pfAuthBase
++ pfAuthCookie
++ pfAuthDBStorage
++ pfAuthSecurity
++ pfAuthStorage
 
 ### ./auth/roles/
-* pfAuthDBRolesSecurity
-* pfAuthDBRolesStorage
++ pfAuthDBRolesSecurity
++ pfAuthDBRolesStorage
 
 ### ./cache/pfCache.p
 * pfCache
