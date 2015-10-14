@@ -88,3 +88,10 @@ find . -name "*.p" | sort | xargs grep "^@CLASS" -A 1 -H | awk '$0 !~ /(--|@CLAS
 
 ### ./web/helpers/translit.p
 * pfURLTranslit
+
+### ./web/templates.p
+* pfTemplate
+* pfTemplateStorage
+* pfTemplateEngine
+* pfTemplateParserEngine
+* pfTemplateParserPattern

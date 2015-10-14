@@ -84,11 +84,11 @@
 * pfCache
 
 ### ./templet/pfTemple.p
-* pfTemple
-* pfTempleStorage
-* pfTempleEngine
-* pfTempleParserEngine
-* pfTempleParserPattern
++ pfTemple
++ pfTempleStorage
++ pfTempleEngine
++ pfTempleParserEngine
++ pfTempleParserPattern
 
 ### ./web/helpers/
 + pfAntiFlood
