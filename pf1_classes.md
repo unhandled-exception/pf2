@@ -81,7 +81,7 @@
 + pfAuthDBRolesStorage
 
 ### ./cache/pfCache.p
-* pfCache
++ pfCache
 
 ### ./templet/pfTemple.p
 + pfTemple
