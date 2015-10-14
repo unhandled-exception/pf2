@@ -23,6 +23,14 @@
 ### ./debug/pfRuntime.p +
 + pfRuntime
 
+### ./tests/ +
++ pfAssert
+
+### ./types/ +
++ pfClass
++ pfString
++ pfValidate
+
 ### ./io/ +
 + pfCFile
 + pfConsole
@@ -58,7 +66,7 @@
 Классы pfMySQL и pfSQLite похоже не нужны совсем. Может быть понадобится сделать класс pfSQLDialect, которые использовать в орме.
 
 ### ./security/
-* pfSecurityCrypt
++ pfSecurityCrypt -> pfSQLSecurityCrypt.
 
 ### ./auth/
 * pfAuthApache
@@ -81,14 +89,6 @@
 * pfTempleEngine
 * pfTempleParserEngine
 * pfTempleParserPattern
-
-### ./tests/ +
-+ pfAssert
-
-### ./types/ +
-+ pfClass
-+ pfString
-+ pfValidate
 
 ### ./web/helpers/
 + pfAntiFlood

@@ -41,6 +41,9 @@ find . -name "*.p" | sort | xargs grep "^@CLASS" -A 1 -H | awk '$0 !~ /(--|@CLAS
 ### ./net/curl_file.p
 * pfCurlFile
 
+### ./security/sql_security.p
+* pfSQLSecurityCrypt
+
 ### ./sql/connection.p
 * pfSQLConnection
 
