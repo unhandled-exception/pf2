@@ -39,10 +39,6 @@ pfClass
   $_activeModule[]
   $_request[]
 
-# Метод goTo оставлен для совместимости с очень старым кодом,
-# но может быть удален в любой момент.
-  ^alias[goTo;$redirectTo]
-
 @auto[]
   $_pfModuleCheckDotRegex[^regex::create[\.[^^/]+?/+^$][n]]
   $_pfModuleRepeatableSlashRegex[^regex::create[/+][g]]
