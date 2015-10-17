@@ -84,7 +84,7 @@
 + pfCache
 
 ### ./templet/pfTemple.p
-+ pfTemple
++ pfTemple -> pfTemplate
 + pfTempleStorage
 + pfTempleEngine
 + pfTempleParserEngine
@@ -97,13 +97,14 @@
 + pfAntiFloodDBStorage
 
 ### ./modules/
-* pfModule
-* pfRouter
++ pfModule
++ pfRouter
 
 ### ./web/
 * pfHTTPRequest
 * pfHTTPRequestMeta
 * pfHTTPRequestHeaders
+
 * pfHTTPResponse
 * pfHTTPResponseRedirect
 * pfHTTPResponsePermanentRedirect
@@ -114,10 +115,12 @@
 * pfHTTPResponseForbidden
 * pfHTTPResponseGone
 * pfHTTPResponseServerError
-* pfScroller
-* pfSiteApp
-* pfSiteManager
+
+- pfSiteManager [Удаляем, в PF1 он уже давно только алиас на pfSiteModule]
 * pfSiteModule
+
+* pfSiteApp
+* pfScroller
 
 ### ./wiki/pfURLTranslit.p
 + pfURLTranslit
