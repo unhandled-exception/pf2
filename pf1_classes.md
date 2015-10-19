@@ -119,7 +119,7 @@
 - pfSiteManager [Удаляем, в PF1 он уже давно только алиас на pfSiteModule]
 + pfSiteModule
 
-* pfSiteApp
++ pfSiteApp
 * pfScroller
 
 ### ./wiki/pfURLTranslit.p
