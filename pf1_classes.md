@@ -117,7 +117,7 @@
 + pfHTTPResponseServerError
 
 - pfSiteManager [Удаляем, в PF1 он уже давно только алиас на pfSiteModule]
-* pfSiteModule
++ pfSiteModule
 
 * pfSiteApp
 * pfScroller
