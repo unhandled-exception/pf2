@@ -2,9 +2,12 @@
 
 @USE
 pf2/lib/common.p
+lib/sql/connection.p
+lib/web/auth.p
+lib/web/templates.p
+
 
 ## Веб-фреймворк
-
 
 @CLASS
 pfModule
@@ -984,22 +987,19 @@ pfSiteModule
 pfModule
 
 @create[aOptions]
-## Создаем модуль. Если нам передали объекты ($.sql, $.cache и т.п.),
+## Создаем модуль. Если нам передали объекты ($.sql, и т.п.),
 ## то используем их, иначе вызываем соотвествующие фабрики и передаем
 ## им параметры xxxType, xxxOptions.
 ## aOptions.asManager(false) — использовать модуль как менеджер.
 ## aOptions.passDefaultPost(!asManager) — пропустить постобработку.
-## aOptions.cache
-## aOptions.cacheType - не используется
-## aOptions.cacheOptions
 ## aOptions.sql
 ## aOptions.sqlConnectString[$MAIN:SQL.connect-string]
 ## aOptions.sqlOptions
 ## aOptions.auth
 ## aOptions.authType
 ## aOptions.authOptions
-## aOptions.templet
-## aOptions.templetOptions
+## aOptions.template
+## aOptions.templateOptions
 ## aOptions.templatePrefix
 ## aOptions.request
 ## aOptions.uriProtocol
@@ -1018,10 +1018,9 @@ pfModule
 
   $templatePath[^if(^aOptions.contains[templatePrefix]){$aOptions.templatePrefix}{$mountPoint}]
 
-  $_sql[^if(def $aOptions.sql){$aOptions.sql}]
-  $_auth[^if(def $aOptions.auth){$aOptions.auth}]
-  $_cache[^if(def $aOptions.cache){$aOptions.cache}]
-  $_templet[^if(def $aOptions.templet){$aOptions.templet}]
+  $_sql[$aOptions.sql]
+  $_auth[$aOptions.auth]
+  $_template[$aOptions.template]
 
   $_templateVars[^hash::create[]]
 
@@ -1070,9 +1069,8 @@ pfModule
   $lArgs[
     $.sql[$CSQL]
     $.auth[$AUTH]
-    $.cache[$CACHE]
-    $.templetOptions[$_createOptions.templetOptions]
-    $.templet[$TEMPLET]
+    $.templateOptions[$_createOptions.templateOptions]
+    $.template[$TEMPLATE]
   ]
   ^if(!def $aOptions.args){
     $aOptions.args[$lArgs]
@@ -1138,13 +1136,13 @@ pfModule
      }
   }
 
-@render[aTemplate;aOptions][lTemplatePrefix;lVars]
-## Вызывает шаблон с именем "путь/$aTemplate[.pt]"
-## Если aTemplate начинается со "/", то не подставляем текущий перфикс.
-## Если переменная aTemplate не задана, то зовем шаблон default.
+@render[aTemplateName;aOptions][lTemplatePrefix;lVars]
+## Вызывает шаблон с именем "путь/$aTemplateName[.pt]"
+## Если aTemplateName начинается со "/", то не подставляем текущий перфикс.
+## Если переменная aTemplateName не задана, то зовем шаблон default.
 ## aOptions.vars - переменные, которые добавляются к тем, что уже заданы через assignVar.
   ^cleanMethodArgument[]
-  ^if(!def $aTemplate || ^aTemplate.left(1) ne "/"){
+  ^if(!def $aTemplateName || ^aTemplateName.left(1) ne "/"){
      $lTemplatePrefix[$templatePath]
   }
 
@@ -1157,7 +1155,7 @@ pfModule
   ^if(!^lVars.contains[linkFor]){$lVars.linkFor[$linkFor]}
   ^if(!^lVars.contains[redirectFor]){$lVars.redirectFor[$redirectFor]}
 
-  $result[^TEMPLET.render[${lTemplatePrefix}^if(def $aTemplate){$aTemplate^if(!def ^file:justext[$aTemplate]){.pt}}{default.pt};
+  $result[^TEMPLATE.render[${lTemplatePrefix}^if(def $aTemplateName){$aTemplateName^if(!def ^file:justext[$aTemplateName]){.pt}}{default.pt};
     $.vars[$lVars]
     $.force($aOptions.force)
     $.engine[$aOptions.engine]
@@ -1187,9 +1185,9 @@ pfModule
 
 #----- Методы менеджера -----
 
-@run[aOptions][lRequest;lResult;lAction]
+@run[aOptions][locals]
 ## Основной процесс обработки запроса (как правило перекрывать не нужно).
-## Не забудьте задать в кончтрукторе параметр asManager, чтобы сработала постобработка.
+## Не забудьте задать в конструкторе параметр asManager, чтобы сработала постобработка.
   $lRequest[$REQUEST]
   $lAction[$lRequest._action]
   ^authenticate[$lAction;$lRequest]
@@ -1220,17 +1218,11 @@ pfModule
   }
   $result[$_sql]
 
-@GET_CACHE[]
-  ^if(!def $_cache){
-     $_cache[^cacheFactory[$_createOptions.cacheType;$_createOptions.cacheOptions]]
+@GET_TEMPLATE[]
+  ^if(!def $_template){
+     $_template[^templateFactory[$_createOptions.templateOptions]]
   }
-  $result[$_cache]
-
-@GET_TEMPLET[]
-  ^if(!def $_templet){
-     $_templet[^templetFactory[$_createOptions.templetOptions]]
-  }
-  $result[$_templet]
+  $result[$_template]
 
 @SET_templatePath[aPath]
   $_templatePath[^if(def $aPath){^aPath.trim[both;/]}/]
@@ -1309,7 +1301,7 @@ pfModule
 @postDEFAULT[aResponse]
   $result[$aResponse]
   ^if(!$_passDefaultPost){
-    ^throw[pfSiteManager.postDEFAULT;Unknown response type "$aResponse.type".]
+    ^throw[pfSiteModule.postDEFAULT;Unknown response type "$aResponse.type".]
   }
 
 @postAS-IS[aResponse]
@@ -1438,49 +1430,24 @@ pfModule
 #----- Фабрики объектов -----
 
 @sqlFactory[aConnectString;aSqlOptions]
-# Возвращает sql-объект исходя из $MAIN:SQL.connect-string
-# Проверка на правильность строки не производится
-  ^switch[^aConnectString.left(^aConnectString.pos[://])]{
-    ^case[mysql]{
-      ^use[pf/sql/pfMySQL.p]
-      $result[^pfMySQL::create[$aConnectString;$aSqlOptions]]
-    }
-    ^case[sqlite]{
-      ^use[pf/sql/pfSQLite.p]
-      $result[^pfSQLite::create[$aConnectString;$aSqlOptions]]
-    }
-    ^case[DEFAULT]{
-      ^if(def $aConnectString){
-        ^throw[pfSiteModule.bad.connect.string;Bad connect-string: "$aConnectString".]
-      }{
-         $result[]
-       }
-    }
-  }
+# Возвращает sql-объект
+  ^if(!def $aConnectString){^throw[pfSiteModule.sqlFactory.fail;Не задана строка соединения с sql-сервером.]}
+  $result[^pfSQLConnection::create[$aConnectString;$aOptions]]
 
 @authFactory[aAuthType;aAuthOptions]
 # Возвращает auth-объект на основании aAuthType
   ^switch[$aAuthType]{
     ^case[base;DEFAULT]{
-      ^use[pf/auth/pfAuthBase.p]
       $result[^pfAuthBase::create[$aAuthOptions]]
     }
     ^case[apache]{
-      ^use[pf/auth/pfAuthApache.p]
       $result[^pfAuthApache::create[$aAuthOptions]]
     }
     ^case[cookie]{
-      ^use[pf/auth/pfAuthCookie.p]
       $result[^pfAuthCookie::create[$aAuthOptions]]
     }
   }
 
-@cacheFactory[aCacheType;aCacheOptions]
-# Возвращает cache-объект
-  ^use[pf/cache/pfCache.p]
-  $result[^pfCache::create[$aCacheOptions]]
-
-@templetFactory[aTempletOptions]
-# Возвращает temple-объект
-  ^use[pf/templet/pfTemple.p]
-  $result[^pfTemple::create[$aTempletOptions]]
+@templateFactory[aTemplateOptions]
+# Возвращает template-объект
+  $result[^pfTemplate::create[$aTemplateOptions]]
