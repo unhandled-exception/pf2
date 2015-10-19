@@ -590,8 +590,207 @@ pfClass
 
 #--------------------------------------------------------------------------------------------------
 
+@CLASS
+pfHTTPRequest
+
+## Класс, объединяющий все данные запроса от клиента в один объект.
+
+@BASE
+pfClass
+
+@create[aOptions]
+  ^cleanMethodArgument[]
+  ^BASE:create[]
+
+  $FIELDS[^if(def $aOptions.fields){$aOptions.fields}{$form:fields}]
+  $QTAIL[^if(def $aOptions.qtail){$aOptions.qtail}{$form:qtail}]
+  $IMAP[^if(def $aOptions.imap){$aOptions.imap}{$form:imap}]
+  $TABLES[^if(def $aOptions.tables){$aOptions.tables}{$form:tables}]
+  $FILES[^if(def $aOptions.files){$aOptions.files}{$form:files}]
+  $COOKIE[^if(def $aOptions.cookie){$aOptions.cookie}{$cookie:fields}]
+
+  $META[^if(def $aOptions.meta){$aOptions.meta}{^pfHTTPRequestMeta::create[]}]
+  $HEADERS[^if(def $aOptions.headers){$aOptions.headers}{^pfHTTPRequestHeaders::create[]}]
+
+  $_HOST[]
+  $_PATH[]
+
+@GET[]
+## Return request fields count
+  $result($FIELDS)
+
+@GET_DEFAULT[aName]
+## Return request field
+  $result[^get[$aName]]
+
+@GET_isSECURE[]
+## Проверяет пришел ли нам запрос по протоколу HTTPS.
+  $result((def $META.HTTPS && ^META.HTTPS.lower[] eq "on") || ^META.SERVER_PORT.int(80) == 443)
+
+@GET_METHOD[]
+## Возвращает http-метод запроса в нижнем регистре
+  $result[^META.REQUEST_METHOD.lower[]]
+  ^if($result eq "post" && def $FIELDS._method){
+    $result[^switch[^FIELDS._method.lower[]]{
+      ^case[DEFAULT]{post}
+      ^case[delete]{delete}
+      ^case[put]{put}
+    }]
+  }
+
+@GET_isGET[]
+  $result($METHOD eq "get")
+
+@GET_isPOST[]
+  $result($METHOD eq "post")
+
+@GET_isHEAD[]
+  $result($METHOD eq "head")
+
+@GET_isPUT[]
+  $result($METHOD eq "put")
+
+@GET_isDELETE[]
+  $result($METHOD eq "delete")
+
+@GET_isAJAX[]
+  $result(^HEADERS.[X_Requested_With].pos[XMLHttpRequest] > -1)
+
+@GET_URI[]
+## Return request:uri
+  $result[$request:uri]
+
+@GET_PATH[][lPos]
+## Return the request:uri without a query part
+  ^if(!def $_PATH){
+    $lPos(^request:uri.pos[?])
+    $_PATH[^if($lPos >= 0){^request:uri.left($lPos)}{$request:uri}]
+  }
+  $result[$_PATH]
+
+@GET_ACTION[]
+  $result[$FIELDS._action]
+
+@GET_QUERY[]
+## Return request:query
+  $result[$request:query]
+
+@GET_CHARSET[]
+## Return request:charset
+  $result[$request:charset]
+
+@GET_RESPONSE-CHARSET[]
+## Return $response:charset
+  $response[$response:charset]
+
+@GET_POST-CHARSET[]
+## Return request:post-charset
+  $result[$request:post-charset]
+
+@GET_BODY[]
+## Return request:body
+  $result[$request:body]
+
+@GET_DOCUMENT-ROOT[]
+## Return request:document-root
+  $result[$request:document-root]
+
+@GET_HOST[][lPort]
+## Return host.
+  ^if(!def $_HOST){
+    $_HOST[^HEADERS.get[X_Forwarded_Host;^HEADERS.get[Host]]]
+    ^if(!def $_HOST){
+      $_HOST[^META.get[SERVER_NAME]]
+    }
+    $lPort[^META.get[SERVER_PORT]]
+    $_HOST[${_HOST}^if($lPort ne "80" && ($isSECURE && $lPort ne "443")){:$lPort}]
+  }
+  $result[$_HOST]
+
+@get[aName;aDefault]
+  $result[$FIELDS.[$aName]]
+  ^if($result is junction){$result[]}
+  ^if(!def $result && def $aDefault){
+    $result[$aDefault]
+  }
+
+@contains[aName]
+  $result(^FIELDS.contains[$aName])
+
+@getFullPath[]
+## Returns the path, plus an appended query string, if applicable.
+  $result[$request:uri]
+
+@buildAbsoluteUri[aLocation]
+## Returns the absolute URI form of location.
+## If no location is provided, the location will be set to getFullPath
+  ^if(!def $aLocation){
+    $aLocation[^getFullPath[]]
+  }
+  ^if(^aLocation.left(1) ne "/"){
+    $aLocation[/$aLocation]
+  }
+  $result[http^if($isSECURE){s}://${HOST}$aLocation]
+
+@foreach[aKeyName;aValueName;aCode;aSeparator]
+## Iterate all request fields
+  $result[^FIELDS.foreach[k;v]{$caller.[$aKeyName][$k]$caller.[$aValueName][$v]$aCode}{$aSeparator}]
+
+@__add[aNewFields]
+## Add new fields in to request
+  ^pfAssert:isTrue($aNewFields is hash)[New fields must be a hash.]
+  ^FIELDS.add[$aNewFields]
+  $result[]
 
 
+@CLASS
+pfHTTPRequestMeta
+
+## Вспомогательный класс для работы с переменными окружения в запросе.
+
+@BASE
+pfClass
+
+@create[]
+  ^BASE:create[]
+
+@GET_DEFAULT[aName]
+  $result[^get[$aName]]
+
+@get[aName;aDefault]
+  $result[$env:[$aName]]
+  ^if(!def $result && def $aDefault){
+    $result[$aDefault]
+  }
+
+
+@CLASS
+pfHTTPRequestHeaders
+
+## Вспомогательный класс для работы с заголовками http-запроса.
+
+@BASE
+pfClass
+
+@create[]
+  ^BASE:create[]
+
+@GET_DEFAULT[aName]
+  $result[^get[$aName]]
+
+@get[aName;aDefault]
+## Возвращает поле запроса.
+## Позволяет задать имя в привычном виде (например, User-Agent).
+  ^if(def $aName){
+    $lName[^aName.trim[both][ :]]
+    $lName[^aName.match[[-\s]][g][_]]
+    $result[$env:[HTTP_^lName.upper[]]]
+  }{
+     $result[]
+   }
+  ^if(!def $result && def $aDefault){
+    $result[$aDefault]
+  }
 
 #--------------------------------------------------------------------------------------------------
 #--------------------------------------------------------------------------------------------------

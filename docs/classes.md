@@ -102,3 +102,6 @@ find . -name "*.p" | sort | xargs grep "^@CLASS" -A 1 -H | awk '$0 !~ /(--|@CLAS
 ### ./web/web.p
 * pfModule
 * pfRouter
+* pfHTTPRequest
+* pfHTTPRequestMeta
+* pfHTTPRequestHeaders
