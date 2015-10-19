@@ -105,3 +105,13 @@ find . -name "*.p" | sort | xargs grep "^@CLASS" -A 1 -H | awk '$0 !~ /(--|@CLAS
 * pfHTTPRequest
 * pfHTTPRequestMeta
 * pfHTTPRequestHeaders
+* pfHTTPResponse
+* pfHTTPResponseRedirect
+* pfHTTPResponsePermanentRedirect
+* pfHTTPResponseNotFound
+* pfHTTPResponseBadRequest
+* pfHTTPResponseNotModified
+* pfHTTPResponseNotAllowed
+* pfHTTPResponseForbidden
+* pfHTTPResponseGone
+* pfHTTPResponseServerError

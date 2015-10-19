@@ -105,16 +105,16 @@
 + pfHTTPRequestMeta
 + pfHTTPRequestHeaders
 
-* pfHTTPResponse
-* pfHTTPResponseRedirect
-* pfHTTPResponsePermanentRedirect
-* pfHTTPResponseNotFound
-* pfHTTPResponseBadRequest
-* pfHTTPResponseNotModified
-* pfHTTPResponseNotAllowed
-* pfHTTPResponseForbidden
-* pfHTTPResponseGone
-* pfHTTPResponseServerError
++ pfHTTPResponse
++ pfHTTPResponseRedirect
++ pfHTTPResponsePermanentRedirect
++ pfHTTPResponseNotFound
++ pfHTTPResponseBadRequest
++ pfHTTPResponseNotModified
++ pfHTTPResponseNotAllowed
++ pfHTTPResponseForbidden
++ pfHTTPResponseGone
++ pfHTTPResponseServerError
 
 - pfSiteManager [Удаляем, в PF1 он уже давно только алиас на pfSiteModule]
 * pfSiteModule
