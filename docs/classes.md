@@ -3,7 +3,7 @@
 
 Автоматически получаем командой в папке lib:
 ````
-find . -name "*.p" | sort | xargs grep "^@CLASS" -A 1 -H | awk '$0 !~ /(--|@CLASS)/{split($0, m, "-"); if(mod != m[1]){printf("\n### %s\n", m[1])} print "*", m[2]; mod = m[1]}'
+find . -name "*.p" | sort | xargs grep "^@CLASS" -A 1 -H | awk '$0 !~ /(--|@CLASS)/{split($0, m, "-"); if(mod != m[1]){printf("\n### %s\n", m[1])} if(substr(m[2], 1, 2) != "__"){print "*", m[2]; mod = m[1]}} END{ printf("\n"); }'
 ````
 
 ### ./api/archives/zip.p
@@ -88,6 +88,9 @@ find . -name "*.p" | sort | xargs grep "^@CLASS" -A 1 -H | awk '$0 !~ /(--|@CLAS
 
 ### ./web/helpers/cache.p
 * pfCache
+
+### ./web/helpers/scroller.p
+* pfScroller
 
 ### ./web/helpers/translit.p
 * pfURLTranslit

@@ -120,7 +120,7 @@
 + pfSiteModule
 
 + pfSiteApp
-* pfScroller
++ pfScroller
 
 ### ./wiki/pfURLTranslit.p
 + pfURLTranslit
