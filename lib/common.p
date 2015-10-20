@@ -139,7 +139,7 @@ pfMixin
 @CLASS
 pfChainMixin
 
-## Добавляет в класс интерфейс для поддержки цепочек вызовов с поздним связыванием.
+## Добавляет в класс интерфейс для поддержки цепочек модулей с поздним связыванием.
 ## ^assignModule[name;package.p@Class::create]
 ## @GET_name[]: $result[^getModule[name]]
 ## Подключение пакета и создание объекта произойдет только при первом обращении к свойству name.
@@ -151,7 +151,7 @@ pfMixin
   $__pfChainMixin__classDefRegex__[^regex::create[^^([^^@:]*)(?:@([^^:]+))?(?::+(.+))?^$]]
 
 @__init__[aThis;aOptions]
-## aOptions.exportFields[$.name1[] $.name2[var_name]]
+## aOptions.exportFields[$.name1[] $.name2[var_name]] — список полей объекта, которые надо передать параметрами модулую.
   ^BASE:__init__[$aThis;$aOptions]
 
   $_modules[^hash::create[]]
@@ -161,7 +161,7 @@ pfMixin
   $result[^_modules.contains[$aName]]
 
 @assignModule[aName;aClassDef;aArgs]
-## aClassDef[path/to/package.p@className::constructor]
+## aClassDef[path/to/package.p@className::constructor] — минимально надо указать имя класса или имя файла с классом (во втором случае имя класса берется из имени пакета без расширения).
   $result[]
   ^if(^_modules.contains[$aName]){^throw[model.chain.module.exists;Модуль "$aName" уже привязан в объекте класса "$this.CLASS_NAME"]}
   $_modules.[$aName][
