@@ -29,6 +29,7 @@ pfClass
 
   $_csql[^if(def $aOptions.sql){$aOptions.sql}{$_PFSQLTABLE_CSQL}]
   ^pfAssert:isTrue(def $_csql){Не задан объект для работы с SQL-сервером.}
+  $CSQL[$_csql]
 
   $_builder[^if(def $aOptions.builder){$aOptions.builder}{$_PFSQLTABLE_BUILDER}]
   ^if(!def $_builder){
@@ -54,9 +55,6 @@ pfClass
 
   $_defaultOrderBy[]
   $_defaultGroupBy[]
-
-  $_now[^date::now[]]
-  $_today[^date::today[]]
 
   $__context[]
 
@@ -215,9 +213,6 @@ pfClass
 
 @GET_FIELDS[]
   $result[$_fields]
-
-@GET_CSQL[]
-  $result[$_csql]
 
 @GET_DEFAULT[aField][locals]
 # Если нам пришло имя поля, то возвращаем имя поля в БД

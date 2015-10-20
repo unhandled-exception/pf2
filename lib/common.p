@@ -9,6 +9,10 @@ pfClass
 
 ## Базовый предок классов библиотеки
 
+@auto[]
+  $_now[^date::now[]]
+  $_today[^date::today[]]
+
 @create[aOptions]
 
 
@@ -83,7 +87,7 @@ pfMixin
 
 @static:mixin[aContainer;aOptions][obj]
 ## aContainer[$caller.self] — если передали миксиним в объект, иначе берем self из caller'а.
-## aOptions — параметры, которые передаются инициалищатору миксина
+## aOptions — параметры, которые передаются инициализатору миксина
   $result[]
   $obj[^reflection:create[$CLASS_NAME;__init__;^if(def $aContainer){$aContainer}{$caller.self};$aOptions]]
 
