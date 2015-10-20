@@ -101,7 +101,7 @@ pfMixin
   $lMethods[^if($aOptions.export){$aOptions.export}{^reflection:methods[$CLASS_NAME]}]
   $lForeach[^reflection:method[$lMethods;foreach]]
   ^lForeach[m;_]{
-    ^if(!def $aOptions.export && (^m.left(1) eq "_" || $m eq "mixin")){^continue[]}
+    ^if(!def $aOptions.export && (^m.left(1) eq "_" || $m eq "mixin" || $m eq "auto")){^continue[]}
     ^if(!($this.[$m] is junction)){$this.[$m][^reflection:method[$self;$m]]}
   }
 
@@ -133,6 +133,83 @@ pfMixin
   $lFields[^reflection:fields[$this]]
   $lForeach[^reflection:method[$lFields;foreach]]
   $result[^lForeach[lKey;lValue]{^if(!$_includeJunctionFields && $lValue is junction){^continue[]}$caller.[$aKeyName][$lKey]$caller.[$aValueName][$lValue]$aCode}[$aSeparator]]
+
+#--------------------------------------------------------------------------------------------------
+
+@CLASS
+pfChainMixin
+
+## Добавляет в класс интерфейс для поддержки цепочек вызовов с поздним связыванием.
+## ^assignModule[name;package.p@Class::create]
+## @GET_name[]: $result[^getModule[name]]
+## Подключение пакета и создание объекта произойдет только при первом обращении к свойству name.
+
+@BASE
+pfMixin
+
+@auto[]
+  $__pfChainMixin__classDefRegex__[^regex::create[^^([^^@:]*)(?:@([^^:]+))?(?::+(.+))?^$]]
+
+@__init__[aThis;aOptions]
+## aOptions.exportFields[$.name1[] $.name2[var_name]]
+  ^BASE:__init__[$aThis;$aOptions]
+
+  $_modules[^hash::create[]]
+  $_exportFields[^hash::create[$aOptions.exportFields]]
+
+@containsModule[aName]
+  $result[^_modules.contains[$aName]]
+
+@assignModule[aName;aClassDef;aArgs]
+## aClassDef[path/to/package.p@className::constructor]
+  $result[]
+  ^if(^_modules.contains[$aName]){^throw[model.chain.module.exists;Модуль "$aName" уже привязан в объекте класса "$this.CLASS_NAME"]}
+  $_modules.[$aName][
+    ^_parseClassDef[$aClassDef]
+    $.object[]
+    $.args[$aArgs]
+  ]
+
+  ^process[$this]{@GET_${aName}[]
+    ^$result[^^${self.mixinName}.getModule[$aName]]
+  }
+
+@getModule[aName]
+  ^if(^_modules.contains[$aName]){
+    ^if(!def $_modules.[$aName].object){
+    ^_compileModule[$aName]
+    }
+    $result[$_modules.[$aName].object]
+  }{
+     ^throw[model.chain.module.not.found;Не найден модуль "$aName" в объекте класса "$this.CLASS_NAME".]
+   }
+
+@_compileModule[aName][locals]
+  $lModule[$_modules.[$aName]]
+  ^if(def $lModule.package){
+    ^use[$lModule.package]
+  }
+  $lModule.object[^reflection:create[$lModule.className;$lModule.constructor;^_makeModuleArgs[$lModule.args]]]
+
+@_makeModuleArgs[aArgs][locals]
+  $result[^hash::create[$aArgs]]
+  ^_exportFields.foreach[lField;lVarName]{
+    ^if(!^result.contains[$lField]){
+      $result.[$lField][^if(def $lVarName){$this.[$lVarName]}{$this.[$lField]}]
+    }
+  }
+
+@_parseClassDef[aClassDef]
+  $result[$.classDef[$aClassDef]]
+  ^aClassDef.match[$__pfChainMixin__classDefRegex__][]{
+    $result.constructor[^if(def $match.3){$match.3}{create}]
+    ^if(def $match.2){
+      $result.className[$match.2]
+    }{
+       $result.className[^file:justname[$match.1]]
+     }
+    $result.package[^if($match.1 ne $result.className){$match.1}]
+  }
 
 #--------------------------------------------------------------------------------------------------
 
