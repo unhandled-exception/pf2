@@ -28,6 +28,7 @@ find . -name "*.p" | sort | xargs grep "^@CLASS" -A 1 -H | awk '$0 !~ /(--|@CLAS
 * pfClass
 * pfMixin
 * pfHashMixin
+* pfChainMixin
 * pfAssert
 * pfString
 * pfValidate
@@ -69,6 +70,11 @@ find . -name "*.p" | sort | xargs grep "^@CLASS" -A 1 -H | awk '$0 !~ /(--|@CLAS
 ### ./sql/models/sql_table.p
 * pfSQLTable
 * pfSQLBuilder
+
+### ./sql/models/structs.p
+* pfModelModule
+* pfModelTable
+* pfModelChainMixin
 
 ### ./web/auth.p
 * pfAuthBase
