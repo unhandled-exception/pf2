@@ -2,9 +2,9 @@
 
 @USE
 pf2/lib/common.p
-lib/sql/connection.p
-lib/web/auth.p
-lib/web/templates.p
+pf2/lib/sql/connection.p
+pf2/lib/web/auth.p
+pf2/lib/web/templates.p
 
 
 ## Веб-фреймворк

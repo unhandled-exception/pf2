@@ -84,7 +84,7 @@ pfChainMixin
   $aThis.core[$aThis._core]
 
   ^if(!^aOptions.ignoreSQLFields.bool(false)){
-    ^pfAssert:isTrue(def $aOptions.sql)[Не передан объект для соединения с БД в конструктор объекта "$aThis.CLASS_NAME".]
+    ^pfAssert:isTrue(def $aOptions.sql)[Не передан объект для соединения с БД в конструкторе объекта "$aThis.CLASS_NAME".]
 
     $aThis._csql[$aOptions.sql]
     $aThis.CSQL[$aThis._csql]
