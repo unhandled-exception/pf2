@@ -161,7 +161,10 @@ pfMixin
   $result[^_modules.contains[$aName]]
 
 @assignModule[aName;aClassDef;aArgs]
+## aName — имя свойства со ссылкой на модуль.
 ## aClassDef[path/to/package.p@className::constructor] — минимально надо указать имя класса или имя файла с классом (во втором случае имя класса берется из имени пакета без расширения).
+  ^pfAssert:isTrue(def $aName){Не задано имя свойства модуля.}
+  ^pfAssert:isTrue(def $aClassDef){Не задано имя класса модуля.}
   $result[]
   ^if(^_modules.contains[$aName]){^throw[model.chain.module.exists;Модуль "$aName" уже привязан в объекте класса "$this.CLASS_NAME"]}
   $_modules.[$aName][
