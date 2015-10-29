@@ -27,16 +27,22 @@ pfClass
 
 @assignCommand[aCommandName;aClassDef;aOptions]
   $result[]
-  ^assignModule[$aCommandName;$aClassDef;
+
+# Меняем двоеточие в имени команды, для поддержки неймспесов для команд.
+  $lModuleName[^aCommandName.replace[:;__]]
+
+  ^assignModule[$lModuleName;$aClassDef;
     ^hash::create[$aOptions]
     $.app[$self]
     $.name[$aCommandName]
   ]
-  $_commands.[$aCommandName][^hash::create[]]
+  $_commands.[$aCommandName][
+    $.moduleName[$lModuleName]
+  ]
 
 @getCommand[aCommandName]
   ^if(!def $aCommandName || !^_commands.contains[$aCommandName]){^fail[]}
-  $result[^getModule[$aCommandName]]
+  $result[^getModule[$_commands.[$aCommandName].moduleName]]
 
 @run[aOptions][locals]
   ^try{
