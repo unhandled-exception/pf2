@@ -158,6 +158,9 @@ static
 @CLASS
 pfConsoleCommand
 
+## Базовая команда. Менеджер (pfConsoleApp) создает объект команды и вызвает метод process.
+## Описание команды для usage берется из поля help.
+
 @BASE
 pfClass
 
@@ -173,8 +176,8 @@ pfClass
 @process[aArgs;aSwitches]
 ## Этот метод вызывает приложение, когда передает упралвение команде.
 ## Его надо перекрыть в наследнике.
-## aSwitches
-## aArgs
+## aArgs[$.0[command] $.1[param_1] $.2[...]] — хеш с аргументами команды. Имя команды приходит в поле 0.
+## aSwitches[$.switch-name[value] ...] — хеш со свитчами команды (--switch-name[=value]). Имя свитча приходит без начальных "--".
   $result[]
   ^if(^aSwitches.contains[help]){^fail[]}
 
@@ -208,6 +211,7 @@ pfClass
 pfConsoleCommandWithSubcommands
 
 ## Команда с вложенными командами.
+## Субкоманда — это метод объекта. Имя субкоманды и метод задаем через assignSubcommand.
 
 @BASE
 pfConsoleCommand
