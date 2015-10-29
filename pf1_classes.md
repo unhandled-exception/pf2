@@ -33,7 +33,6 @@
 
 ### ./io/ +
 + pfCFile
-+ pfConsole
 + pfCurlFile
 + pfOS
 

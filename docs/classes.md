@@ -36,9 +36,6 @@ find . -name "*.p" | sort | xargs grep "^@CLASS" -A 1 -H | awk '$0 !~ /(--|@CLAS
 * pfRuntime
 * pfOS
 
-### ./console/console.p
-* pfConsole
-
 ### ./console/console_app.p
 * pfConsoleApp
 * pfConsoleAppStdout
