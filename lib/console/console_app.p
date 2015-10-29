@@ -143,6 +143,10 @@ static
 @stdout[][locals]
   $result[^_buffer.foreach[_;l]{${l.start}${l.line}${l.end}}]
 
+@clear[]
+  $result[]
+  $self._buffer[^hash::create[]]
+
 #--------------------------------------------------------------------------------------------------
 
 @CLASS
@@ -154,12 +158,11 @@ pfClass
 @create[aOptions]
 ## aOptions.app
 ## aOptions.name — имя команды в приложении
-## aOptions.help
   ^BASE:create[]
 
   $app[$aOptions.app]
   $name[$aOptions.name]
-  $help[$aOptions.help]
+  $help[]
 
 @process[aArgs;aSwitches]
 ## Этот метод вызывает приложение, когда передает упралвение команде.
@@ -169,15 +172,21 @@ pfClass
   $result[]
   ^if(^aSwitches.contains[help]){^fail[]}
 
-@usage[aErrorMessage]
+@usage[aErrorMessage;aCode]
+## aErrorMessage — сообщение об ошибке. Выводим перед описанием скрипта.
+## aCode — код, который выполняется сразу после печати строки "Usage:...". Нужно,  если хотим вывести список команд свитчей.
   $result[]
   ^if(def $aErrorMessage){
     ^print[$aErrorMessage]
     ^print[-------------;$.end[^#0A^#0A]]
   }
 
-  ^print[Usage: $app.name $name [COMMAND [SWITCHES]] args…;$.end[^#0A^#0A]]
+  ^if(def $help){
+    ^print[$help;$.end[^#0A^#0A]]
+  }
 
+  ^print[Usage: $app.name $name [COMMAND [SWITCHES]] args…;$.end[^#0A^#0A]]
+  $aCode
   ^print[Switches:]
   ^print[--help   Prints this help message and quits.;$.end[^#0A^#0A]]
 
@@ -187,5 +196,62 @@ pfClass
 @fail[aErrorMessage]
   ^throw[console.command.usage;;$aErrorMessage]
 
+#--------------------------------------------------------------------------------------------------
 
+@CLASS
+pfConsoleCommandWithSubcommands
+
+## Команда с вложенными командами.
+
+@BASE
+pfConsoleCommand
+
+@create[aOptions]
+  ^BASE:create[$aOptions]
+
+  $_subCommands[^hash::create[]]
+
+@assignSubcommand[aCommandDef;aFunction;aOptions]
+## aCommandDef — имя команды и параметры: [command param1 [param2]]
+## aFunction — имя или ссылка на функцию с командой
+## aOptions.help — описание команды для usage.
+  $result[]
+  ^pfAssert:isTrue(def $aCommandDef){Не задано имя команды.}
+  ^pfAssert:isTrue($aFunction is junction || def $aFunction){На задано имя или ссылка на функцию с командой.}
+
+  $lParsedCommand[^aCommandDef.match[^^\s*(\S+)\s*(.*?)\s*^$][]]
+  $lName[$lParsedCommand.1]
+  $lParams[$lParsedCommand.2]
+  ^pfAssert:isTrue(!^_subCommands.contains[$lName]){Субкоманда "$lName" уже задана.}
+
+  $lFunction[^if($aFunction is junction){$aFunction}{$self.[$aFunction]}]
+  ^pfAssert:isTrue($lFunction is junction){Не найдена функция для команды "$lName".}
+
+  $_subCommands.[$lName][
+    $.name[$lName]
+    $.function[$lFunction]
+
+    $.params[$lParams]
+    $.help[$aOptions.help]
+  ]
+
+@usage[aErrorMessage;aCode]
+  ^BASE:usage[$aErrorMessage]{
+    $aCode
+    ^if($_subCommands){
+      ^print[Commands:]
+      ^_subCommands.foreach[_;v]{
+        ^print[$v.name^if(def $v.params){ $v.params}		^if(def $v.help){$v.help}{—};$.start[  ]]
+      }
+      ^print[]
+    }
+  }
+
+@process[aArgs;aSwitches]
+  ^BASE:process[$aArgs;$aSwitches]
+  ^if(^_subCommands.contains[$aArgs.0]){
+    $result[^_subCommands.[$aArgs.0].function[$aArgs;$aSwitches]]
+  }{
+     ^fail[]
+   }
 
