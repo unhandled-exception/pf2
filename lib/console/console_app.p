@@ -130,13 +130,14 @@ static
   $_buffer[^hash::create[]]
 
 @print[aLine;aOptions]
-## aOptions.end[^#0A]
-## aOptions.start[]
+## aOptions.end[^#0A] — окончание строки. Если не надо переходить на следующую строку передаем пустой $.end[].
+## aOptions.start[] — начало строки. Удобно через него задавать отступы.
+  $aOptions[^hash::create[$aOptions]]
   $result[]
   $_buffer.[^_buffer._count[]][
     $.line[$aLine]
     $.start[$aOptions.start]
-    $.end[^if(def $aOptions.end){$aOptions.end}{^#0A}]
+    $.end[^if(^aOptions.contains[end]){$aOptions.end}{^#0A}]
   ]
 
 @stdout[][locals]
