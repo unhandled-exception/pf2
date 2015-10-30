@@ -51,6 +51,7 @@ pfSQLTable
       $.[processTime <][$_now]
     ][
       $.tail[for update]
+      $.force(true)
     ]]
     ^result.foreach[k;v]{
       ^modify[$v.taskID;

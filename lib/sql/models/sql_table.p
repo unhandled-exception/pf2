@@ -265,6 +265,7 @@ pfClass
 ##   aSQLOptions.tail — концовка запроса
 ##   aSQLOptions.selectОptions — модификатор после select (distinct, sql_no_cache и т.п.)
 ##   aSQLOptions.skipFields — пропустить поля
+##   aSQLOptions.force — отменить кеширование результата запроса
 ##   + Все опции pfSQL.
  ^cleanMethodArgument[aOptions;aSQLOptions]
  $lResultType[^__getResultType[$aOptions]]
