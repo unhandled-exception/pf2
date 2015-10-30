@@ -12,16 +12,25 @@ pfConsoleGenerateCommand
 @BASE
 pfConsoleCommandWithSubcommands
 
-@create[aOptions]
+@create[aOptions][k]
 ## aOptions.sql — ссылка на класс соединение с БД.
 ## aOptions.core - ссылка на модель данных.
+## aOptions.formWidgets[bootstrap3] — виджеты для генерации форм.
+  ^cleanMethodArgument[]
   ^BASE:create[$aOptions]
   ^pfModelChainMixin:mixin[$self;$aOptions]
 
   $help[Generate models, forms and controllers.]
 
+  $_formWidgets[
+    $.bootstrap2[pfTableFormGeneratorBootstrap2Widgets]
+    $.bootstrap3[pfTableFormGeneratorBootstrap3Widgets]
+  ]
+  $_defaultFormWidget[^if(def $aOptions.formWidgets){$aOptions.formWidgets}{bootstrap3}]
+  ^pfAssert:isTrue(^_formWidgets.contains[$_defaultFormWidget]){"$_defaultFormWidget" is an unknown form widgets type.}
+
   ^assignSubcommand[model [schema.]table_name;$model;$.help[Generate a model class by table DDL.]]
-  ^assignSubcommand[form core.model_name;$form;$.help[Generate a html-form by a model object.]]
+  ^assignSubcommand[form core.model_name [widgets];$form;$.help[Generate a html-form by a model object. Available widgets: ^_formWidgets.foreach[k;_]{$k}[, ] (default: ${_defaultFormWidget}).]]
   ^assignSubcommand[controller model.name [entity_name];$controller;$.help[Generate a controller class by a model object.]]
 
 @model[aArgs;aSwitches][locals]
@@ -43,10 +52,17 @@ pfConsoleCommandWithSubcommands
      }
    }
 
-@form[aArgs;aSwitches]
+@form[aArgs;aSwitches][locals]
   $aModelName[$aArgs.1]
+  $aWidgets[$aArgs.2]
   ^if(!def $aModelName){^fail[Not specified a model name.]}
-    $lGenerator[^pfTableFormGenerator::create[]]
+    $aWidgets[^if(def $aWidgets){$aWidgets}{$_defaultFormWidget}]
+    ^if(!^_formWidgets.contains[$aWidgets]){
+      ^fail["$aWidgets" is an unknow widgets type.]
+    }
+    $lGenerator[^pfTableFormGenerator::create[
+      $.widgets[^reflection:create[$_formWidgets.[$aWidgets];create]]
+    ]]
     ^try{
       ^print[^lGenerator.generate[^_getModel[$aModelName]]]
     }{
