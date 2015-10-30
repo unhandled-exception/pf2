@@ -54,12 +54,16 @@ find . -name "*.p" | sort | xargs grep "^@CLASS" -A 1 -H | awk '$0 !~ /(--|@CLAS
 ### ./sql/connection.p
 * pfSQLConnection
 
-### ./sql/models/generators/sql_table_generators.p
-* pfTableModelGenerator
+### ./sql/models/generators/model_controller_generators.p
+* pfTableControllerGenerator
+
+### ./sql/models/generators/model_form_generators.p
 * pfTableFormGenerator
 * pfTableFormGeneratorBootstrap2Widgets
 * pfTableFormGeneratorBootstrap3Widgets
-* pfTableControllerGenerator
+
+### ./sql/models/generators/sql_table_generators.p
+* pfTableModelGenerator
 
 ### ./sql/models/generics/queue/sql_queue.p
 * pfSQLQueue

@@ -1,7 +1,10 @@
 @USE
 pf2/lib/console/console_app.p
 pf2/lib/sql/models/structs.p
+
 pf2/lib/sql/models/generators/sql_table_generators.p
+pf2/lib/sql/models/generators/model_form_generators.p
+pf2/lib/sql/models/generators/model_controller_generators.p
 
 @CLASS
 pfConsoleGenerateCommand
