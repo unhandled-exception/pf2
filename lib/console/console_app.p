@@ -111,7 +111,11 @@ pfClass
         ^if($lStage eq app){
           $result.switches.[$match.1][$match.2]
         }{
-           $result.command.switches.[$match.1][$match.2]
+           ^if(def $match.2){
+             $result.command.switches.[$match.1][$match.2]
+           }{
+              $result.command.switches.[$match.1](true)
+            }
          }
       }
     }{
