@@ -73,9 +73,12 @@ pfClass
 ## В случае ошибки может дополнительно выполнить aCatchCode.
   $result[^try{$aCode}{$exception.handled(true)$aCatchCode}]
 
-@_abstractMethod[]
-  ^pfAssert:fail[Не реализовано. Вызов абстрактного метода.]
-
+@ifdef[aValue;aDefaultValue]
+## Возвращает значение aValue, если переменная определена или возвращает aDefaultValue.
+## Лучше передавать значение по-умолчанию как код:
+## ^ifdef[value]{default}
+## ^ifdef[value](expression)
+  $result[^if(def $aValue){$aValue}{$aDefaultValue}]
 
 #--------------------------------------------------------------------------------------------------
 
