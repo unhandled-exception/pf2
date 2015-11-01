@@ -155,13 +155,20 @@ pfMixin
 
 @__init__[aThis;aOptions]
 ## aOptions.exportFields[$.name1[] $.name2[var_name]] — список полей объекта, которые надо передать параметрами модулую.
+## aOptions.exportModulesProperty(false)
   ^BASE:__init__[$aThis;$aOptions]
 
-  $_modules[^hash::create[]]
+  $modules[^hash::create[]]
   $_exportFields[^hash::create[$aOptions.exportFields]]
 
+  ^if(^aOptions.exportModulesProperty.bool(false)){
+    ^proces[$aThis]{@GET_MODULES[]
+      ^$result[^$${self.mixinName}.modules]
+    }
+  }
+
 @containsModule[aName]
-  $result[^_modules.contains[$aName]]
+  $result[^modules.contains[$aName]]
 
 @assignModule[aName;aClassDef;aArgs]
 ## aName — имя свойства со ссылкой на модуль.
@@ -169,8 +176,8 @@ pfMixin
   ^pfAssert:isTrue(def $aName){Не задано имя свойства модуля.}
   ^pfAssert:isTrue(def $aClassDef){Не задано имя класса модуля.}
   $result[]
-  ^if(^_modules.contains[$aName]){^throw[model.chain.module.exists;Модуль "$aName" уже привязан в объекте класса "$this.CLASS_NAME"]}
-  $_modules.[$aName][
+  ^if(^modules.contains[$aName]){^throw[model.chain.module.exists;Модуль "$aName" уже привязан в объекте класса "$this.CLASS_NAME"]}
+  $modules.[$aName][
     ^_parseClassDef[$aClassDef]
     $.object[]
     $.args[$aArgs]
@@ -181,17 +188,17 @@ pfMixin
   }
 
 @getModule[aName]
-  ^if(^_modules.contains[$aName]){
-    ^if(!def $_modules.[$aName].object){
+  ^if(^modules.contains[$aName]){
+    ^if(!def $modules.[$aName].object){
     ^_compileModule[$aName]
     }
-    $result[$_modules.[$aName].object]
+    $result[$modules.[$aName].object]
   }{
      ^throw[model.chain.module.not.found;Не найден модуль "$aName" в объекте класса "$this.CLASS_NAME".]
    }
 
 @_compileModule[aName][locals]
-  $lModule[$_modules.[$aName]]
+  $lModule[$modules.[$aName]]
   ^if(def $lModule.package){
     ^use[$lModule.package]
   }
