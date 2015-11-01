@@ -2,8 +2,108 @@
 
 @USE
 pf2/lib/common.p
+pf2/lib/sql/connection.p
+pf2/lib/web/templates.p
 
 ## HTTP-фреймворк. Минимальная версия Парсера — 3.4.4.
+
+@CLASS
+pfHTTPController
+
+@BASE
+pfClass
+
+@create[aOptions]
+## aOptions.sql
+## aOptions.core
+## aOptions.rootController
+## aOptions.parentController
+## aOptions.mountPoint[/] — место монтирования. Нужно передавать только в головной модуль, поскольку метод assignModule будт вычислять точку монтирования самостоятельно.
+  ^BASE:create[]
+  ^pfHTTPControllerChainMixin:mixin[$self;$aOptions]
+
+  $_mountPoint[^ifdef[$aOptions.mountPoint]{/}]
+  $_uriPrefix[$_mountPoint]
+  $_localUriPrefix[]
+
+  $_router[^pfHTTPRouter::create[]]
+  $_appendSlash(^aOptions.appendSlash.bool(true))
+
+  $_action[]
+
+@auto[]
+  $__pfHTTPControllerCheckDotRegex__[^regex::create[\.[^^/]+?/+^$][n]]
+  $__pfHTTPControllerRepeatableSlashRegex__[^regex::create[/+][g]]
+
+@GET_CSQL[]
+  ^if(!def $_csql){
+#   Создаем объект для соединения с СУБД, если нам его не передали в конструкторе.
+    $_csql[^pfSQLConnection::create[$MAIN:SQL.connect-string]]
+  }
+  $result[$_csql]
+
+@GET_mountPoint[]
+  $result[$_mountPoint]
+
+@GET_uriPrefix[]
+  $result[$_uriPrefix]
+
+@SET_uriPrefix[aUriPrefix]
+  $_uriPrefix[^aUriPrefix.trim[right;/.]/]
+  $_uriPrefix[^_uriPrefix.match[$__pfHTTPControllerRepeatableSlashRegex__][][/]]
+
+@GET_localUriPrefix[]
+  $result[$_localUriPrefix]
+
+@SET_localUriPrefix[aLocalUriPrefix]
+  $_localUriPrefix[^aLocalUriPrefix.trim[right;/]]
+  $_localUriPrefix[^_localUriPrefix.match[$__pfHTTPControllerRepeatableSlashRegex__][][/]]
+
+@GET_action[]
+  $result[$_action]
+
+@assignModule[aName;aClassDef;aArgs][locals]
+## aOptions.mountTo[$aName] - точка монтирования относительно текущего модуля.
+  ^pfHTTPControllerChainMixin.assignModule[$aName;$aClassDef;$aArgs]
+  $lModule[^getModule[$aName]]
+
+#--------------------------------------------------------------------------------------------------
+
+@CLASS
+pfHTTPControllerChainMixin
+
+@BASE
+pfChainMixin
+
+@__init__[aThis;aOptions][locals]
+  $aOptions[^hash::create[$aOptions]]
+
+  ^if(!def $aOptions.rootController){
+    $aOptions.rootController[$aThis]
+  }
+
+  $lDefaultModelExportFields[
+    $.sql[CSQL]
+    $.core[core]
+    $.rootController[rootController]
+    $.parentController[self]
+  ]
+  $aOptions.exportFields[
+    ^hash::create[$lDefaultModelExportFields]
+    $aOptions.exportFields
+  ]
+
+  ^BASE:__init__[$aThis;
+    $aOptions
+    $.exportModulesProperty(true)
+  ]
+
+  $aThis.core[$aOptions.core]
+  $aThis._csql[$aOptions.sql]
+  $aThis.rootController[$aOptions.rootController]
+  $aThis.parent[$aOptions.parentController]
+
+#--------------------------------------------------------------------------------------------------
 
 @CLASS
 _pfHTTPRequest
@@ -58,15 +158,20 @@ _pfHTTPRequest
   $BODY[^ifdef[$aOptions.BODY]{$request:body}]
   $_BODY_FILE[$aOptions.BODY_FILE]
 
-  $isAJAX(^ifdef[$aOptions.isAJAX](^headers.[X_REQUESTED_WITH].pos[XMLHttpRequest] > -1))
-  $clientAcceptsJSON(^headers.ACCEPT.pos[application/json] >= 0)
-  $clientAcceptsXML(^headers.ACCEPT.pos[application/xml] >= 0)
-
 @GET_DEFAULT[aName]
   $result[^if(^__CONTEXT__.contains[$aName]){$__CONTEXT__.[$aName]}{$fields.[$aName]}]
 
 @GET_BODY_FILE[]
   $result[^if(def $_BODY_FILE){$_BODY_FILE}{$request:body-file}]
+
+@GET_isAJAX[]
+  $result(^ifdef[$aOptions.isAJAX](^headers.[X_REQUESTED_WITH].pos[XMLHttpRequest] > -1))
+
+@GET_clientAcceptsJSON[]
+  $result(^headers.ACCEPT.pos[application/json] >= 0)
+
+@GET_clientAcceptsXML[]
+  $result(^headers.ACCEPT.pos[application/xml] >= 0)
 
 @assign[*aArgs]
 ## Добавляет в запрос поля.
