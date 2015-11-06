@@ -147,18 +147,13 @@ pfClass
   $result[^processAction[$lProcessed.action;$lProcessed.request;$lProcessed.prefix;^hash::create[$aOptions] $.render[$lProcessed.render]]]
   $result[^processResponse[$result;$lProcessed.action;$lProcessed.request;$aOptions]]
 
-@processRequest[aAction;aRequest;aOptions][lRewrite]
+@processRequest[aAction;aRequest;aOptions][locals]
 ## Производит предобработку запроса
 ## $result[$.action[] $.request[] $.prefix[] $.render[]] - экшн, запрос, префикс, параметры шаблона, которые будут переданы обработчикам
   $lRewrite[^rewriteAction[$aAction;$aRequest]]
   $aAction[$lRewrite.action]
   ^if($lRewrite.args){
-#   Пытаемся воспользоваться методом рефлексии.
-    ^if($aRequest.__add is junction){
-      ^aRequest.__add[$lRewrite.args]
-    }{
-       ^aRequest.add[$lRewrite.args]
-     }
+    ^aRequest.assign[$lRewrite.args]
   }
   $result[$.action[$aAction] $.request[$aRequest] $.prefix[$lRewrite.prefix] $.render[$lRewrite.render]]
 
@@ -509,204 +504,111 @@ pfClass
 @CLASS
 pfHTTPRequest
 
-## Класс, объединяющий все данные запроса от клиента в один объект.
+## Собирает в одном объекте все параметры http-запроса, доступные в Пасрере.
 
-@BASE
-pfClass
+@create[aOptions][ifdef]
+## aOptions — хеш с переменными объекта, которые надо заменить. [Для тестов.]
+  $ifdef[$pfClass:ifdef]
+  $__CONTEXT__[^hash::create[]]
 
-@create[aOptions]
-  ^cleanMethodArgument[]
-  ^BASE:create[]
+  $fields[^ifdef[$aOptions.fields]{$form:fields}]
+  $tables[^ifdef[$aOptions.tables]{$form:tables}]
+  $files[^ifdef[$aOptions.files]{$form:files}]
 
-  $FIELDS[^if(def $aOptions.fields){$aOptions.fields}{$form:fields}]
-  $QTAIL[^if(def $aOptions.qtail){$aOptions.qtail}{$form:qtail}]
-  $IMAP[^if(def $aOptions.imap){$aOptions.imap}{$form:imap}]
-  $TABLES[^if(def $aOptions.tables){$aOptions.tables}{$form:tables}]
-  $FILES[^if(def $aOptions.files){$aOptions.files}{$form:files}]
-  $COOKIE[^if(def $aOptions.cookie){$aOptions.cookie}{$cookie:fields}]
+  $cookies[^ifdef[$aOptions.cookies]{$cookie:fields}]
+  $headers[^ifdef[$aOptions.headers]{$request:headers}]
 
-  $META[^if(def $aOptions.meta){$aOptions.meta}{^pfHTTPRequestMeta::create[]}]
-  $HEADERS[^if(def $aOptions.headers){$aOptions.headers}{^pfHTTPRequestHeaders::create[]}]
-
-  $_HOST[]
-  $_PATH[]
-
-@GET[]
-## Return request fields count
-  $result($FIELDS)
-
-@GET_DEFAULT[aName]
-## Return request field
-  $result[^get[$aName]]
-
-@GET_isSECURE[]
-## Проверяет пришел ли нам запрос по протоколу HTTPS.
-  $result((def $META.HTTPS && ^META.HTTPS.lower[] eq "on") || ^META.SERVER_PORT.int(80) == 443)
-
-@GET_METHOD[]
-## Возвращает http-метод запроса в нижнем регистре
-  $result[^META.REQUEST_METHOD.lower[]]
-  ^if($result eq "post" && def $FIELDS._method){
-    $result[^switch[^FIELDS._method.lower[]]{
+  $method[^ifdef[^aOptions.method.lower[]]{^request:method.lower[]}]
+# Если нам пришел post-запрос с полем _method, то берем method из запроса.
+  ^if($method eq "post" && def $fields._method){
+    $method[^switch[^fields._method.lower[]]{
       ^case[DEFAULT]{post}
-      ^case[delete]{delete}
       ^case[put]{put}
+      ^case[delete]{delete}
+      ^case[patch]{patch}
     }]
   }
 
-@GET_isGET[]
-  $result($METHOD eq "get")
+  $ENV[^ifdef[$aOptions.ENV]{$env:fields}]
+  $URI[^ifdef[$aOptions.URI]{$request:uri}]
+  $QUERY[^ifdef[$aOptions.QUERY]{$request:query}]
+  $PATH[^URI.left(^URI.pos[?])]
 
-@GET_isPOST[]
-  $result($METHOD eq "post")
+  $ACTION[^ifdef[$aOptions.ACTION]{^ifdef[$fields.action]{$fields._action}}]
 
-@GET_isHEAD[]
-  $result($METHOD eq "head")
+  $PORT[^ifdef[$aOptions.PORT]{^ENV.SERVER_PORT.int(80)}]
+  $isSECURE(^ifdef[$aOptions.isSECURE](^ENV.HTTPS.lower[] eq "on" || $PORT eq "443"))
+  $SCHEME[http^if($isSECURE){s}]
 
-@GET_isPUT[]
-  $result($METHOD eq "put")
+  $HOST[^ifdef[$aOptions.HOST]{^header[X-Forwarded-Host;^header[Host;$ENV.SERVER_NAME]]}]
+  $HOST[$HOST^if($PORT ne "80" && ($isSECURE && $PORT ne "443")){:$PORT}]
 
-@GET_isDELETE[]
-  $result($METHOD eq "delete")
+  $REMOTE_IP[^ifdef[$aOptions.REMOTE_IP]{$ENV.REMOTE_ADDR}]
+  $DOCUMENT_ROOT[^ifdef[$aOptions.DOCUMENT_ROOT]{$request:document-root}]
+
+  $CHARSET[^ifdef[$aOptions.CHARSET]{$request:charset}]
+  $RESPONSE_CHARSET[^ifdef[$aOptions.RESPONSE_CHARSET]{^response:charset.lower[]}]
+  $POST_CHARSET[^ifdef[$aOptions.POST_CHARSET]{^request:post-charset.lower[]}]
+  $BODY_CHARSET[^ifdef[$aOptions.BODY_CHARSET]{^request:body-charset.lower[]}]
+
+  $BODY[^ifdef[$aOptions.BODY]{$request:body}]
+  $_BODY_FILE[$aOptions.BODY_FILE]
+
+@GET[aContext]
+  $result($fields || $__CONTEXT__)
+
+@GET_DEFAULT[aName]
+  $result[^if(^__CONTEXT__.contains[$aName]){$__CONTEXT__.[$aName]}{$fields.[$aName]}]
+
+@GET_BODY_FILE[]
+  $result[^if(def $_BODY_FILE){$_BODY_FILE}{$request:body-file}]
 
 @GET_isAJAX[]
-  $result(^HEADERS.[X_Requested_With].pos[XMLHttpRequest] > -1)
+  $result(^ifdef[$aOptions.isAJAX](^headers.[X_REQUESTED_WITH].pos[XMLHttpRequest] > -1))
 
-@GET_URI[]
-## Return request:uri
-  $result[$request:uri]
+@GET_clientAcceptsJSON[]
+  $result(^headers.ACCEPT.pos[application/json] >= 0)
 
-@GET_PATH[][lPos]
-## Return the request:uri without a query part
-  ^if(!def $_PATH){
-    $lPos(^request:uri.pos[?])
-    $_PATH[^if($lPos >= 0){^request:uri.left($lPos)}{$request:uri}]
-  }
-  $result[$_PATH]
+@GET_clientAcceptsXML[]
+  $result(^headers.ACCEPT.pos[application/xml] >= 0)
 
-@GET_ACTION[]
-  $result[$FIELDS._action]
-
-@GET_QUERY[]
-## Return request:query
-  $result[$request:query]
-
-@GET_CHARSET[]
-## Return request:charset
-  $result[$request:charset]
-
-@GET_RESPONSE-CHARSET[]
-## Return $response:charset
-  $response[$response:charset]
-
-@GET_POST-CHARSET[]
-## Return request:post-charset
-  $result[$request:post-charset]
-
-@GET_BODY[]
-## Return request:body
-  $result[$request:body]
-
-@GET_DOCUMENT-ROOT[]
-## Return request:document-root
-  $result[$request:document-root]
-
-@GET_HOST[][lPort]
-## Return host.
-  ^if(!def $_HOST){
-    $_HOST[^HEADERS.get[X_Forwarded_Host;^HEADERS.get[Host]]]
-    ^if(!def $_HOST){
-      $_HOST[^META.get[SERVER_NAME]]
-    }
-    $lPort[^META.get[SERVER_PORT]]
-    $_HOST[${_HOST}^if($lPort ne "80" && ($isSECURE && $lPort ne "443")){:$lPort}]
-  }
-  $result[$_HOST]
-
-@get[aName;aDefault]
-  $result[$FIELDS.[$aName]]
-  ^if($result is junction){$result[]}
-  ^if(!def $result && def $aDefault){
-    $result[$aDefault]
-  }
+@assign[*aArgs]
+## Добавляет в запрос поля.
+## ^assign[name;value]
+## ^assign[$.name[value] ...]
+  ^if($aArgs.0 is hash){
+    ^__CONTEXT__.add[$aArgs.0]
+  }{
+     $__CONTEXT__.[$aArgs.0][$aArgs.1]
+   }
 
 @contains[aName]
-  $result(^FIELDS.contains[$aName])
+  $result(^__CONTEXT__.contains[$aName] || ^fields.contains[$aName])
 
-@getFullPath[]
-## Returns the path, plus an appended query string, if applicable.
-  $result[$request:uri]
+@foreach[aKeyName;aValueName;aCode;aSeparator][locals]
+  $lFields[^hash::create[$fields]]
+  ^lFields.add[$__CONTEXT__]
+  $result[^lFields.foreach[k;v]{$caller.[$aKeyName][$k]$caller.[$aValueName][$v]$aCode}{$aSeparator}]
 
-@buildAbsoluteUri[aLocation]
-## Returns the absolute URI form of location.
-## If no location is provided, the location will be set to getFullPath
-  ^if(!def $aLocation){
-    $aLocation[^getFullPath[]]
+@header[aHeaderName;aDefaultValue][CONTEXT]
+## Возвращает заголовок запроса.
+## aDefaultValue — результат функции, если заголовок не определен.
+  $lName[^aHeaderName.trim[both; :]]
+  $lName[^lName.replace[-;_]]
+  $lName[^lName.replace[ ;_]]
+  $result[$headers.[^lName.upper[]]]
+  ^if(!def $result){
+    $result[$aDefaultValue]
   }
+
+@absoluteUrl[aLocation]
+## Возвращает полный url для запроса.
+## aLocation — адрес страницы вместо URI.
+  $aLocation[^pfClass:ifdef[$aLocation]{$URI}]
   ^if(^aLocation.left(1) ne "/"){
     $aLocation[/$aLocation]
   }
-  $result[http^if($isSECURE){s}://${HOST}$aLocation]
-
-@foreach[aKeyName;aValueName;aCode;aSeparator]
-## Iterate all request fields
-  $result[^FIELDS.foreach[k;v]{$caller.[$aKeyName][$k]$caller.[$aValueName][$v]$aCode}{$aSeparator}]
-
-@__add[aNewFields]
-## Add new fields in to request
-  ^pfAssert:isTrue($aNewFields is hash)[New fields must be a hash.]
-  ^FIELDS.add[$aNewFields]
-  $result[]
-
-
-@CLASS
-pfHTTPRequestMeta
-
-## Вспомогательный класс для работы с переменными окружения в запросе.
-
-@BASE
-pfClass
-
-@create[]
-  ^BASE:create[]
-
-@GET_DEFAULT[aName]
-  $result[^get[$aName]]
-
-@get[aName;aDefault]
-  $result[$env:[$aName]]
-  ^if(!def $result && def $aDefault){
-    $result[$aDefault]
-  }
-
-
-@CLASS
-pfHTTPRequestHeaders
-
-## Вспомогательный класс для работы с заголовками http-запроса.
-
-@BASE
-pfClass
-
-@create[]
-  ^BASE:create[]
-
-@GET_DEFAULT[aName]
-  $result[^get[$aName]]
-
-@get[aName;aDefault]
-## Возвращает поле запроса.
-## Позволяет задать имя в привычном виде (например, User-Agent).
-  ^if(def $aName){
-    $lName[^aName.trim[both][ :]]
-    $lName[^aName.match[[-\s]][g][_]]
-    $result[$env:[HTTP_^lName.upper[]]]
-  }{
-     $result[]
-   }
-  ^if(!def $result && def $aDefault){
-    $result[$aDefault]
-  }
+  $result[${SCHEME}://${HOST}$aLocation]
 
 #--------------------------------------------------------------------------------------------------
 
@@ -1013,7 +915,7 @@ pfModule
       ^switch[$exception.type]{
         ^case[$_redirectExceptionName;$_permanentRedirectExceptionName]{
           $exception.handled(true)
-          $lRedirectPath[^if(^exception.comment.match[^^https?://][n]){$exception.comment}{^aRequest.buildAbsoluteUri[$exception.comment]}]
+          $lRedirectPath[^if(^exception.comment.match[^^https?://][n]){$exception.comment}{^aRequest.absoluteUrl[$exception.comment]}]
           ^if($exception.type eq $_permanentRedirectExceptionName){
             $result[^pfHTTPResponsePermanentRedirect::create[$lRedirectPath]]
           }{

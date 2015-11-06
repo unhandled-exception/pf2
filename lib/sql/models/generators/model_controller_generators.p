@@ -95,7 +95,7 @@ pfClass
   $result[
   ^@on${aOptions.actionPrefix}New[aRequest][locals]
     ^$self.title[...]
-    ^^if(^$aRequest.isPOST){
+    ^^if(^$aRequest.method eq post){
       ^^antiFlood.process[^$aRequest]){
         ^$lNewData[^^${aOptions.formAction}[$aRequest]]
         ^$lNewID[^^${aOptions.modelName}.new[^$lNewData]]
@@ -116,7 +116,7 @@ pfClass
     ^$${aOptions.localVar}[^^${aOptions.modelName}.one[^$.${aOptions.primaryKey}[^$aRequest.${aOptions.primaryKey}]]]
     ^^if(!^$${aOptions.localVar}){^^redirectTo[/]}
     ^$self.title[...]
-    ^^if(^$aRequest.isPOST){
+    ^^if(^$aRequest.method eq post){
       ^^antiFlood.process[^$aRequest]{
         ^$lNewData[^^${aOptions.formAction}[$aRequest]]
         ^^${aOptions.modelName}.modify[^$${aOptions.localVar}.${aOptions.primaryKey}^;^$lNewData]
