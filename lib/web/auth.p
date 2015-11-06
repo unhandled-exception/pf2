@@ -635,7 +635,7 @@ pfAuthStorage
       insert into $_usersTable (^_extraFields.foreach[k;v]{^if(^aOptions.contains[$k]){`^if(def $v){$v}{$k}`, }} login, password, is_active)
       values (^_extraFields.foreach[k;v]{^if(^aOptions.contains[$k]){"$aOptions.[$k]", }} "^taint[$aOptions.login]", "^taint[^passwordHash[$aOptions.password]]", "^aOptions.isActive.int(1)")
     }
-    $result[^CSQL.lastInsertId[]]
+    $result[^CSQL.lastInsertID[]]
   }{
      ^throw[pfAuth.user.exists;Пользователь "$aOptions.login" уже есть в системе.]
    }
@@ -915,7 +915,7 @@ pfAuthDBStorage
       "^aOptions.sortOrder.int(0)"
     )
   }
-  $result[^CSQL.lastInsertId[]]
+  $result[^CSQL.lastInsertID[]]
 
 @roleModify[aRoleID;aOptions][k;v]
 ## Изменяет данные роли
