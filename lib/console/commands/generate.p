@@ -45,7 +45,9 @@ pfConsoleCommandWithSubcommands
     ^if(def $lParts.1){
       $lSchema[$lParts.0]
       $lTableName[$lParts.1]
-    }
+    }{
+       $lTableName[$lParts.0]
+     }
     $lGenerator[^pfTableModelGenerator::create[$lTableName;$.sql[$CSQL] $.schema[$lSchema]]]
     ^print[^lGenerator.generate[]]
   }{
