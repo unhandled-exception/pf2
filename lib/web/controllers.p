@@ -24,13 +24,18 @@ pfClass
 ## aOptions.parentModule - ссылка на объект-контейнер.
 ## aOptions.appendSlash(false) - нужно ли добавлять к урлам слеш.
   ^BASE:create[]
-  ^cleanMethodArgument[]
+  $aOptions[^hash::create[$aOptions]]
+
+  ^pfChainMixin:mixin[$self;
+    ^hash::create[$aOptions]
+    $.exportModulesProperty(true)
+  ]
+
   $_throwPrefix[pfModule]
   $_name[$aOptions.name]
 
   $_parentModule[$aOptions.parentModule]
 
-  $_MODULES[^hash::create[]]
   $_mountPoint[^if(def $aOptions.mountPoint){$aOptions.mountPoint}{/}]
   $uriPrefix[$_mountPoint]
   $_localUriPrefix[]
@@ -72,9 +77,6 @@ pfClass
 @GET_request[]
   $result[$_request]
 
-@GET_MODULES[]
-  $result[$_MODULES]
-
 @GET_router[]
   ^if(!def $_router){
     $_router[^pfRouter::create[]]
@@ -92,127 +94,38 @@ pfClass
 
 @hasModule[aName]
 ## Проверяет есть ли у нас модуль с имененм aName
-  $result(^_MODULES.contains[^aName.lower[]])
+  $result(^MODULES.contains[$aName])
 
 @hasAction[aAction][lHandler]
 ## Проверяем есть ли в модуле обработчик aAction
   $lHandler[^_makeActionName[$aAction]]
   $result($$lHandler is junction)
 
-@assignModule[aName;aOptions][locals]
-## Добавляет модуль aName
-## aOptions.class - имя класса (если не задано, то пробуем его взять из имени файла)
-## aOptions.file - файл с текстом класса
-## aOptions.source - строка с текстом класса (если определена, то плюем на file)
-## aOptions.compile(0) - откомпилировать модуль сразу
-## aOptions.args - опции, которые будут переданы конструктору.
+@assignModule[aName;aClassDef;aOptions][locals]
+## aName — имя свойства со ссылкой на модуль.
+## aClassDef[path/to/package.p@className::constructor]
+## aOptions — параметры, которые передаются конструктору.
 ## aOptions.mountTo[$aName] - точка монтирования относительно текущего модуля.
-
-## Experimental:
-## aOptions.faсtory - метод, который будет вызван для создания модуля
-##                    Если определен, то при компиляции модуля вызывается код,
-##                    который задан в этой переменной. Предполагается, что в качестве
-##                    кода выступает метод, который возвращает экземпляр.
-##                    Если определена $aOptions.args, то эта переменная будет
-##                    передана методу в качестве единственного параметра.
-##                    Пример:
-##                     ^addModule[test;$.factory[$moduleFactory] $.args[test]]
-##
-##                     @moduleFactory[aArgs]
-##                       $result[^pfModule::create[$aArgs]]
-##
   ^cleanMethodArgument[]
   ^pfAssert:isTrue(def $aName)[Не задано имя для модуля.]
+
   $aName[^aName.lower[]]
   $lMountTo[^if(def $aOptions.mountTo){^aOptions.mountTo.lower[]}{$aName}]
   $lMountTo[^lMountTo.trim[both;/]]
 
-#  Добавляем в хэш с модулями данные о модуле
-   $_MODULES.[$aName][
-       $.mountTo[$lMountTo]
-       $.file[$aOptions.file]
-       $.source[$aOptions.source]
-       $.class[^if(!def $aOptions.class && def $aOptions.file){^file:justname[$aOptions.file]}{$aOptions.class}]
+  ^__pfChainMixin__.assignModule[$aName;$aClassDef;$aOptions]
 
-       ^if($aOptions.factory is junction){
-         $.factory[$aOptions.factory]
-         $.hasFactory(1)
-       }{
-          $.factory[]
-          $.hasFactory(0)
-        }
-
-       $.args[^if(def $aOptions.args){$aOptions.args}{^hash::create[]} $.parentModule[$self]]
-       $.object[]
-
-       $.isCompiled(0)
-       $.makeAction(^aOptions.makeAction.int(1))
-       $.mountPoint[${_mountPoint}$lMountTo/]
-   ]
+# Добавляем в хэш с модулями данные о модуле
+  $lModule[$MODULES.[$aName]]
+  $lModule.mountTo[$lMountTo]
+  $lModule.mountPoint[${_mountPoint}$lMountTo/]
 
 #  Перекрываем uriPrefix, который пришел к нам в $aOptions.args.
 #  Возможно и не самое удачное решение, но позволяет сохранить цепочку.
-   $_MODULES.[$aName].args.mountPoint[$_MODULES.[$aName].mountPoint]
-   ^if(!def $_MODULES.[$aName].args.templatePrefix){
-     $_MODULES.[$aName].args.templatePrefix[${_mountPoint}$aName/]
-   }
-
-   ^if(^aOptions.compile.int(0)){
-     ^compileModule[$aName]
-   }
-
-@GET_DEFAULT[aName][lName]
-## Эмулирует свойства modModule
-  $result[]
-  ^if(^aName.left(3) eq "mod"){
-    $lName[^aName.mid(3)]
-    $lName[^lName.lower[]]
-    ^if(^_MODULES.contains[$lName]){
-      ^if(!$_MODULES.[$lName].isCompiled){
-        ^compileModule[$lName]
-      }
-      $result[$_MODULES.[$lName].object]
-    }
+  $lModule.args.mountPoint[$lModule.mountPoint]
+  ^if(!def $lModule.args.templatePrefix){
+    $lModule.args.templatePrefix[${_mountPoint}$aName/]
   }
-
-@compileModule[aName][lFactory]
-## Компилирует модуль
-## Если модуль задан не в виде ссылки на файл, а в виде строки (source),
-## то компилируем ее, не обращая при этом, внимания на файл.
-## Если для модуля есть фабрика, то зовем именно ее.
-  $result[]
-  $aName[^aName.lower[]]
-  ^if($_MODULES.[$aName]){
-    ^if($_MODULES.[$aName].hasFactory){
-      $lFactory[$_MODULES.[$aName].factory]
-      ^if(def $_MODULES.[$aName].args){
-        $_MODULES.[$aName].object[^lFactory[$_MODULES.[$aName].args]]
-      }{
-         $_MODULES.[$aName].object[^lFactory[]]
-       }
-      $_MODULES.[$aName].isCompiled(1)
-    }{
-      ^if(def $_MODULES.[$aName].source){
-        ^process[$MAIN:CLASS]{^taint[as-is][$_MODULES.[$aName].source]}
-      }{
-        ^if(def $_MODULES.[$aName].file){
-          ^try{
-            ^use[$_MODULES.[$aName].file;$.replace(true)]
-          }{
-#           Для совместимости с парсером до 3.4.3, который не поддерживает ключ replace в use.
-            ^if($exception.type eq "parser.runtime"){
-              ^use[$_MODULES.[$aName].file]
-              $exception.handled(true)
-            }
-          }
-        }
-       }
-      $_MODULES.[$aName].object[^reflection:create[$_MODULES.[$aName].class;create;$_MODULES.[$aName].args $.appendSlash[$appendSlash]]]
-      $_MODULES.[$aName].isCompiled(1)
-     }
-  }{
-     ^throw[pfModule.compile;Module "$aName" not found.]
-   }
 
 @dispatch[aAction;aRequest;aOptions][lProcessed]
 ## Производим обработку экшна
@@ -289,7 +202,7 @@ pfClass
       $result[^self.[^_makeActionName[$lModuleMountTo]][$lRequest]]
       $self._action[$lAction]
     }{
-       $result[^self.[mod^_makeSpecialName[^lModule.lower[]]].dispatch[^lAction.mid(^lModuleMountTo.length[]);$lRequest;
+       $result[^self.[^lModule.lower[]].dispatch[^lAction.mid(^lModuleMountTo.length[]);$lRequest;
          $.prefix[$uriPrefix/^if(def $aLocalPrefix){$aLocalPrefix/}{$lModuleMountTo/}]
        ]]
      }
@@ -376,7 +289,7 @@ pfClass
 ## Ищет модуль по имени экшна
   $result[]
   ^if(def $aAction){
-    ^_MODULES.foreach[k;v]{
+    ^MODULES.foreach[k;v]{
       ^if(^aAction.match[^^^taint[regex][$v.mountTo] (/|^$)][ixn]){
         $result[$k]
         ^break[]
@@ -1005,6 +918,15 @@ pfModule
 ## aOptions.uriProtocol
 ## aOptions.uriServerName
   ^cleanMethodArgument[]
+
+  $aOptions.exportFields[
+    ^hash::create[$aOptions.exportFields]
+    $.sql[CSQL]
+    $.auth[AUTH]
+    $.template[TEMPLATE]
+    $.templateOptions[_templateOptions]
+  ]
+
   ^BASE:create[$aOptions]
 
   $_asManager(^aOptions.asManager.bool(false))
@@ -1017,15 +939,13 @@ pfModule
   $_createOptions[$aOptions]
 
   $templatePath[^if(^aOptions.contains[templatePrefix]){$aOptions.templatePrefix}{$mountPoint}]
+  $_templateOptions[$aOptions.templateOptions]
 
   $_sql[$aOptions.sql]
   $_auth[$aOptions.auth]
   $_template[$aOptions.template]
 
   $_templateVars[^hash::create[]]
-
-# Метод display лучше не использовать (deprecated).
-  ^alias[display;$render]
 
 # Переменные для менеджера
   $_REQUEST[$aOptions.request]
@@ -1062,22 +982,6 @@ pfModule
   ]
 # Стандартный mime-тип
   $_PFSITEMODULE_DEFAULT_MIME[application/octet-stream]
-
-@assignModule[aName;aOptions][lArgs]
-# Если нам не передали aOptions.args, то формируем штатный заменитель.
-  ^cleanMethodArgument[]
-  $lArgs[
-    $.sql[$CSQL]
-    $.auth[$AUTH]
-    $.templateOptions[$_createOptions.templateOptions]
-    $.template[$TEMPLATE]
-  ]
-  ^if(!def $aOptions.args){
-    $aOptions.args[$lArgs]
-  }{
-     $aOptions.args[^aOptions.args.union[$lArgs]]
-   }
-  ^BASE:assignModule[$aName;$aOptions]
 
 @processAction[aAction;aRequest;aPrefix;aOptions][lRedirectPath]
 ## aOptions.passWrap(false) - не формировать объект вокруг ответа из строк и чисел.
@@ -1281,21 +1185,13 @@ pfModule
 
 @onAUTHSUCCESS[aRequest]
 ## Вызывается при удачной авторизации.
-  ^if($_asManager && $self.onAuthSuccess is junction){
-    $result[^onAuthSuccess[$aRequest]]
-  }{
-     $result[]
-  }
+  $result[]
 
 @onAUTHFAILED[aRequest]
 ## Вызывается при неудачной авторизации
-  ^if($_asManager && $self.onAuthFailed is junction){
-    $result[^onAuthFailed[$aRequest]]
-  }{
-     $result[]
-  }
+  $result[]
 
-# Пост-обработчики для менеджера
+#---- Пост-обработчики для менеджера ----
 
 @postDEFAULT[aResponse]
   $result[$aResponse]
@@ -1481,9 +1377,6 @@ pfSiteModule
 
   $_serveStatic(^aOptions.serveStatic.bool(false))
   $_publicPath[$_appRoot/$_publicFolder]
-
-  $_now[^date::now[]]
-  $_today[^date::today[]]
 
 @onNOTFOUND[aRequest][locals]
   $lFileName[$_publicPath/$action]

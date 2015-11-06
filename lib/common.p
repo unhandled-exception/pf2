@@ -162,7 +162,7 @@ pfMixin
   $_exportFields[^hash::create[$aOptions.exportFields]]
 
   ^if(^aOptions.exportModulesProperty.bool(false)){
-    ^proces[$aThis]{@GET_MODULES[]
+    ^process[$aThis]{@GET_MODULES[]
       ^$result[^$${self.mixinName}.modules]
     }
   }
