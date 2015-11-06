@@ -552,8 +552,8 @@ pfAuthStorage
 ## Добавляем сессию в хранилище
   ^CSQL.void{insert into $_sessionsTable (uid, sid, login, dt_access, dt_create, is_persistent, ip)
              values ("$aSession.uid", "$aSession.sid", "$aSession.login",
-                      ^if(def $aSession.dt_access){"$aSession.dt_create"}{^CSQL.now[]},
-                      ^if(def $aSession.dt_login){"$aSession.dt_login"}{^CSQL.now[]},
+                      ^if(def $aSession.dt_access){"$aSession.dt_create"}{"^_now.sql-string[]"},
+                      ^if(def $aSession.dt_login){"$aSession.dt_login"}{"^_now.sql-string[]"},
                       ^if(def $aSession.is_persistent && $aSession.is_persistent){"1"}{"0"},
                       inet_aton("$env:REMOTE_ADDR")
                      )
@@ -566,7 +566,7 @@ pfAuthStorage
                 set uid = "$aNewSession.uid",
                     sid = "$aNewSession.sid",
                     ^if(def $aNewSession.is_persistent){is_persistent = "$aNewSession.is_persistent",}
-                    dt_access = ^if(def $aNewSession.dt_access){"$aNewSession.dt_access"}{^CSQL.now[]}
+                    dt_access = ^if(def $aNewSession.dt_access){"$aNewSession.dt_access"}{"^_now.sql-string[]"}
               where uid = "$aSession.uid"
                     and sid = "$aSession.sid"
   }
@@ -576,7 +576,7 @@ pfAuthStorage
 ## Удалить сессию из хранилища
   ^CSQL.void{update $_sessionsTable
              set is_active = "0",
-                 dt_close = ^CSQL.now[]
+                 dt_close = "^_now.sql-string[]"
            where uid = "$aSession.uid"
                  and sid = "$aSession.sid"
   }
