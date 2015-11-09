@@ -3,6 +3,8 @@
 @USE
 pf2/lib/sql/models/sql_table.p
 pf2/lib/sql/models/generators/sql_table_generators.p
+pf2/lib/sql/models/generators/model_controller_generators.p
+pf2/lib/sql/models/generators/model_form_generators.p
 
 @main[][locals]
 SQL orm generators test!

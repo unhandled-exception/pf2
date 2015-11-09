@@ -6,11 +6,10 @@ pf2/lib/common.p
 @main[][locals]
   Тест для common.p@pfCFile:
 
-  $lURL[https://google.com]
+  $lURL[https://www.yandex.ru]
   $f[^pfCFile::load[text;$lURL]]
   $lURL is loaded. Status — ${f.status}. Body is starting from:
-  ^f.body.left(100)
-
+  ^f.text.left(100)
 
   Finish tests.^#0A
 
