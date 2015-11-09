@@ -48,7 +48,7 @@ pfSQLTable
     $lConds[^hash::create[$aOptions]]
     $result[^all[
       $lConds
-      $.[processTime <][$_now]
+      $.[processTime <][^date::now[]]
     ][
       $.tail[for update]
       $.force(true)
@@ -57,9 +57,9 @@ pfSQLTable
       ^modify[$v.taskID;
         $.attempt($v.attempt + 1)
         ^if($_interval > 0){
-          $.processTime[^date::create($_now + ($_interval/1440))]
+          $.processTime[^date::create(^date::now[] + ($_interval/1440))]
         }{
-          $.processTime[^date::create($_now + ^math:pow(2;$v.attempt)/1440)]
+          $.processTime[^date::create(^date::now[] + ^math:pow(2;$v.attempt)/1440)]
         }
       ]
     }
