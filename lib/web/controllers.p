@@ -572,6 +572,24 @@ pfHTTPRequest
 @GET_clientAcceptsXML[]
   $result(^headers.ACCEPT.pos[application/xml] >= 0)
 
+@GET_isGET[]
+  $result($method eq "get")
+
+@GET_isPOST[]
+  $result($method eq "post")
+
+@GET_isPUT[]
+  $result($method eq "put")
+
+@GET_isDELETE[]
+  $result($method eq "delete")
+
+@GET_isPATCH[]
+  $result($method eq "patch")
+
+@GET_isHEAD[]
+  $result($method eq "head")
+
 @assign[*aArgs]
 ## Добавляет в запрос поля.
 ## ^assign[name;value]
