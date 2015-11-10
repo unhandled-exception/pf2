@@ -252,7 +252,7 @@ pfAntiFloodStorage
   $result(false)
   $lToken[^_unpackToken[^aToken.trim[both]]]
   ^if($lToken){
-    ^CSQL.naturalTransaction{
+    ^CSQL.transaction{
       $lNow[^date::now[]]
       $lID[^CSQL.string{
         select id

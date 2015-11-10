@@ -29,24 +29,15 @@ pfAuthBase
 pfClass
 
 @create[aOptions]
-## aOptions.storage - объект-хранилище данных аутентификации
+## aOptions.storage - хранилище данных аутентификации
 ## aOptions.security - объект, реализующий контроль доступа
 ## aOptions.formPrefix[auth.] - префикс для переменных форм и кук.
   ^cleanMethodArgument[]
 
-  ^if(def $aOptions.storage){
-    $_storage[$aOptions.storage]
-  }{
-     $_storage[^pfAuthStorage::create[]]
-   }
+  $_storage[^ifdef[$aOptions.storage]{^pfAuthStorage::create[]}]
+  $_security[^ifdef[$aOptions.security]{^pfAuthSecurity::create[]}]
 
-  ^if(def $aOptions.security){
-    $_security[$aOptions.security]
-  }{
-     $_security[^pfAuthSecurity::create[]]
-   }
-
-  ^if(def $aOptions.formPrefix){$_formPrefix[$aOptions.formPrefix]}{$_formPrefix[auth.]}
+  $_formPrefix[^ifdef[$aOptions.formPrefix]{auth.}]
 
   $_isUserLogin(false)
   $_user[^hash::create[]]
@@ -867,7 +858,7 @@ pfAuthDBStorage
   ^cleanMethodArgument[]
   $lUserID[^aUserID.int(0)]
   ^if($lUserID){
-    ^CSQL.naturalTransaction{
+    ^CSQL.transaction{
       ^CSQL.void{delete from $_rolesToUsersTable where user_id = "$lUserID"}
       ^if($aRoles){
         ^CSQL.void{
@@ -945,7 +936,7 @@ pfAuthDBStorage
 ## Удаляет роль и все привязки к пользователям
   $result[]
   ^if($aRoleID){
-    ^CSQL.naturalTransaction{
+    ^CSQL.transaction{
       ^CSQL.void{delete from $_rolesToUsersTable where role_id = "^aRoleID.int(-1)"}
       ^CSQL.void{delete from $_rolesTable where role_id = "^aRoleID.int(-1)"}
     }
