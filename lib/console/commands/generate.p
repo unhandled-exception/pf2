@@ -28,6 +28,7 @@ pfConsoleCommandWithSubcommands
   $_formWidgets[
     $.bootstrap2[pfTableFormGeneratorBootstrap2Widgets]
     $.bootstrap3[pfTableFormGeneratorBootstrap3Widgets]
+    $.semantic[pfTableFormGeneratorSemanticUIWidgets]
   ]
   $_defaultFormWidget[^if(def $aOptions.formWidgets){$aOptions.formWidgets}{bootstrap3}]
   ^pfAssert:isTrue(^_formWidgets.contains[$_defaultFormWidget]){"$_defaultFormWidget" is an unknown form widgets type.}

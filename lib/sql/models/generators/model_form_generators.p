@@ -212,3 +212,71 @@ pfClass
       </div>
     </div>
   ]
+
+#--------------------------------------------------------------------------------------------------
+
+@CLASS
+pfTableFormGeneratorSemanticUIWidgets
+
+## SemanticUI — http://semantic-ui.com/
+
+@BASE
+pfClass
+
+@create[aOptions]
+  ^BASE:create[]
+
+@formWidget[aBlock]
+  $result[<form action="" method="post" class="ui form">
+    $aBlock
+  </form>
+  <script>
+    jQuery(function(){
+      ^^^$('select.dropdown').dropdown()^^^;
+      ^^^$('.ui.checkbox').checkbox()^^^;
+    })^^^;
+  </script>]
+
+@inputWidget[aField;aType;aOptions]
+  $result[
+    <div class="field">
+      <label for="f-$aField.name">$aField.label</label>
+      <input type="^if(def $aType){$aType}{text}" name="$aField.name" id="f-$aField.name" value="^$${aOptions.argName}.$aField.name" class="" placeholder="" />
+    </div>]
+
+@textareaWidget[aField;aOptions]
+  $result[
+    <div class="field">
+      <label for="f-$aField.name">$aField.label</label>
+      <textarea name="$aField.name" id="f-$aField.name" rows="7" class="" placeholder="" />^$${aOptions.argName}.$aField.name</textarea>
+    </div>]
+
+@checkboxWidget[aField;aType;aOptions][locals]
+  $lVarName[^$${aOptions.argName}.$aField.name]
+  $aType[^if(def $aType){$aType}{checkbox}]
+  $result[
+    <div class="ui ^if($aType eq "radio"){radio }checkbox field">
+      <input type="$aType" name="$aField.name" id="f-${aField.name}1" value="1" ^^if($lVarName){checked="true"} />
+      <label for="f-$aField.name">$aField.label</label>
+    </div>]
+
+@selectWidget[aField;aOptions]
+  $result[
+    <div class="field">
+      <label for="f-$aField.name">$aField.label</label>
+      <select name="$aField.name" id="f-$aField.name" class="ui dropdown" placeholder="">
+        <option value=""></option>
+^#        <option value="" ^^if(^$${aOptions.argName}.$aField.name eq ""){selected="true"}></option>
+      </select>
+    </div>]
+
+@hiddenWidget[aField;aOptions]
+  $result[    <input type="hidden" name="$aField.name" value="^$${aOptions.argName}.$aField.name" />]
+
+@submitWidget[aOptions]
+  ^cleanMethodArgument[]
+  $result[^^antiFlood.field^[^]
+    <div class="ui hidden divider"></div>
+    <button type="submit" class="ui primary button">Сохранить</button>
+    или <a href="^^linkTo^[/^]" class="action">Ничего не менять</a>
+  ]
