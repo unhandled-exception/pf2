@@ -120,12 +120,11 @@ pfClass
   $lModule.mountTo[$lMountTo]
   $lModule.mountPoint[${_mountPoint}$lMountTo/]
 
-#  Перекрываем uriPrefix, который пришел к нам в $aOptions.args.
-#  Возможно и не самое удачное решение, но позволяет сохранить цепочку.
+# Перекрываем uriPrefix, который пришел к нам в $aOptions.args.
+# Возможно и не самое удачное решение, но позволяет сохранить цепочку.
   $lModule.args.mountPoint[$lModule.mountPoint]
-  ^if(!def $lModule.args.templatePrefix){
-    $lModule.args.templatePrefix[${_mountPoint}$aName/]
-  }
+  $lModule.args.templatePrefix[^ifdef[$lModule.args.templatePrefix]{${_mountPoint}$aName/}]
+  $lModule.args.parentModule[^ifdef[$lModule.args.parentModule]{$self}]
 
 @dispatch[aAction;aRequest;aOptions][lProcessed]
 ## Производим обработку экшна
