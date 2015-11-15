@@ -130,17 +130,17 @@ pfClass
   $result[
   ^@CLASS
   ${_tableName}
-  # Table ^if(def $_schema){`$_schema`.}`$_tableName`
 
   ^@USE
-  pf2/sql/models/sql_table.p
+  pf2/sql/models/structs.p
 
   ^@BASE
-  pfSQLTable
+  pfModelTable
 
-  ^@create^[aTableName^;aOptions^]
-    ^^BASE:create^[^$aTableName^;^^hash::create^[^$aOptions^]
-  #    ^$.tableAlias^[^]
+  ^@create^[aOptions^]
+    ^$aOptions[^^hash::create^[^$aOptions^]]
+    ^^BASE:create^[^$aOptions^if(def $_schema){^#0A      ^$.schema[$_schema]}
+      ^$.tableName[$_tableName]
   #    ^$.allAsTable(true)
     ^]
 
