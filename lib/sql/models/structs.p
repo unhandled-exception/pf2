@@ -61,7 +61,7 @@ pfModelChainMixin
 @BASE
 pfChainMixin
 
-@__init__[aThis;aOptions]
+@__init__[aThis;aOptions][locals]
 ## aOptions.core
 ## aOptions.sql
 ## aOptions.schema

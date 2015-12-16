@@ -29,24 +29,15 @@ pfAuthBase
 pfClass
 
 @create[aOptions]
-## aOptions.storage - объект-хранилище данных аутентификации
+## aOptions.storage - хранилище данных аутентификации
 ## aOptions.security - объект, реализующий контроль доступа
 ## aOptions.formPrefix[auth.] - префикс для переменных форм и кук.
   ^cleanMethodArgument[]
 
-  ^if(def $aOptions.storage){
-    $_storage[$aOptions.storage]
-  }{
-     $_storage[^pfAuthStorage::create[]]
-   }
+  $_storage[^ifdef[$aOptions.storage]{^pfAuthStorage::create[]}]
+  $_security[^ifdef[$aOptions.security]{^pfAuthSecurity::create[]}]
 
-  ^if(def $aOptions.security){
-    $_security[$aOptions.security]
-  }{
-     $_security[^pfAuthSecurity::create[]]
-   }
-
-  ^if(def $aOptions.formPrefix){$_formPrefix[$aOptions.formPrefix]}{$_formPrefix[auth.]}
+  $_formPrefix[^ifdef[$aOptions.formPrefix]{auth.}]
 
   $_isUserLogin(false)
   $_user[^hash::create[]]
@@ -552,8 +543,8 @@ pfAuthStorage
 ## Добавляем сессию в хранилище
   ^CSQL.void{insert into $_sessionsTable (uid, sid, login, dt_access, dt_create, is_persistent, ip)
              values ("$aSession.uid", "$aSession.sid", "$aSession.login",
-                      ^if(def $aSession.dt_access){"$aSession.dt_create"}{^CSQL.now[]},
-                      ^if(def $aSession.dt_login){"$aSession.dt_login"}{^CSQL.now[]},
+                      ^if(def $aSession.dt_access){"$aSession.dt_create"}{"^_now.sql-string[]"},
+                      ^if(def $aSession.dt_login){"$aSession.dt_login"}{"^_now.sql-string[]"},
                       ^if(def $aSession.is_persistent && $aSession.is_persistent){"1"}{"0"},
                       inet_aton("$env:REMOTE_ADDR")
                      )
@@ -566,7 +557,7 @@ pfAuthStorage
                 set uid = "$aNewSession.uid",
                     sid = "$aNewSession.sid",
                     ^if(def $aNewSession.is_persistent){is_persistent = "$aNewSession.is_persistent",}
-                    dt_access = ^if(def $aNewSession.dt_access){"$aNewSession.dt_access"}{^CSQL.now[]}
+                    dt_access = ^if(def $aNewSession.dt_access){"$aNewSession.dt_access"}{"^_now.sql-string[]"}
               where uid = "$aSession.uid"
                     and sid = "$aSession.sid"
   }
@@ -576,7 +567,7 @@ pfAuthStorage
 ## Удалить сессию из хранилища
   ^CSQL.void{update $_sessionsTable
              set is_active = "0",
-                 dt_close = ^CSQL.now[]
+                 dt_close = "^_now.sql-string[]"
            where uid = "$aSession.uid"
                  and sid = "$aSession.sid"
   }
@@ -635,7 +626,7 @@ pfAuthStorage
       insert into $_usersTable (^_extraFields.foreach[k;v]{^if(^aOptions.contains[$k]){`^if(def $v){$v}{$k}`, }} login, password, is_active)
       values (^_extraFields.foreach[k;v]{^if(^aOptions.contains[$k]){"$aOptions.[$k]", }} "^taint[$aOptions.login]", "^taint[^passwordHash[$aOptions.password]]", "^aOptions.isActive.int(1)")
     }
-    $result[^CSQL.lastInsertId[]]
+    $result[^CSQL.lastInsertID[]]
   }{
      ^throw[pfAuth.user.exists;Пользователь "$aOptions.login" уже есть в системе.]
    }
@@ -867,7 +858,7 @@ pfAuthDBStorage
   ^cleanMethodArgument[]
   $lUserID[^aUserID.int(0)]
   ^if($lUserID){
-    ^CSQL.naturalTransaction{
+    ^CSQL.transaction{
       ^CSQL.void{delete from $_rolesToUsersTable where user_id = "$lUserID"}
       ^if($aRoles){
         ^CSQL.void{
@@ -915,7 +906,7 @@ pfAuthDBStorage
       "^aOptions.sortOrder.int(0)"
     )
   }
-  $result[^CSQL.lastInsertId[]]
+  $result[^CSQL.lastInsertID[]]
 
 @roleModify[aRoleID;aOptions][k;v]
 ## Изменяет данные роли
@@ -945,7 +936,7 @@ pfAuthDBStorage
 ## Удаляет роль и все привязки к пользователям
   $result[]
   ^if($aRoleID){
-    ^CSQL.naturalTransaction{
+    ^CSQL.transaction{
       ^CSQL.void{delete from $_rolesToUsersTable where role_id = "^aRoleID.int(-1)"}
       ^CSQL.void{delete from $_rolesTable where role_id = "^aRoleID.int(-1)"}
     }

@@ -6,10 +6,10 @@ pf2/lib/net/curl_file.p
 @main[][locals]
   Тест для net/curl_file.p@pfCurlFile:
 
-  $lURL[https://google.com]
+  $lURL[https://www.yandex.ru]
   $f[^pfCurlFile::load[text;$lURL]]
   $lURL is loaded. Status — ${f.status}. Body is starting from:
-  ^f.body.left(100)
+  ^f.text.left(100)
 
 
   Finish tests.^#0A

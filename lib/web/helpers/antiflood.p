@@ -216,7 +216,6 @@ pfAntiFloodStorage
 ## aOptions.autoCleanup(true) - автоматически очищать неиспользуемые пары
   ^cleanMethodArgument[]
   ^pfAssert:isTrue(def $aOptions.sql)[Не задан sql-класс.]
-  ^pfAssert:isTrue($aOptions.sql is pfSQL)[SQL-класс должен быть наследником pfSQL.]
   ^pfAssert:isTrue(def $aOptions.password)[Не задан пароль для шифрования токена.]
 
   ^BASE:create[$aOptions]
@@ -244,7 +243,7 @@ pfAntiFloodStorage
        insert into $_tableName (salt)
             values (0x$lSalt)
     }
-    $lID[^CSQL.lastInsertId[]]
+    $lID[^CSQL.lastInsertID[]]
   }
   $result[^_packTocken[$lID;$lSalt]]
 
@@ -253,7 +252,7 @@ pfAntiFloodStorage
   $result(false)
   $lToken[^_unpackToken[^aToken.trim[both]]]
   ^if($lToken){
-    ^CSQL.naturalTransaction{
+    ^CSQL.transaction{
       $lNow[^date::now[]]
       $lID[^CSQL.string{
         select id
@@ -267,7 +266,7 @@ pfAntiFloodStorage
       }[$.default{}][$.isForce(true)]]
       ^if(def $lID){
         $result(true)
-        ^CSQL.void{update $_tableName set processed_at = ^CSQL.now[] where id ="$lID"}
+        ^CSQL.void{update $_tableName set processed_at = "^_now.sql-string[]" where id ="$lID"}
       }
     }
   }

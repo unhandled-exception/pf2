@@ -28,6 +28,7 @@ pfConsoleCommandWithSubcommands
   $_formWidgets[
     $.bootstrap2[pfTableFormGeneratorBootstrap2Widgets]
     $.bootstrap3[pfTableFormGeneratorBootstrap3Widgets]
+    $.semantic[pfTableFormGeneratorSemanticUIWidgets]
   ]
   $_defaultFormWidget[^if(def $aOptions.formWidgets){$aOptions.formWidgets}{bootstrap3}]
   ^pfAssert:isTrue(^_formWidgets.contains[$_defaultFormWidget]){"$_defaultFormWidget" is an unknown form widgets type.}
@@ -45,7 +46,9 @@ pfConsoleCommandWithSubcommands
     ^if(def $lParts.1){
       $lSchema[$lParts.0]
       $lTableName[$lParts.1]
-    }
+    }{
+       $lTableName[$lParts.0]
+     }
     $lGenerator[^pfTableModelGenerator::create[$lTableName;$.sql[$CSQL] $.schema[$lSchema]]]
     ^print[^lGenerator.generate[]]
   }{

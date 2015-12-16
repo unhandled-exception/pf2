@@ -113,7 +113,6 @@ pfClass
 
 @multiAssign[aVars][k;v]
 ## Добавляет сразу несколько переменных в шаблон.
-  ^pfAssert:isTrue($aVars.foreach is junction)[aVars не поддерживает foreach.]
   ^aVars.foreach[k;v]{
     ^assign[$k;$v]
   }
