@@ -138,8 +138,7 @@ pfClass
   pfModelTable
 
   ^@create^[aOptions^]
-    ^$aOptions[^^hash::create^[^$aOptions^]]
-    ^^BASE:create^[^$aOptions^if(def $_schema){^#0A      ^$.schema[$_schema]}
+    ^^BASE:create^[^^hash::create^[^$aOptions^]^if(def $_schema){^#0A      ^$.schema[$_schema]}
       ^$.tableName[$_tableName]
   #    ^$.allAsTable(true)
     ^]
@@ -156,7 +155,7 @@ $result[
     ^]
 
   ^if(def $_primary){
-    ^$_defaultOrderBy^[^$.${_primary}[asc]]
+    ^$self._defaultOrderBy^[^$.${_primary}[asc]]
   }
 
   ^if(^_fields.contains[isActive] && def $_primary){

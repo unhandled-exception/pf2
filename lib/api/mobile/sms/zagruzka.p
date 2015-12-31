@@ -34,7 +34,7 @@ pfClass
 @send[aPhone;aMessage;aOptions][lResp]
 ## aPhone - номер телефона (для России номер должен быть в формате 7xxxxxxxxxx)
 ## aMessage
-## result[$.status[bool] $.smsID[table] $.comment[]] - результат операции
+## result[$.status[bool] $.smsID[table] $.comment[] <$.badPhone(bool)>] - результат операции
   ^cleanMethodArgument[]
   ^pfAssert:isTrue(def $aMessage)[Не задан текст сообщения.]
   ^pfAssert:isTrue(def $aPhone)[Не задан получатель сообщения.]
@@ -53,7 +53,7 @@ pfClass
         $.serviceId[$_serviceID]
         $.pass[$_password]
         ^if(def $_shortNumber){
-          $.shortNumber[$_shortNumber]
+          $.source[$_shortNumber]
         }
       ]
     ]]
