@@ -61,6 +61,7 @@ find . -name "*.p" | sort | xargs grep "^@CLASS" -A 1 -H | awk '$0 !~ /(--|@CLAS
 * pfTableFormGenerator
 * pfTableFormGeneratorBootstrap2Widgets
 * pfTableFormGeneratorBootstrap3Widgets
+* pfTableFormGeneratorSemanticUIWidgets
 
 ### ./sql/models/generators/sql_table_generators.p
 * pfTableModelGenerator
@@ -96,6 +97,23 @@ find . -name "*.p" | sort | xargs grep "^@CLASS" -A 1 -H | awk '$0 !~ /(--|@CLAS
 * pfAuthDBRolesStorage
 * pfAuthDBRolesSecurity
 
+### ./web/controllers.p
+* pfModule
+* pfRouter
+* pfHTTPRequest
+* pfHTTPResponse
+* pfHTTPResponseRedirect
+* pfHTTPResponsePermanentRedirect
+* pfHTTPResponseNotFound
+* pfHTTPResponseBadRequest
+* pfHTTPResponseNotModified
+* pfHTTPResponseNotAllowed
+* pfHTTPResponseForbidden
+* pfHTTPResponseGone
+* pfHTTPResponseServerError
+* pfSiteModule
+* pfSiteApp
+
 ### ./web/helpers/antiflood.p
 * pfAntiFlood
 * pfAntiFloodStorage
@@ -117,22 +135,3 @@ find . -name "*.p" | sort | xargs grep "^@CLASS" -A 1 -H | awk '$0 !~ /(--|@CLAS
 * pfTemplateEngine
 * pfTemplateParserEngine
 * pfTemplateParserPattern
-
-### ./web/web.p
-* pfModule
-* pfRouter
-* pfHTTPRequest
-* pfHTTPRequestMeta
-* pfHTTPRequestHeaders
-* pfHTTPResponse
-* pfHTTPResponseRedirect
-* pfHTTPResponsePermanentRedirect
-* pfHTTPResponseNotFound
-* pfHTTPResponseBadRequest
-* pfHTTPResponseNotModified
-* pfHTTPResponseNotAllowed
-* pfHTTPResponseForbidden
-* pfHTTPResponseGone
-* pfHTTPResponseServerError
-* pfSiteModule
-* pfSiteApp

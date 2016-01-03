@@ -15,6 +15,8 @@ pfClass
 ## aOptions.templateFolder - путь к базовому каталогу с шаблонами
 ## aOptions.force(false) - принудительно отменяет кеширование в стораджах и пр. местах
 ## aOptions.defaultEnginePattern[(?:pt|htm|html)^$] - шаблон для дефолтного энжина
+## aOptions.defaultEngineOptions[] — опции, которые надо передать дефолтному энжину
+## Дефолтный энжин — parser
   ^cleanMethodArgument[]
   ^BASE:create[$aOptions]
 
@@ -25,12 +27,12 @@ pfClass
   $_force($aOptions.force)
 
   $_storages[^hash::create[]]
-  ^registerStorage[file;pfTemplateStorage;$.force($_isForce)]
+  ^registerStorage[file;pfTemplateStorage;$.force($_force)]
   $_defaultStorage[file]
 
   $_engines[^hash::create[]]
   $_defaultEnginePattern[^if(def $aOptions.defaultEnginePattern){$aOptions.defaultEnginePattern}{(?:pt|htm|html)^$}]
-  ^registerEngine[parser;;pfTemplateParserEngine]
+  ^registerEngine[parser;;pfTemplateParserEngine;$.options[$aOptions.defaultEngineOptions]]
   $_defaultEngine[parser]
 
   $_globalVars[^hash::create[]]
@@ -69,14 +71,14 @@ pfClass
 
 @registerStorage[aStorageName;aClassName;aOptions]
 ## aOptions.file - имя файла с классом
-## aOptions.args - переменные, которые надо передать конструктору стораджа
+## aOptions.options - переменные, которые надо передать конструктору стораджа
   ^cleanMethodArgument[]
   ^pfAssert:isTrue(def $aStorageName)[Не задано имя стораджа.]
   ^pfAssert:isTrue(def $aClassName)[Не задано имя класса стораджа.]
   $_storages.[$aStorageName][
     $.className[$aClassName]
     $.file[$aOptions.file]
-    $.args[$aOptions.args]
+    $.options[$aOptions.options]
     $.object[]
   ]
   $result[]
@@ -84,7 +86,7 @@ pfClass
 @registerEngine[aEngineName;aPattern;aClassName;aOptions]
 ## aPattern[] - регулярное выражение для определения типа движка по имени шаблона, если не задано, то опеределяем движок
 ## aOptions.file - имя файла с классом
-## aOptions.args - переменные, которые надо передать конструктору энжина
+## aOptions.options - переменные, которые надо передать конструктору энжина
   ^cleanMethodArgument[]
   ^pfAssert:isTrue(def $aEngineName)[Не задано имя энжина.]
   ^pfAssert:isTrue(def $aClassName)[Не задано имя класса энжина.]
@@ -92,7 +94,7 @@ pfClass
     $.pattern[^if(def $aPattern){$aPattern}]
     $.className[$aClassName]
     $.file[$aOptions.file]
-    $.args[$aOptions.args]
+    $.options[$aOptions.options]
     $.object[]
   ]
   $result[]
@@ -142,7 +144,7 @@ pfClass
       ^if(def $lStorage.file){
         ^use[$lStorage.file]
       }
-      $lStorage.object[^reflection:create[$lStorage.className;create;$self;$lStorage.args]]
+      $lStorage.object[^reflection:create[$lStorage.className;create;$self;$lStorage.options]]
     }
     $result[$lStorage.object]
   }{
@@ -156,7 +158,7 @@ pfClass
       ^if(def $lEngine.file){
         ^use[$lEngine.file]
       }
-      $lEngine.object[^reflection:create[$lEngine.className;create;$self;$lEngine.args]]
+      $lEngine.object[^reflection:create[$lEngine.className;create;$self;$lEngine.options]]
     }
     $result[$lEngine.object]
   }{
@@ -287,8 +289,10 @@ pfTemplateEngine
 
 @create[aTemplate;aOptions]
 ## aTemplate - ссылка на объект темпла, которому принадлежит энжин
+## aOptions.locals(false) — включить options locals в классе-обертке шаблона
   ^cleanMethodArgument[]
   ^BASE:create[$aTemplate;$aOptions]
+  $self._locals(^aOptions.locals.bool(false))
 
 @render[aTemplate;aOptions][lPattern]
 ## aTemplate[$.body $.path]
@@ -325,6 +329,10 @@ $result[]
 ^process{
 ^@CLASS
 $aClassName
+^if($_locals){
+^@OPTIONS
+locals
+}
 ^@BASE
 ^if(def $aBaseName){$aBaseName}{pfTemplateParserPattern}
 ^@__create__[]
