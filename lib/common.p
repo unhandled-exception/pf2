@@ -181,6 +181,7 @@ pfMixin
     ^_parseClassDef[$aClassDef]
     $.object[]
     $.args[$aArgs]
+    $.name[$aName]
   ]
 
   ^process[$this]{@GET_${aName}[]

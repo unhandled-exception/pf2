@@ -59,7 +59,7 @@ pfClass
 @SET_defaultEnginePattern[aName]
   $_defaultEnginePattern[$aName]
 
-@GET_VARS[]
+@GET_vars[]
   $result[$_globalVars]
 
 @appendPath[aPath]
@@ -191,7 +191,7 @@ pfClass
     $lProtocol[$defaultStorage]
   }
   ^if(!def $lProtocol){
-    ^throw[templet.runtime;Storage "$lProtocol" not found.]
+    ^throw[template.runtime;Storage "$lProtocol" not found.]
   }
   $result[$.protocol[$lProtocol] $.path[$lPath]]
 
@@ -209,7 +209,7 @@ pfClass
   ^cleanMethodArgument[]
   ^pfAssert:isTrue(def $aTemplate)[Не задан объект Темпла.]
 
-  $_temple[$aTemplate]
+  $_template[$aTemplate]
   $_isForce($aOptions.force)
   $_cache[^hash::create[]]
 
@@ -225,9 +225,9 @@ pfClass
 # Ищем файл
   $lPath[^if(def $aOptions.base && -f "$aOptions.base/$aTemplateName"){$aOptions.base/$aTemplateName}]
   ^if(!def $lPath){
-    $c($_temple.templatePath)
+    $c($_template.templatePath)
     ^for[i](1;$c){
-      $v[$_temple.templatePath.[^eval($c - $i)]]
+      $v[$_template.templatePath.[^eval($c - $i)]]
       ^if(-f "$v/$aTemplateName"){
         $lPath[$v/$aTemplateName]
         ^break[]
@@ -248,6 +248,7 @@ pfClass
        }
      }
   }{
+    ^pfAssert:fail[$_template.templatePath]
      ^throw[template.not.found;Шаблон "$aTemplateName" не найден.]
    }
 
@@ -266,10 +267,10 @@ pfClass
 @create[aTemplate;aOptions]
 ## aTemplate - ссылка на объект темпла, которому принадлежит энжин
   ^pfAssert:isTrue($aTemplate is pfTemplate)[Не передан объект pfTemplate.]
-  $_temple[$aTemplate]
+  $_template[$aTemplate]
 
-@GET_TEMPLE[]
-  $result[$_temple]
+@GET_template[]
+  $result[$_template]
 
 @render[aTemplate;aOptions]
 ## aTemplate[$.body $.path]
@@ -300,8 +301,8 @@ pfTemplateEngine
   ^cleanMethodArgument[]
   $lClassName[^_compileToPattern[$aTemplate]]
 
-  $lPattern[^reflection:create[$lClassName;create;$.temple[$TEMPLE] $.file[$aTemplate.path]]]
-  $result[^lPattern.__process__[$.global[$TEMPLE.VARS] $.local[$aOptions.vars]]]
+  $lPattern[^reflection:create[$lClassName;create;$.template[$template] $.file[$aTemplate.path]]]
+  $result[^lPattern.__process__[$.global[$template.vars] $.local[$aOptions.vars]]]
 
 @_compileToPattern[aTemplate;aBaseName][lBases;lClass;lParent;lTemplateName]
   $result[^_buildClassName[$aTemplate.path]]
@@ -312,7 +313,7 @@ pfTemplateEngine
   ^if($lBases){
     $lTemplateName[^lBases.1.trim[both; ]]
     ^if($lTemplateName eq ^file:basename[$aTemplate.path]){^throw[template.base.fail;Шаблон "$aTemplate.path" не может быть собственным предком.]}
-    $lParent[^_compileToPattern[^TEMPLE.loadTemplate[$lTemplateName;$.base[^file:dirname[$aTemplate.path]]];$lParent]]
+    $lParent[^_compileToPattern[^template.loadTemplate[$lTemplateName;$.base[^file:dirname[$aTemplate.path]]];$lParent]]
   }
 
 # Компилируем текущий шаблон
@@ -356,7 +357,7 @@ locals
   ^lImports.menu{
     $lImportName[^lImports.1.trim[both; ]]
     ^if($lImportName eq $lTemplateName){^throw[temlate.import.fail;Нельзя импортировать шаблон "$aTemplate.path" самого в себя.]}
-    $lTempl[^TEMPLE.loadTemplate[$lImportName;$.base[$lBase]]]
+    $lTempl[^template.loadTemplate[$lImportName;$.base[$lBase]]]
 
     ^applyImports[$lTempl;$lClass]
   }
@@ -372,9 +373,10 @@ pfTemplateParserPattern
 pfClass
 
 @create[aOptions]
+## aOptions.template
 ## aOptions.file
   ^if(!def $aOptions){$aOptions[^hash::create[]]}
-  $__temple[$aOptions.temple]
+  $__TEMPLATE[$aOptions.template]
   $__FILE[$aOptions.file]
   $__GLOBAL[]
   $__LOCAL[]
@@ -388,8 +390,8 @@ pfClass
 @GET___LOCAL__[]
   $result[$__LOCAL]
 
-@GET_TEMPLET[]
-  $result[$__temple]
+@GET_TEMPLATE[]
+  $result[$__template]
 
 @__process__[aOptions]
 ## aOptions.global
@@ -410,13 +412,13 @@ pfClass
   ^pfRuntime:compact[]
 
 @include[aTemplateName;aOptions]
-  $result[^__temple.render[$aTemplateName;$aOptions]]
+  $result[^__TEMPLATE.render[$aTemplateName;$aOptions]]
 
 @import[aTemplateName][locals]
   $result[]
-  $lTempl[^__temple.loadTemplate[$aTemplateName;^if(def $__FILE){$.base[^file:dirname[$__FILE]]}]]
-  $lEngine[^__temple.findEngine[$aTemplateName]]
+  $lTemplate[^__TEMPLATE.loadTemplate[$aTemplateName;^if(def $__FILE){$.base[^file:dirname[$__FILE]]}]]
+  $lEngine[^__TEMPLATE.findEngine[$aTemplateName]]
   ^if(def $lEngine){
-    ^lEngine.applyImports[$lTempl;$CLASS]
+    ^lEngine.applyImports[$lTemplate;$CLASS]
   }
-  ^process[$CLASS]{^taint[as-is][$lTempl.body]}[$.main[__main__] $.file[$lTempl.path]]
+  ^process[$CLASS]{^taint[as-is][$lTemplate.body]}[$.main[__main__] $.file[$lTemplate.path]]
