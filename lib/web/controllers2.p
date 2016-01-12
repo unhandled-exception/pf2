@@ -62,7 +62,8 @@ locals
     $self.router[^pfRouter::create[]]
   }
 
-  $self.isManager(false)
+# Контролер становится рутовым, если вызвали метод run.
+  $self.asRoot(false)
 
 @auto[]
   $self.__pfController__[
@@ -92,13 +93,12 @@ locals
 
 @run[aRequest;aOptions] -> []
 ## Запускает процесс. Если вызван метод run, то модуль становится «менеджером».
-## aOptions.actionField[_action]
+## aOptions.actionFieldName[_action]
   ^cleanMethodArgument[]
   $result[]
   $aRequest[^ifdef[$aRequest]{^pfRequest::create[]}]
-  $lActionField[^ifdef[$aOptions.actionField]{_action}]
-  $self.isManager(true)
-
+  $lActionField[^ifdef[$aOptions.actionFieldName]{_action}]
+  $self.asRoot(true)
   $lResponse[^self.dispatch[$aRequest.[$lActionField];$aRequest]]
   ^lResponse.apply[]
 
@@ -120,7 +120,7 @@ locals
 
 @hasModule[aName]
 ## Проверяет есть ли у нас модуль с имененм aName
-  $result(^MODULES.contains[$aName])
+  $result(^self.MODULES.contains[$aName])
 
 @hasAction[aAction][lHandler]
 ## Проверяем есть ли в модуле обработчик aAction
@@ -201,9 +201,7 @@ locals
        ]]
      }
   }{
-#   Если модуля нет, то пытаемся найти и запустить экш из нашего модуля
-#   Если не получится, то зовем onDEFAULT, а если и это не получится,
-#   то выбрасываем эксепшн.
+#    Если модуля нет, то пытаемся найти и запустить экш из нашего модуля
      $lHandler[^self._findHandler[$lAction;$lRequest]]
      ^if(def $lHandler){
        $result[^self.[$lHandler][$lRequest]]
@@ -221,9 +219,6 @@ locals
     ^case[http.404]{
       ^if($self.onNOTFOUND is junction){
         $result[^onNOTFOUND[$aRequest]]
-        $lProcessed(true)
-      }($self.onDEFAULT is junction){
-        $result[^onDEFAULT[$aRequest]]
         $lProcessed(true)
       }
     }
@@ -299,7 +294,22 @@ locals
   }(^MODULES.contains[$aAction]){
     $result[^_makeLinkURI[$MODULES.[$aAction].mountTo;$aOptions.fields;$aAnchor]]
   }{
-     $result[^_makeLinkURI[$aAction;$aOptions.fields;$aAnchor]]
+    $result[^_makeLinkURI[$aAction;$aOptions.fields;$aAnchor]]
+   }
+
+@linkFor[aAction;aObject;aOptions][locals]
+## Формирует ссылку на объект.
+## aObject[<hash>]
+## aOptions.form — поля, которые надо добавить к объекту/маршруту
+## aOptions.anchor — «якорь»
+  ^cleanMethodArgument[]
+  $lReverse[^router.reverse[$aAction;$aObject;$.form[$aOptions.form] $.onlyPatternVars(true)]]
+  ^if($lReverse){
+    $result[^_makeLinkURI[$lReverse.path;$lReverse.args;$aOptions.anchor;$lReverse.reversePrefix]]
+  }(^MODULES.contains[$aAction]){
+    $result[^_makeLinkURI[$MODULES.[$aAction].mountTo;$aOptions.form;$aAnchor]]
+  }{
+    $result[^_makeLinkURI[$aAction;$aOptions.form;$aAnchor]]
    }
 
 @redirect[aURL;aStatus]
@@ -308,12 +318,8 @@ locals
 @redirectTo[aAction;aOptions;aAnchor]
   ^self.abort(302)[^self.linkTo[$aAction;$aOptions;$aAnchor]]
 
-@linkFor[aAction;aObject;aOptions][locals]
-## Формирует ссылку на объект
-  $result[]
-
 @redirectFor[aAction;aObject;aOptions]
-  ^self.abort[http.302;^self.linkTo[$aAction;$aOptions;$aAnchor]]
+  ^self.abort[http.302;^self.linkFor[$aAction;$aOptions;$aAnchor]]
 
 @assignVar[aName;aValue]
   $result[]
@@ -326,15 +332,15 @@ locals
     $self._templateVars.[$k][$v]
   }
 
-#@onDEFAULT[aRequest] -> [response]
-#@postDEFAULT[aResponse] -> [response]
-
 #@onINDEX[aRequest] -> [response] или ^router.root[$index]
 #@onAction[aRequest] -> [response] или ^router.assign[action;$actionHandler;$.strict(true)]
-
 #@onNOTFOUND[aRequest] -> [response]
+
+#@postDEFAULT[aResponse] -> [response]
 #@postHTML[aResponse] -> [response]
 
+@onINDEX[aRequest]
+  ^throw[${_exceptionPrefix}.index.not.implemented;An onINDEX method is not implemented in the ${self.CLASS_NAME} class.]
 
 #----- Private -----
 
@@ -393,10 +399,6 @@ locals
     $lActionName[^_makeActionName[$aAction]]
     ^if(def $lActionName && $self.[${lActionName}$lMethod] is junction){$result[${lActionName}$lMethod]}
   }
-
-# Если не определен onDEFAULT, то зовем onNOTFOUND.
-  ^if(!def $result && $onNOTFOUND is junction){$result[onNOTFOUND]}
-
 
 #--------------------------------------------------------------------------------------------------
 
@@ -825,29 +827,3 @@ pfClass
   ^cleanMethodArgument[aVars]
   ^cleanMethodArgument[aArgs]
   $result[^if(def $aPath){^aPath.match[$_pfRouterPatternRegex][]{^if(^aVars.contains[$match.2]){$aVars.[$match.2]}{^if(^aArgs.contains[$match.2] || $match.1 eq "*"){$aArgs.[$match.2]}}}}]
-
-#--------------------------------------------------------------------------------------------------
-
-@CLASS
-pfMiddleware
-
-@BASE
-pfClass
-
-@OPTIONS
-locals
-
-@create[aOptions]
-
-@processRequest[aRequest;aController;aProcessOptions] -> [response|null]
-# если ничего не возвращает, то продолжаем обработку, если возвращает pfHTTPResponse, то прерываем обработку и не зовем дургие middleware.
-
-@processAction[aRequest;aFunction;aController;aProcessOptions] -> [response|null]
-# если ничего не возвращает, то продолжаем обработку, если возвращает, то продолжаем до вызова view
-
-@processExceptions[aRequest;aException;aController;aProcessOptions] -> [response|null]
-# если возвращает response, то прокидываем его дальше, если нет, то протягиваем exception дальше по мидлваре и если его никто не обработает выбрасываем заново
-
-@processResponse[aRequest;aResponse;aController;aProcessOptions] -> [response|null]
-# должен вернуть response-объект, который пойдет дальше.
-
