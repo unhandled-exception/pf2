@@ -283,12 +283,12 @@ pfAntiFloodStorage
   }
 
 @_packTocken[aID;aSalt]
-  $result[^CSQL.string{select lower(hex(aes_encrypt('^taint[$aID|$aSalt]', '$_password')))}]
+  $result[^CSQL.string{select lower(hex(aes_encrypt('^taint[$aID|$aSalt]', '$_password')))}[][$.log[-- Encrypt an antiflood token.]]]
 
 @_unpackToken[aToken][lString]
 ## result[$.id $.salt]
   $result[^hash::create[]]
-  $lString[^CSQL.string{select aes_decrypt(unhex('^taint[$aToken]'), '$_password')}]
+  $lString[^CSQL.string{select aes_decrypt(unhex('^taint[$aToken]'), '$_password')}[][$.log[-- Decrypt an antiflood token.]]]
   ^lString.match[^^(\d+)\|([a-f0-9]{16})^$][]{
     $result.id[$match.1]
     $result.salt[$match.2]

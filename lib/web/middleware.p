@@ -81,7 +81,7 @@ locals
   }
 
 @_parseSession[aData] -> [hash]
-  $aData[^self._cryptoProvider.decrypt[$aData]]
+  $aData[^self._cryptoProvider.decrypt[$aData;$.log[-- Decrypt a session data.]]]
   $aData[^self._validateSessionAndReturnData[$aData]]
   ^if(def $aData){
     ^try{
@@ -99,7 +99,7 @@ locals
 @_serializeSession[aData] -> [string]
   $result[^json:string[$aData]]
   $result[^self._signSession[$result]]
-  $result[^self._cryptoProvider.encrypt[$result]]
+  $result[^self._cryptoProvider.encrypt[$result;$.log[-- Encrypt a session data.]]]
 
 @_signSession[aData]
 ## Подписывает сессию

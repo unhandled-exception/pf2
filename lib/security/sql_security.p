@@ -40,17 +40,17 @@ pfClass
 @GET_CSQL[]
   $result[$_sql]
 
-@encrypt[aString]
+@encrypt[aString;aOptions]
 ## Шифрует строку и сериализует её.
   $result[^CSQL.string{
     select sql_no_cache ${_funcs.serialize}(${_funcs.encrypt}("^taint[$aString]", "^taint[$_cryptKey]"))
-  }]
+  }[][$.log[^ifdef[$aOptions.log]{-- Encrypt string: "$aString".}]]]
 
-@decrypt[aString]
+@decrypt[aString;aOptions]
 ## Расшифровывает строку, закодированную методом encrypt.
   $result[^CSQL.string{
     select sql_no_cache ${_funcs.decrypt}(${_funcs.unserialize}("^taint[$aString]"), "^taint[$_cryptKey]")
-  }]
+  }[][$.log[^ifdef[$aOptions.log]{-- Decrypt string: "$aString".}]]]
 
 @makeToken[aTokenData;aOptions][locals]
 ## Формирует токен из данных и подписывает его.

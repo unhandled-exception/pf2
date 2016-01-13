@@ -124,6 +124,7 @@ pfClass
 @table[aQuery;aSQLOptions;aOptions][locals]
 ## aOptions.force — отключить кеширование в памяти
 ## aOptions.cacheKey — ключ для кешироапния. Если не задан, то вычисляется автоматически.
+## aOptions.log[] — запись, которую надо сделать в логе вместо текста запроса.
   $lQuery[$aQuery]
   $lOptions[^_getOptions[$lQuery;table;$aSQLOptions;$aOptions]]
   $result[^_processMemoryCache{^_sql[table]{^table::sql{$lQuery}[$aSQLOptions]}[$lOptions]}[$lOptions]]
@@ -131,6 +132,7 @@ pfClass
 @hash[aQuery;aSQLOptions;aOptions][locals]
 ## aOptions.force — отключить кеширование в памяти
 ## aOptions.cacheKey — ключ для кешироапния. Если не задан, то вычисляется автоматически.
+## aOptions.log[] — запись, которую надо сделать в логе вместо текста запроса.
   $lQuery[$aQuery]
   $lOptions[^_getOptions[$lQuery;hash;$aSQLOptions;$aOptions]]
   $result[^_processMemoryCache{^_sql[hash]{^hash::sql{$lQuery}[$aSQLOptions]}[$lOptions]}[$lOptions]]
@@ -138,6 +140,7 @@ pfClass
 @file[aQuery;aSQLOptions;aOptions][locals]
 ## aOptions.force — отключить кеширование в памяти
 ## aOptions.cacheKey — ключ для кешироапния. Если не задан, то вычисляется автоматически.
+## aOptions.log[] — запись, которую надо сделать в логе вместо текста запроса.
   $lQuery[$aQuery]
   $lOptions[^_getOptions[$lQuery;file;$aSQLOptions;$aOptions]]
   $result[^_processMemoryCache{^_sql[file]{^file::sql{$lQuery}[$aSQLOptions]}[$lOptions]}[$lOptions]]
@@ -145,6 +148,7 @@ pfClass
 @string[aQuery;aSQLOptions;aOptions][locals]
 ## aOptions.force — отключить кеширование в памяти
 ## aOptions.cacheKey — ключ для кешироапния. Если не задан, то вычисляется автоматически.
+## aOptions.log[] — запись, которую надо сделать в логе вместо текста запроса.
   $lQuery[$aQuery]
   $lOptions[^_getOptions[$lQuery;string;$aSQLOptions;$aOptions]]
   $result[^_processMemoryCache{^_sql[string]{^string:sql{$lQuery}[$aSQLOptions]}[$lOptions]}[$lOptions]]
@@ -152,6 +156,7 @@ pfClass
 @double[aQuery;aSQLOptions;aOptions][locals]
 ## aOptions.force — отключить кеширование в памяти
 ## aOptions.cacheKey — ключ для кешироапния. Если не задан, то вычисляется автоматически.
+## aOptions.log[] — запись, которую надо сделать в логе вместо текста запроса.
   $lQuery[$aQuery]
   $lOptions[^_getOptions[$lQuery;double;$aSQLOptions;$aOptions]]
   $result(^_processMemoryCache{^_sql[double]{^double:sql{$lQuery}[$aSQLOptions]}[$lOptions]}[$lOptions])
@@ -159,11 +164,13 @@ pfClass
 @int[aQuery;aSQLOptions;aOptions][locals]
 ## aOptions.force — отключить кеширование в памяти
 ## aOptions.cacheKey — ключ для кешироапния. Если не задан, то вычисляется автоматически.
+## aOptions.log[] — запись, которую надо сделать в логе вместо текста запроса.
   $lQuery[$aQuery]
   $lOptions[^_getOptions[$lQuery;int;$aSQLOptions;$aOptions]]
   $result(^_processMemoryCache{^_sql[int]{^int:sql{$lQuery}[$aSQLOptions]}[$lOptions]}[$lOptions])
 
 @void[aQuery;aSQLOptions;aOptions][locals]
+## aOptions.log[] — запись, которую надо сделать в логе вместо текста запроса.
   $lQuery[$aQuery]
   $lOptions[^_getOptions[$lQuery;int;$aSQLOptions;$aOptions]]
   $result[^_sql[void]{^void:sql{$lQuery}[$aSQLOptions]}[^hash::create[$lOptions]]]
@@ -245,7 +252,7 @@ pfClass
   ^if($_enableQueriesLog){
     $_stat.queries.[^_stat.queries._count[]][
       $.type[$aType]
-      $.query[^taint[$aOptions.query]]
+      $.query[^taint[^ifdef[$aOptions.log]{$aOptions.query}]]
       $.time($lEnd-$lStart)
       $.limit[$aOptions.limit]
       $.offset[$aOptions.offset]
