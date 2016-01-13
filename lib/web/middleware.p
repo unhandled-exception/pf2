@@ -3,6 +3,48 @@ pf2/lib/web/controllers2.p
 
 
 @CLASS
+pfCommonMiddleware
+
+## Стандартные дейтсвия: антикеширующие заголовки, редирект на страницу со слешем в конце и пр.
+
+## Пример мидлваре, которое умеет прерывать запросы не вызывая обработчик и постобработку.
+## Редиректы на канонический url лучше делать средставми веб-сервера, а не через Парсер. :)
+
+@BASE
+pfMiddleware
+
+@OPTIONS
+locals
+
+@create[aOptions]
+## aOptions.appendSlash(false) — сделать редирект на url со слешем в конце.
+## aOptions.disableHTTPCache(false) — выдать «антикеширующие заголовки».
+  ^cleanMethodArgument[]
+  $self._appendSlash(^aOptions.appendSlash.bool(false))
+  $self._disableHTTPCache(^aOptions.disableHTTPCache.bool(false))
+
+@processRequest[aAction;aRequest;aController;aProcessOptions] -> []
+  $result[]
+  ^if(!def $result && $_appendSlash){
+    ^if(^aRequest.PATH.right(1) ne "/"
+        && ($aRequest.method eq "get" || $aRequest.method eq "head")
+    ){
+       $lPos(^aRequest.URI.pos[?])
+       $lURL[$aRequest.PATH/^if($lPos >= 0){^aRequest.URI.mid($lPos)}]
+       $result[^pfResponseRedirect::create[^aRequest.absoluteURL[$lURL];301]]
+     }
+  }
+
+@processResponse[aAction;aRequest;aResponse;aController;aProcessOptions] -> [response]
+  $result[$aResponse]
+  ^if($self._disableHTTPCache){
+    $result.headers.cache-control[no-store, no-cache, must-revalidate, proxy-revalidate]
+    $result.headers.pragma[no-cache]
+  }
+
+#--------------------------------------------------------------------------------------------------
+
+@CLASS
 pfSessionMiddleware
 
 ## Добавляет в объект запроса объект сессии. Хранит данные в шифрованной куке.
@@ -141,6 +183,7 @@ locals
 @create[aOptions]
 ## aOptions.enable(false) — включить вывод отладочной информации в конце страницы.
 ## aOptions.sql — класс с sql-соединением
+  ^cleanMethodArgument[]
   $self._enabled(^aOptions.enable.bool(false))
   $self._sql[$aOptions.sql]
 

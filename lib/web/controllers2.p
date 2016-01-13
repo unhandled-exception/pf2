@@ -150,7 +150,7 @@ locals
 
   ^self.MIDDLEWARE.foreach[_;lMiddleware]{
     $result[^lMiddleware.processRequest[$aAction;$aRequest;$self;$aOptions]]
-    ^if(def $result){^break[]}
+    ^if(def $result){$lStop(true)^break[]}
   }
 
   ^if(!def $result){
@@ -549,7 +549,7 @@ pfRequest
     $result[$aDefaultValue]
   }
 
-@absoluteUrl[aLocation]
+@absoluteURL[aLocation]
 ## Возвращает полный url для запроса.
 ## aLocation — адрес страницы вместо URI.
   $aLocation[^pfClass:ifdef[$aLocation]{$URI}]
