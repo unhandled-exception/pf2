@@ -62,6 +62,8 @@ locals
     $self.router[^pfRouter::create[]]
   }
 
+  $self.MIDDLEWARE[^hash::create[]]
+
 # Контролер становится рутовым, если вызвали метод run.
   $self.asRoot(false)
 
@@ -93,13 +95,11 @@ locals
 
 @run[aRequest;aOptions] -> []
 ## Запускает процесс. Если вызван метод run, то модуль становится «менеджером».
-## aOptions.actionFieldName[_action]
   ^cleanMethodArgument[]
   $result[]
   $aRequest[^ifdef[$aRequest]{^pfRequest::create[]}]
-  $lActionField[^ifdef[$aOptions.actionFieldName]{_action}]
   $self.asRoot(true)
-  $lResponse[^self.dispatch[$aRequest.[$lActionField];$aRequest]]
+  $lResponse[^self.dispatch[$aRequest.ACTION;$aRequest]]
   ^lResponse.apply[]
 
 @assignModule[aName;aClassDef;aArgs] -> []
@@ -131,13 +131,32 @@ locals
 ## aObject[class def|middleware object] — определение класса или вызов конструктора
 ## aConstructorOptions
   $result[]
+  ^pfAssert:isTrue(def $aObject){A middleware object not defined.}
+  ^if($aObject is string){
+     $lMiddleware[^pfChainMixin:_parseClassDef[$aObject]]
+     ^if(def $lMiddleware.package){
+       ^use[$lMiddleware.package]
+     }
+     $lMiddleware[^reflection:create[$lMiddleware.className;$lMiddleware.constructor;$aConstructorOptions]]
+  }{
+     $lMiddleware[$aObject]
+   }
+  $self.MIDDLEWARE.[^eval($self.MIDDLEWARE + 1)][$lMiddleware]
 
 @dispatch[aAction;aRequest;aOptions] -> [response]
 ## aOptions.prefix
   $result[]
   $self.action[$aAction]
-  $lResult[^self.processRequest[$self.action;$aRequest;$aOptions]]
-  $result[^ifdef[$lResult.response]]
+
+  ^self.MIDDLEWARE.foreach[_;lMiddleware]{
+    $result[^lMiddleware.processRequest[$aAction;$aRequest;$self;$aOptions]]
+    ^if(def $result){^break[]}
+  }
+
+  ^if(!def $result){
+    $lResult[^self.processRequest[$self.action;$aRequest;$aOptions]]
+    $result[^ifdef[$lResult.response]]
+  }
 
   ^if(!def $result){
     $self.action[$lResult.action]
@@ -148,6 +167,11 @@ locals
     }{
        $result[^self.processException[$self.action;$self.request;$exception;$aOptions]]
      }
+    $lMiddlewareCount($self.MIDDLEWARE)
+    ^for[i](1;$lMiddlewareCount){
+      $lMiddleware[^self.MIDDLEWARE._at($lMiddlewareCount - $i)]
+      $result[^lMiddleware.processResponse[$self.action;$self.request;$result;$self;$aOptions]]
+    }
   }
 
 @processRequest[aAction;aRequest;aOptions] -> [$.action[] $.request[] $.prefix[] $.response[]]
@@ -158,7 +182,12 @@ locals
   ^if($lRewrite.args){
     ^aRequest.assign[$lRewrite.args]
   }
-  $result[$.action[$aAction] $.request[$aRequest] $.prefix[$lRewrite.prefix] $.render[$lRewrite.render]]
+  $result[
+    $.action[$aAction]
+    $.request[$aRequest]
+    $.prefix[$lRewrite.prefix]
+    $.render[$lRewrite.render]
+  ]
 
 @rewriteAction[aAction;aRequest;aOptions]
 ## Вызывается каждый раз перед диспатчем - внутренний аналог mod_rewrite.
@@ -412,17 +441,17 @@ pfRequest
   $ifdef[$pfClass:ifdef]
   $__CONTEXT__[^hash::create[]]
 
-  $fields[^ifdef[$aOptions.fields]{$form:fields}]
+  $form[^ifdef[$aOptions.form]{$form:fields}]
   $tables[^ifdef[$aOptions.tables]{$form:tables}]
   $files[^ifdef[$aOptions.files]{$form:files}]
 
-  $cookies[^ifdef[$aOptions.cookies]{$cookie:fields}]
+  $cookie[^ifdef[$aOptions.cookie]{$cookie:fields}]
   $headers[^ifdef[$aOptions.headers]{$request:headers}]
 
   $method[^ifdef[^aOptions.method.lower[]]{^request:method.lower[]}]
 # Если нам пришел post-запрос с полем _method, то берем method из запроса.
-  ^if($method eq "post" && def $fields._method){
-    $method[^switch[^fields._method.lower[]]{
+  ^if($method eq "post" && def $form._method){
+    $method[^switch[^form._method.lower[]]{
       ^case[DEFAULT]{post}
       ^case[put]{put}
       ^case[delete]{delete}
@@ -435,7 +464,7 @@ pfRequest
   $QUERY[^ifdef[$aOptions.QUERY]{$request:query}]
   $PATH[^URI.left(^URI.pos[?])]
 
-  $ACTION[^ifdef[$aOptions.ACTION]{^ifdef[$fields.action]{$fields._action}}]
+  $ACTION[^ifdef[$aOptions.ACTION]{^ifdef[$form.action]{$form._action}}]
 
   $PORT[^ifdef[$aOptions.PORT]{^ENV.SERVER_PORT.int(80)}]
   $isSECURE(^ifdef[$aOptions.isSECURE](^ENV.HTTPS.lower[] eq "on" || $PORT eq "443"))
@@ -456,10 +485,10 @@ pfRequest
   $_BODY_FILE[$aOptions.BODY_FILE]
 
 @GET[aContext]
-  $result($fields || $__CONTEXT__)
+  $result($form || $__CONTEXT__)
 
 @GET_DEFAULT[aName]
-  $result[^if(^__CONTEXT__.contains[$aName]){$__CONTEXT__.[$aName]}{$fields.[$aName]}]
+  $result[^if(^__CONTEXT__.contains[$aName]){$__CONTEXT__.[$aName]}{$form.[$aName]}]
 
 @GET_BODY_FILE[]
   $result[^if(def $_BODY_FILE){$_BODY_FILE}{$request:body-file}]
@@ -502,10 +531,10 @@ pfRequest
    }
 
 @contains[aName]
-  $result(^__CONTEXT__.contains[$aName] || ^fields.contains[$aName])
+  $result(^__CONTEXT__.contains[$aName] || ^form.contains[$aName])
 
 @foreach[aKeyName;aValueName;aCode;aSeparator][locals]
-  $lFields[^hash::create[$fields]]
+  $lFields[^hash::create[$form]]
   ^lFields.add[$__CONTEXT__]
   $result[^lFields.foreach[k;v]{$caller.[$aKeyName][$k]$caller.[$aValueName][$v]$aCode}{$aSeparator}]
 
@@ -827,3 +856,38 @@ pfClass
   ^cleanMethodArgument[aVars]
   ^cleanMethodArgument[aArgs]
   $result[^if(def $aPath){^aPath.match[$_pfRouterPatternRegex][]{^if(^aVars.contains[$match.2]){$aVars.[$match.2]}{^if(^aArgs.contains[$match.2] || $match.1 eq "*"){$aArgs.[$match.2]}}}}]
+
+#--------------------------------------------------------------------------------------------------
+
+@CLASS
+pfMiddleware
+
+## Базовый предок для классов мидлваре. Показывает какой интерфейс должен быть у мидлваре.
+## Методы process* надо реализовывать только если классу надо встроиться в конкретный этап обработки запросов.
+##
+## Мидлваре в контролере образуют цепочку. Запрос проходит методы processRequest и processAction
+## в порядке добавления мидлваре, а processException и processResponse в обратном порядке.
+
+@BASE
+pfClass
+
+@OPTIONS
+locals
+
+@create[aOptions]
+
+@processRequest[aAction;aRequest;aController;aProcessOptions] -> [response|null]
+# если ничего не возвращает, то продолжаем обработку, если возвращает pfHTTPResponse, то прерываем обработку и не зовем дургие middleware.
+  $result[]
+
+@processAction[aAction;aRequest;aFunction;aController;aProcessOptions] -> [response|null]
+# если ничего не возвращает, то продолжаем обработку, если возвращает, то продолжаем до вызова view
+  $result[]
+
+@processExceptions[aAction;aRequest;aException;aController;aProcessOptions] -> [response|null]
+# если возвращает response, то прокидываем его дальше, если нет, то протягиваем exception дальше по мидлваре и если его никто не обработает выбрасываем заново
+  $result[]
+
+@processResponse[aAction;aRequest;aResponse;aController;aProcessOptions] -> [response|null]
+# должен вернуть response-объект, который пойдет дальше.
+  $result[$aResponse]

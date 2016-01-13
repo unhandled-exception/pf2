@@ -214,6 +214,7 @@ pfMixin
   }
 
 @_parseClassDef[aClassDef]
+## Метод может быть вызван из других классов для разбора пути к пакетам.
   $result[$.classDef[$aClassDef]]
   ^aClassDef.match[$__pfChainMixin__classDefRegex__][]{
     $result.constructor[^if(def $match.3){$match.3}{create}]

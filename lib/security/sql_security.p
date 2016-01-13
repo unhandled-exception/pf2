@@ -8,6 +8,10 @@ pfSQLSecurityCrypt
 
 ## Сериализация токенов в base64 доступна начиная с MySQL 5.6.10 и MariaDB 10.0.5.
 
+## Ключи лучше не вбивать с клавиатуры, а сгенерировать с помощью надежного генератора случайных чисел:
+## В unix/linux это можно сделать командой:
+## > python3 -c "import os, base64; print(base64.b64encode(os.urandom(24)))"
+
 @USE
 pf2/lib/common.p
 pf2/lib/sql/connection.p
@@ -17,22 +21,21 @@ pfClass
 
 @create[aOptions]
 ## aOptions.sql — объект для соединениея с БД.
-## aOptions.cryptKey — ключ шифрования
-## aOptions.secretKey — ключ для подписи
+## aOptions.secretKey — ключ для подписи, если не задан, то используем secretKey.
+## aOptions.cryptKey[aOptions.secretKey] — ключ шифрования
 ## aOptions.serializationAlgorythm[hex] — алгоритм сериализации (hex|base64)
   ^cleanMethodArgument[]
   ^BASE:create[]
 
   ^pfAssert:isTrue(def $aOptions.sql)[На задан объект для доступа к sql-серверу.]
   ^pfAssert:isTrue($aOptions.sql.serverType eq "mysql")[Класс $CLASS_NAME работает только с MySQL-совместимыми серверами.]
-  ^pfAssert:isTrue(def $aOptions.cryptKey)[Не задан ключ шифрования.]
-  ^pfAssert:isTrue(def $aOptions.secretKey)[Не задан ключ для подписи.]
+  ^pfAssert:isTrue(def $aOptions.secretKey)[Не задан секретный ключ.]
 
-  $_sql[$aOptions.sql]
-  $_secretKey[$aOptions.secretKey]
-  $_cryptKey[$aOptions.cryptKey]
+  $self._sql[$aOptions.sql]
+  $self._secretKey[$aOptions.secretKey]
+  $self._cryptKey[^ifdef[$aOptions.cryptKey]{$self._secretKey}]
 
-  $_funcs[^_getFunctionsNames[$aOptions.serializationAlgorythm]]
+  $self._funcs[^_getFunctionsNames[$aOptions.serializationAlgorythm]]
 
 @GET_CSQL[]
   $result[$_sql]
