@@ -123,3 +123,58 @@ locals
   }{
      $result[$aData]
    }
+
+#--------------------------------------------------------------------------------------------------
+
+@CLASS
+pfDebugInfoMiddleware
+
+## Добавляет в конец страницы отладочную информацию и лог sql-запросов.
+## Пример мидлваре, которе трогает только html-ответы.
+
+@BASE
+pfMiddleware
+
+@OPTIONS
+locals
+
+@create[aOptions]
+## aOptions.enable(false) — включить вывод отладочной информации в конце страницы.
+## aOptions.sql — класс с sql-соединением
+  $self._enabled(^aOptions.enable.bool(false))
+  $self._sql[$aOptions.sql]
+
+@processResponse[aAction;aRequest;aResponse;aController;aProcessOptions] -> [response]
+  $result[$aResponse]
+  ^if($self._enabled && $aResponse.type eq "html"){
+    $result.body[^result.body.match[</body>][i]{^self._template[]</body>}]
+  }
+
+@_template[]
+  <div class="container"><div class="row"><div class="col-sm-12">
+     ^self._debugInfo[]
+  </div></div></div>
+
+@_debugInfo[]
+  <div class="hidden-xs" style="margin-top: 1.5em^; margin-bottom: 0^; color: #555^;">
+    <p>Time: ^eval($status:rusage.utime + $status:rusage.stime + $sqlStat.queriesTime + $sphinxStat.queriesTime)[%.6f] (utime: ^status:rusage.utime.format[%.6f], stime: ^status:rusage.stime.format[%.6f]).<br />
+    Memory: $status:memory.used KB, free: $status:memory.free KB (total: ^status:memory.ever_allocated_since_start.format[%.0f] KB, after gc: ^status:memory.ever_allocated_since_compact.format[%.0f] KB)
+    </p>
+    ^if(def $self._sql){
+      <div class="sql-log block">
+        ^self._queriesStat[$self._sql.stat]
+      </div>
+    }
+  </div>
+
+@_queriesStat[aStat]
+  <p class="sql-stat">SQL queries: ${aStat.queriesCount} (^aStat.queriesTime.format[%.6f] сек).
+       IM size: ${aStat.identityMap.size}.
+       IM usage: ${aStat.identityMap.usage}.
+  </p>
+
+  <ol style="sql-queries">
+     ^aStat.queries.foreach[_;it]{
+       <li style="margin-bottom: 0.5em^;">(^it.time.format[%.6f] сек) $it.query ^if(def $it.limit){limit $it.limit} ^if(def $it.offset){offset $it.offset} ($it.results rec, $it.memory KB, $it.type)</li>
+     }
+  </ol>
