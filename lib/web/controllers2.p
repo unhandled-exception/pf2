@@ -865,8 +865,8 @@ pfMiddleware
 ## Базовый предок для классов мидлваре. Показывает какой интерфейс должен быть у мидлваре.
 ## Методы process* надо реализовывать только если классу надо встроиться в конкретный этап обработки запросов.
 ##
-## Мидлваре в контролере образуют цепочку. Запрос проходит методы processRequest и processAction
-## в порядке добавления мидлваре, а processException и processResponse в обратном порядке.
+## Мидлваре в контролере образуют цепочку. Запрос проходит методы processRequest в порядке добавления мидлваре,
+## а processResponse в обратном порядке.
 
 @BASE
 pfClass
@@ -883,11 +883,3 @@ locals
 @processAction[aAction;aRequest;aFunction;aController;aProcessOptions] -> [response|null]
 # если ничего не возвращает, то продолжаем обработку, если возвращает, то продолжаем до вызова view
   $result[]
-
-@processExceptions[aAction;aRequest;aException;aController;aProcessOptions] -> [response|null]
-# если возвращает response, то прокидываем его дальше, если нет, то протягиваем exception дальше по мидлваре и если его никто не обработает выбрасываем заново
-  $result[]
-
-@processResponse[aAction;aRequest;aResponse;aController;aProcessOptions] -> [response|null]
-# должен вернуть response-объект, который пойдет дальше.
-  $result[$aResponse]
