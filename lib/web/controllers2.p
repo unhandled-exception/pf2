@@ -42,7 +42,7 @@ locals
   $self._rootController[^ifdef[$aOptions.rootController]{$self}]
 
   $self.mountTo[^ifdef[^aOptions.mountTo.trim[both;/]]{/}]
-  $self.appendSlash(^aOptions.appendSlash.bool(true))
+  $self._appendSlash(^aOptions.appendSlash.bool(true))
 
   $self.uriPrefix[$self._mountTo]
   $self._localUriPrefix[]
@@ -379,8 +379,8 @@ locals
   ^cleanMethodArgument[]
   ^if(def $aAction){$aAction[^aAction.trim[both;/.]]}
 
-  $result[${uriPrefix}^if(def $aPrefix){^aPrefix.trim[both;/]/}{^if(def $localUriPrefix){$localUriPrefix/}}^if(def $aAction){^taint[uri][$aAction]^if($_appendSlash){/}}]
-  ^if($_appendSlash && def $result && ^result.match[$__pfController__.checkDotRegex]){$result[^result.trim[end;/]]}
+  $result[${uriPrefix}^if(def $aPrefix){^aPrefix.trim[both;/]/}{^if(def $localUriPrefix){$localUriPrefix/}}^if(def $aAction){^taint[uri][$aAction]^if($self._appendSlash){/}}]
+  ^if($self._appendSlash && def $result && ^result.match[$__pfController__.checkDotRegex]){$result[^result.trim[end;/]]}
 
   ^if($aOptions is hash && $aOptions){
     $result[${result}?^aOptions.foreach[key;value]{$key=^taint[uri][$value]}[^taint[&]]]
