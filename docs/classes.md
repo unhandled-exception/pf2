@@ -114,6 +114,14 @@ find . -name "*.p" | sort | xargs grep "^@CLASS" -A 1 -H | awk '$0 !~ /(--|@CLAS
 * pfSiteModule
 * pfSiteApp
 
+### ./web/controllers2.p
+* pfController
+* pfRequest
+* pfResponse
+* pfResponseRedirect
+* pfRouter
+* pfMiddleware
+
 ### ./web/helpers/antiflood.p
 * pfAntiFlood
 * pfAntiFloodStorage
@@ -128,6 +136,11 @@ find . -name "*.p" | sort | xargs grep "^@CLASS" -A 1 -H | awk '$0 !~ /(--|@CLAS
 
 ### ./web/helpers/translit.p
 * pfURLTranslit
+
+### ./web/middleware.p
+* pfCommonMiddleware
+* pfSessionMiddleware
+* pfDebugInfoMiddleware
 
 ### ./web/templates.p
 * pfTemplate
