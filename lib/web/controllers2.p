@@ -155,7 +155,7 @@ locals
 
   ^if(!def $result){
     $lResult[^self.processRequest[$self.action;$aRequest;$aOptions]]
-    $result[^ifdef[$lResult.response]]
+    $result[$lResult.response]
   }
 
   ^if(!def $result){

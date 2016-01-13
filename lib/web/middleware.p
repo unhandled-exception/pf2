@@ -35,6 +35,8 @@ locals
 
 # Заполняется в processRequest
   $self._sessionData[]
+  $self._isEmptySession(false)
+  $self._hasSessionCookie(false)
 
 @processRequest[aAction;aRequest;aController;aProcessOptions] -> []
   $result[]
@@ -45,23 +47,38 @@ locals
   }{
      $lData[^hash::create[]]
    }
+  ^if(!$lData){
+    $self._isEmptySession(true)
+  }
   $self._sessionData[$lData]
   ^aRequest.assign[$self._sessionVarName][$self._sessionData]
 
 @processResponse[aAction;aRequest;aResponse;aController;aProcessOptions] -> [response]
-  $aResponse.cookie.[$self._sessionCookieName][
-    $.value[^self._serializeSession[$self._sessionData]]
-    $.httponly(true)
-    ^if(def $self._expires){
-      $.expires[$self._expires]
+  ^if($self._isEmptySession && !$self._sessionData){
+#   Если в запросе пришла пустая сессия и в процессе обработки запроса сессия осталась пустая,
+#   то даем команду на удаление куки.
+    ^if($self._hasSessionCookie){
+      $aResponse.cookie.[$self._sessionCookieName][]
     }
-    ^if(def $self._sessionCookieDomain){$.domain[$self._sessionCookieDomain]}
-    ^if(def $self._sessionCookiePath){$.path[$self._sessionCookiePath]}
-  ]
+  }{
+    $aResponse.cookie.[$self._sessionCookieName][
+      $.value[^self._serializeSession[$self._sessionData]]
+      $.httponly(true)
+      ^if(def $self._expires){
+        $.expires[$self._expires]
+      }
+      ^if(def $self._sessionCookieDomain){$.domain[$self._sessionCookieDomain]}
+      ^if(def $self._sessionCookiePath){$.path[$self._sessionCookiePath]}
+    ]
+  }
   $result[$aResponse]
 
 @_getSessionFromRequest[aRequest] -> [string]
-  $result[$aRequest.cookie.[$self._sessionCookieName]]
+  $result[]
+  ^if(^aRequest.cookie.contains[$self._sessionCookieName]){
+    $self._hasSessionCookie(true)
+    $result[$aRequest.cookie.[$self._sessionCookieName]]
+  }
 
 @_parseSession[aData] -> [hash]
   $aData[^self._cryptoProvider.decrypt[$aData]]
