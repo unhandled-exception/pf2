@@ -460,6 +460,7 @@ pfRequest
   }
 
   $ENV[^ifdef[$aOptions.ENV]{$env:fields}]
+
   $URI[^ifdef[$aOptions.URI]{$request:uri}]
   $QUERY[^ifdef[$aOptions.QUERY]{$request:query}]
   $PATH[^URI.left(^URI.pos[?])]
@@ -880,6 +881,6 @@ locals
 # если ничего не возвращает, то продолжаем обработку, если возвращает pfHTTPResponse, то прерываем обработку и не зовем дургие middleware.
   $result[]
 
-@processAction[aAction;aRequest;aFunction;aController;aProcessOptions] -> [response|null]
-# если ничего не возвращает, то продолжаем обработку, если возвращает, то продолжаем до вызова view
-  $result[]
+@processResponse[aAction;aRequest;aResponse;aController;aProcessOptions] -> [response]
+# возвращает respone
+  $result[$aResponse]
