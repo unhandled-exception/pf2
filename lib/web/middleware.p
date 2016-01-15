@@ -62,10 +62,9 @@ locals
 ## aOptions.sessionCookieDomain — домен для куки сессии
 ## aOptions.sessionCookiePath — путь для куки сессии
 ## aOptions.expires[days(90)|date|session] — срок жизни куки. По-умолчанию ставим ограничение Парсера (90 дней).
-## aOptions.secretKey[] — ключ для цифровой подписи сессии. Если не задан, то данные не подписываем.
   ^cleanMethodArgument[]
   ^BASE:create[$aOptions]
-  ^pfAssert:isTrue(def $aOptions.cryptoProvider){A crypto provider not defined.}
+  ^pfAssert:isTrue(def $aOptions.cryptoProvider){Не задан объект для шифрования сессий (options.cryptoProvider).}
 
   $self._cryptoProvider[$aOptions.cryptoProvider]
   $self._sessionVarName[^ifdef[$aOptions.sessionVarName]{session}]
@@ -73,7 +72,6 @@ locals
   $self._sessionCookieDomain[$aOptions.sessionCookieDomain]
   $self._sessionCookiePath[$aOptions.sessionCookiePath]
   $self._expires[$aOptions.expires]
-  $self._secretKey[$aOptions.secretKey]
 
 # Заполняется в processRequest
   $self._sessionData[]
@@ -123,13 +121,13 @@ locals
   }
 
 @_parseSession[aData] -> [hash]
-  $aData[^self._cryptoProvider.decrypt[$aData;$.log[-- Decrypt a session data.]]]
-  $aData[^self._validateSessionAndReturnData[$aData]]
   ^if(def $aData){
     ^try{
-      $result[^json:parse[^taint[as-is][$aData]]]
+      $result[^self._cryptoProvider.parseAndValidateToken[$aData;$.log{-- Decrypt a session data.}]]
     }{
-      ^if($exception.type eq "json.parse"){
+      ^if($exception.type eq "json.parse"
+        || $exception.type eq "invalid.token"
+      ){
         $result[^hash::create[]]
         $exception.handled(true)
       }
@@ -139,32 +137,7 @@ locals
    }
 
 @_serializeSession[aData] -> [string]
-  $result[^json:string[$aData]]
-  $result[^self._signSession[$result]]
-  $result[^self._cryptoProvider.encrypt[$result;$.log[-- Encrypt a session data.]]]
-
-@_signSession[aData]
-## Подписывает сессию
-  $result[]
-  ^if(def $self._secretKey){
-    $lSignature[^math:digest[sha256;$aData;$.hmac[$self._secretKey]]]
-    $result[${lSignature}.$aData]
-  }{
-     $result[$aData]
-   }
-
-@_validateSessionAndReturnData[aData]
-  $result[]
-  ^if(def $self._secretKey){
-    $lPos(^aData.pos[.])
-    $lSignature[^aData.left($lPos)]
-    $lData[^aData.mid($lPos + 1)]
-    ^if($lSignature eq ^math:digest[sha256;$lData;$.hmac[$self._secretKey]]){
-      $result[$lData]
-    }
-  }{
-     $result[$aData]
-   }
+  $result[^self._cryptoProvider.makeToken[$aData;$.log{-- Encrypt a session data.}]]
 
 #--------------------------------------------------------------------------------------------------
 

@@ -14,11 +14,12 @@ pfMiddleware
 locals
 
 @create[aOptions]
-## aOptions.userFieldName[user] — имя поля с объектом user в объекте запроса
+## aOptions.userFieldName[currentUser] — имя поля с объектом user в объекте запроса
   ^cleanMethodArgument[]
   ^BASE:create[$aOptions]
 
-  $self._userFieldName[^ifdef[$aOptions.userFieldName]{user}]
+  $self._userFieldName[^ifdef[$aOptions.userFieldName]{currentUser}]
+  $self._request[]
 
 # Объект для хранения данных авторизации
   $self._user[
@@ -26,9 +27,6 @@ locals
     $.isAuthenticated(false)
     $.isAnonymous(true)
     $.data[]
-
-    $.login[$self.login]
-    $.logout[$self.logout]
     $.can[$self.can]
   ]
 
@@ -37,16 +35,11 @@ locals
 
 @processRequest[aAction;aRequest;aController;aProcessOptions] -> []
   $result[]
+  $self._request[$aRequest]
   ^authenticate[$aRequest]
   ^aRequest.assign[$self._userFieldName;$self._user]
 
 @authenticate[aRequest]
-  $result[]
-
-@login[aOptions]
-  $result[]
-
-@logout[aOptions]
   $result[]
 
 @can[aPermisson] -> [bool]
