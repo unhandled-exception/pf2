@@ -132,7 +132,7 @@ pfClass
   ${_tableName}
 
   ^@USE
-  pf2/sql/models/structs.p
+  pf2/lib/sql/models/structs.p
 
   ^@BASE
   pfModelTable
