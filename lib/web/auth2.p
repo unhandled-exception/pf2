@@ -83,7 +83,7 @@ locals
   }
 
 @getUser[aID;aOptions]
-  $result[^hash::create[]]
+  $result[$.login[$aID]]
 
 #--------------------------------------------------------------------------------------------------
 
@@ -124,16 +124,7 @@ locals
   $self._usersTableName[^ifdef[$aOptions.usersTableName]{auth_users}]
   $self.users[^ifdef[$aOptions.usersModel]{^self._createUsersModel[]}]
 
-  $self._anonymousUser[
-    $.id[]
-    $.isAuthenticated(false) # Аутентифицирован
-    $.isAnonymous(true) # Анонимный пользователь
-    $.isActive(false) # Активный. Устанавливаем в false, если надо разлогинить
-    $.data[]
-    $.MANAGER[$self]
-    $.can[$self.can]
-  ]
-  $self._currentUser[$self._anonymousUser]
+  $self._currentUser[^self._makeUser[]]
   $self._hasAuthCookie(false)
 
   $self._tokenData[^hash::create[]]
@@ -150,14 +141,14 @@ locals
 @processRequest[aAction;aRequest;aController;aProcessOptions] -> []
   $result[]
   ^if(def $aRequest.cookie.[$self._authCookieName]){
-    ^authenticate[]
+    ^authenticate[$aRequest]
     $self._hasAuthCookie(true)
   }
   ^aRequest.assign[$self._userFieldName][$self.currentUser]
 
 @processResponse[aAction;aRequest;aResponse;aController;aProcessOptions] -> [response]
   $result[$aResponse]
-  ^if($self.currentUser.isActive){
+  ^if($self.currentUser.isActive && $self.currentUser.isAuthenticated){
     $result.cookie.[$self._authCookieName][
       $.value[^self._makeAuthToken[]]
       $.httponly(true)
@@ -168,51 +159,87 @@ locals
   }{
 #    Если у нас неактивный пользователь и у нас была авторизационная кука, то удаляем ее.
      ^if($self._hasAuthCookie){
-       $result.cookie.[$self.authCookieName][]
+       $result.cookie.[$self._authCookieName][]
      }
    }
 
-@authenticate[aRequest;aOptions]
+@authenticate[aRequest;aOptions] -> []
   $result[]
+  ^try{
+    $lToken[^self._cryptoProvider.parseAndValidateToken[$aRequest.cookie.[$self._authCookieName];
+      $.log[-- Decrypt an auth cookie ($self._authCookieName).]
+    ]]
+    $lUser[^self.users.one[
+      $.userID[$lToken.id]
+      $.secureToken[$lToken.token]
+      $.isActive(true)
+    ]]
+    ^if($lUser){
+      ^self._currentUser.delete[]
+      ^self._currentUser.add[^self._makeUser[
+        $.id[$lUser.userID]
+        $.data[$lUser]
+        $.isActive(true)
+        $.isAnonymous(false)
+        $.isAuthenticated(true)
+      ]]
+    }
+  }{
+     ^if($exception.type eq "security.invalid.signature"){
+       $exception.handled(true)
+     }
+   }
 
-@_makeAuthToken[aOptions]
+@_makeAuthToken[aOptions] -> [serialized binary string]
   $result[]
   ^if($self._currentUser.isAuthenticated){
     $result[^self._cryptoProvider.makeToken[
       $.id[$self._currentUser.id]
       $.token[$self._currentUser.data.secureToken]
+    ][
+      $.log[-- Encrypt an auth cookie ($self._authCookieName).]
     ]]
   }
 
-@login[aRequest;aOptions]
+@login[aRequest;aOptions] -> [bool]
   $result(false)
-  $lUser[^self.users.one[$.login[$aRequest.login]]]
+  $lUser[^self.users.one[
+    $.login[$aRequest.login]
+    $.isActive(true)
+  ]]
   ^if($lUser){
     ^self._currentUser.delete[]
     ^self._currentUser.add[^self._makeUser[
       $.id[$lUser.userID]
       $.data[$lUser]
+      $.isActive(true)
+      $.isAnonymous(false)
+      $.isAuthenticated(true)
     ]]
     $result(true)
   }
 
-@_makeUser[aOptions]
+@logout[aRequest;aOptions] -> []
+  $result[]
+  ^self._currentUser.delete[]
+  ^self._currentUser.add[^self._makeUser[
+    $.isActive(false)
+  ]]
+
+@can[aPermission;*aArgs] -> [bool]
+  $result(false)
+
+@_makeUser[aOptions] -> [hash]
   $result[
     $.id[]
-    $.isAuthenticated(true) # Аутентифицирован
-    $.isAnonymous(false) # Анонимный пользователь
-    $.isActive(true) # Активный. Устанавливаем в false, если надо разлогинить
+    $.isAuthenticated(false) # Аутентифицирован
+    $.isAnonymous(true) # Анонимный пользователь
+    $.isActive(false) # Активный. Устанавливаем в false, если надо разлогинить
     $.data[]
     $.MANAGER[$self]
     $.can[$self.can]
   ]
   ^result.add[$aOptions]
-
-@logout[aRequest;aOptions]
-  $result(false)
-
-@can[aPermission;*aArgs]
-  $result(false)
 
 #--------------------------------------------------------------------------------------------------
 
@@ -238,9 +265,16 @@ locals
     $.login[$.label[]]
     $.password[$.label[]]
     $.secureToken[$.dbField[secure_token] $.label[]]
+    $.isActive[$.dbField[is_active] $.processor[bool] $.default(true) $.widget[none]]
     $.createdAt[$.dbField[created_at] $.processor[auto_now] $.skipOnUpdate(true) $.widget[none]]
     $.updatedAt[$.dbField[updated_at] $.processor[auto_now] $.widget[none]]
   ]
 
-@makePasswordHash[aPassword;aSalt]
+@delete[aUserID]
+  $result[^modify[$aUserID;$.isActive(false)]]
+
+@restore[aUserID]
+  $result[^modify[$aUserID;$.isActive(true)]]
+
+@makePasswordHash[aPassword;aSalt] -> [string]
   $result[^math::crypt[$aPassword;^ifdef[$aSalt]{^$apr1^$}]]
