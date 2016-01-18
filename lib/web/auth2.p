@@ -104,7 +104,7 @@ locals
 ## aOptions.cryptoProvider
 ## aOptions.userFieldName[currentUser] — имя поля с объектом user в объекте запроса
 ## aOptions.usersTableName
-## aOptions.usersModel[default]
+## aOptions.usersModel[pfUsersModel]
 ## aOptions.authCookieName[auth_token] — имя куки для хранения сессий.
 ## aOptions.authCookieDomain — домен для куки сессии
 ## aOptions.authCookiePath — путь для куки сессии
@@ -226,8 +226,22 @@ locals
     $.isActive(false)
   ]]
 
-@can[aPermission;*aArgs] -> [bool]
-  $result(false)
+@can[aPermission;*aCode] -> [bool | *aCode result]
+## Варианта вызова метода:
+## — ^if(^aRequest.currentUser.can[...]){__code__}
+## — ^aRequest.currentUser.can[...]{__true code__}
+## — ^aRequest.currentUser.can[...]{__true code__}{__false code__}
+  $result(
+    $self._currentUser.isAuthenticated
+    && ^self.users.can[$self._currentUser.data;$aPermission]
+  )
+  ^if($aCode){
+    ^if($result){
+      $result[$aCode.0]
+    }{
+       $result[$aCode.1]
+     }
+  }
 
 @_makeUser[aOptions] -> [hash]
   $result[
@@ -265,6 +279,7 @@ locals
     $.login[$.label[]]
     $.password[$.label[]]
     $.secureToken[$.dbField[secure_token] $.label[]]
+    $.isAdmin[$.dbField[is_admin] $.processor[bool] $.default(false) $.label[]]
     $.isActive[$.dbField[is_active] $.processor[bool] $.default(true) $.widget[none]]
     $.createdAt[$.dbField[created_at] $.processor[auto_now] $.skipOnUpdate(true) $.widget[none]]
     $.updatedAt[$.dbField[updated_at] $.processor[auto_now] $.widget[none]]
@@ -278,3 +293,9 @@ locals
 
 @makePasswordHash[aPassword;aSalt] -> [string]
   $result[^math::crypt[$aPassword;^ifdef[$aSalt]{^$apr1^$}]]
+
+@can[aUser;aPermission] -> [bool]
+  $result(false)
+  ^if($aUser){
+    $result($aUser.isAdmin)
+  }
