@@ -208,15 +208,18 @@ locals
     $.isActive(true)
   ]]
   ^if($lUser){
-    ^self._currentUser.delete[]
-    ^self._currentUser.add[^self._makeUser[
-      $.id[$lUser.userID]
-      $.data[$lUser]
-      $.isActive(true)
-      $.isAnonymous(false)
-      $.isAuthenticated(true)
-    ]]
-    $result(true)
+    $lPasswordHash[^self.users.makePasswordHash[$aRequest.password;$lUser.password]]
+    ^if($lUser.password eq $lPasswordHash){
+      ^self._currentUser.delete[]
+      ^self._currentUser.add[^self._makeUser[
+        $.id[$lUser.userID]
+        $.data[$lUser]
+        $.isActive(true)
+        $.isAnonymous(false)
+        $.isAuthenticated(true)
+      ]]
+      $result(true)
+    }
   }
 
 @logout[aRequest;aOptions] -> []
@@ -292,7 +295,7 @@ locals
   $result[^modify[$aUserID;$.isActive(true)]]
 
 @makePasswordHash[aPassword;aSalt] -> [string]
-  $result[^math::crypt[$aPassword;^ifdef[$aSalt]{^$apr1^$}]]
+  $result[^math:crypt[$aPassword;^ifdef[$aSalt]{^$apr1^$}]]
 
 @can[aUser;aPermission] -> [bool]
   $result(false)

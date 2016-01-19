@@ -248,7 +248,6 @@ pfClass
        }
      }
   }{
-    ^pfAssert:fail[$_template.templatePath]
      ^throw[template.not.found;Шаблон "$aTemplateName" не найден.]
    }
 
