@@ -275,6 +275,7 @@ locals
   ^if(!^aOptions.passWrap.bool(false)){
     ^switch(true){
       ^case($result is hash){
+        $result.type[^ifdef[$result.type]{$self._defaultResponseType}]
         $result[^pfResponse::create[$result.body;$result]]
       }
       ^case($result is string || $result is double || $result is int){
