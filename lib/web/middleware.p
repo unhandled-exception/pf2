@@ -191,6 +191,6 @@ locals
 
   <ol style="sql-queries">
      ^aStat.queries.foreach[_;it]{
-       <li style="margin-bottom: 0.5em^;">(^it.time.format[%.6f] сек) $it.query ^if(def $it.limit){limit $it.limit} ^if(def $it.offset){offset $it.offset} ($it.results rec, $it.memory KB, $it.type)</li>
+       <li style="margin-bottom: 0.5em^; ^if(def $it.exception){color: #94333C}">(^it.time.format[%.6f] сек) $it.query ^if(def $it.limit){limit $it.limit} ^if(def $it.offset){offset $it.offset} ^if(def $it.exception){<span>[^taint[$it.exception.type - $it.exception.comment]]</span>} ($it.results rec, $it.memory KB, $it.type)</li>
      }
   </ol>

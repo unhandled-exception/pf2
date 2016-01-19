@@ -63,6 +63,7 @@ locals
     ]
   ]
   $self._serializer[^ifdef[$aOptions.serializer]{hex}]
+  $self._hashAlgorythm[sha256]
 
   ^pfAssert:isTrue(^self._sqlFunctions.contains[$self.CSQL.serverType]){Неизвестный тип sql-сервера — "${self.CSQL.serverType}". Класс $CLASS_NAME поддерживает шифрование через серверы ^self._sqlFunctions.foreach[k;v]{"$k"}[, ]}
 
@@ -89,8 +90,8 @@ locals
   }[][$.log{^ifdef[$aOptions.log]{-- Decrypt a string "$aString".}}]]
 
 @signString[aString] -> [signature.$aString]
-## Добавляет в начало строки цифровую подпись подпись sha256/hmac/base64.
-  $lSignature[^math:digest[sha256;$aString;$.hmac[$self._secretKey] $.format[base64]]]
+## Добавляет в начало строки цифровую подпись подпись hash/hmac/base64.
+  $lSignature[^math:digest[$self._hashAlgorythm;$aString;$.hmac[$self._secretKey] $.format[base64]]]
   $result[${lSignature}.$aString]
 
 @validateSignatureAndReturnString[aSignString] -> [string] <security.invalid.signature>
@@ -126,3 +127,8 @@ locals
        ^throw[invalid.token;;Не удалось расшифровать и проверить токен "${aToken}".]
      }
    }
+
+@digest[aString;aOptions]
+## Возвращает hmac-хеш строки.
+## aOptions.format[base64|hex] — формат дайджеста. По-умолчанию base64.
+  $result[^math:digest[$self._hashAlgorythm;$aString;$.format[^ifdef[$aOptions.format]{base64}]]]

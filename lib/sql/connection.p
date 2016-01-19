@@ -242,25 +242,30 @@ pfClass
   $lMemStart($status:memory.used)
   $lStart($status:rusage.tv_sec + $status:rusage.tv_usec/1000000.0)
 
-  $result[^self.connect{$aCode}]
+  ^try{
+    $result[^self.connect{$aCode}]
+  }{
+    $lException[$exception]
+  }{
+    $lEnd($status:rusage.tv_sec + $status:rusage.tv_usec/1000000.0)
+    $lMemEnd($status:memory.used)
 
-  $lEnd($status:rusage.tv_sec + $status:rusage.tv_usec/1000000.0)
-  $lMemEnd($status:memory.used)
-
-  $_stat.queriesTime($_stat.queriesTime + ($lEnd-$lStart))
-  ^_stat.queriesCount.inc[]
-  ^if($_enableQueriesLog){
-    $_stat.queries.[^_stat.queries._count[]][
-      $.type[$aType]
-      $.query[^taint[^ifdef[$aOptions.log]{$aOptions.query}]]
-      $.time($lEnd-$lStart)
-      $.limit[$aOptions.limit]
-      $.offset[$aOptions.offset]
-      $.memory($lMemEnd - $lMemStart)
-      $.results(^switch[$aType]{
-        ^case[DEFAULT;void]{0}
-        ^case[int;double;string;file]{1}
-        ^case[table;hash]{^eval($result)}
-      })
-    ]
+    $_stat.queriesTime($_stat.queriesTime + ($lEnd-$lStart))
+    ^_stat.queriesCount.inc[]
+    ^if($_enableQueriesLog){
+      $_stat.queries.[^_stat.queries._count[]][
+        $.type[$aType]
+        $.query[^taint[^ifdef[$aOptions.log]{$aOptions.query}]]
+        $.time($lEnd-$lStart)
+        $.limit[$aOptions.limit]
+        $.offset[$aOptions.offset]
+        $.memory($lMemEnd - $lMemStart)
+        $.results(^switch[$aType]{
+          ^case[DEFAULT;void]{0}
+          ^case[int;double;string;file]{1}
+          ^case[table;hash]{^eval($result)}
+        })
+        $.exception[$lException]
+      ]
+    }
   }

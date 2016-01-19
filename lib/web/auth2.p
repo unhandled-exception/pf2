@@ -208,8 +208,8 @@ locals
     $.isActive(true)
   ]]
   ^if($lUser){
-    $lPasswordHash[^self.users.makePasswordHash[$aRequest.password;$lUser.password]]
-    ^if($lUser.password eq $lPasswordHash){
+    $lPasswordHash[^self.users.makePasswordHash[$aRequest.password;$lUser.passwordHash]]
+    ^if($lUser.passwordHash eq $lPasswordHash){
       ^self._currentUser.delete[]
       ^self._currentUser.add[^self._makeUser[
         $.id[$lUser.userID]
@@ -273,14 +273,17 @@ locals
 
 @create[aOptions]
 ## aOptions.tableName[auth_users]
+## aOptions.cryptoProvider
   ^BASE:create[^hash::create[$aOptions]
     $.tableName[^ifdef[$aOptions.tableName]{auth_users}]
   ]
 
+  $self._cryptoProvider[$aOptions.cryptoProvider]
+
   ^addFields[
     $.userID[$.dbField[user_id] $.processor[uint] $.primary(true) $.widget[none]]
     $.login[$.label[]]
-    $.password[$.label[]]
+    $.passwordHash[$.dbField[password_hash] $.label[]]
     $.secureToken[$.dbField[secure_token] $.label[]]
     $.isAdmin[$.dbField[is_admin] $.processor[bool] $.default(false) $.label[]]
     $.isActive[$.dbField[is_active] $.processor[bool] $.default(true) $.widget[none]]
