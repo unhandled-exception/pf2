@@ -44,7 +44,7 @@ locals
   $self.mountTo[^ifdef[^aOptions.mountTo.trim[both;/]]{/}]
   $self._appendSlash(^aOptions.appendSlash.bool(true))
 
-  $self.uriPrefix[$self._mountTo]
+  $self.uriPrefix[$self.mountTo]
   $self._localUriPrefix[]
 
   $self.template[^ifdef[$aOptions.template]{^pfTemplate::create[$.templateFolder[$aOptions.templateFolder]]}]
@@ -299,7 +299,8 @@ locals
 ## Если aTemplateName начинается со "/", то не подставляем текущий перфикс.
 ## Если переменная aTemplateName не задана, то зовем шаблон default.
 ## aContext - переменные, которые добавляются к тем, что уже заданы через assignVar.
-  $lVars[^hash::create[$self._templateVars] $aContext]
+  $lVars[^hash::create[$self._templateVars]]
+  ^lVars.add[$aContext]
   ^if(!^lVars.contains[REQUEST]){$lVars.REQUEST[$self.request]}
   ^if(!^lVars.contains[ACTION]){$lVars.ACTION[$self.action]}
   ^if(!^lVars.contains[PARENT]){$lVars.PARENT[$self.PARENT]}
