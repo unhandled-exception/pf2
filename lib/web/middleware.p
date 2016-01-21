@@ -126,7 +126,7 @@ locals
       $result[^self._cryptoProvider.parseAndValidateToken[$aData;$.log{-- Decrypt a session data.}]]
     }{
       ^if($exception.type eq "json.parse"
-        || $exception.type eq "invalid.token"
+        || $exception.type eq "security.invalid.token"
       ){
         $result[^hash::create[]]
         $exception.handled(true)

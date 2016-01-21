@@ -76,7 +76,7 @@ locals
   $lSeralizer[$lFuncs.serializers.[^ifdef[$aOptions.serializer]{$self._serializer}]]
   ^pfAssert:isTrue($lSeralizer){Неизвестный метод сериализации "$aOptions.serializer".}
   $result[^CSQL.string{
-    select ${lSeralizer.to}(${lFuncs.encrypt.func}("^taint[$aString]", "^taint[$_cryptKey]"${lFuncs.encrypt.options}))
+    select ${lSeralizer.to}(${lFuncs.encrypt.func}('^taint[$aString]', '^taint[$_cryptKey]'${lFuncs.encrypt.options}))
   }[][$.log{^ifdef[$aOptions.log]{-- Encrypt a string "$aString".}}]]
 
 @decrypt[aString;aOptions]
@@ -88,7 +88,7 @@ locals
   $lSeralizer[$lFuncs.serializers.[^ifdef[$aOptions.serializer]{$self._serializer}]]
   ^pfAssert:isTrue($lSeralizer){Неизвестный метод сериализации "$aOptions.serializer".}
   $result[^CSQL.string{
-    select ${lFuncs.decrypt.func}(${lSeralizer.from}("^taint[$aString]"), "^taint[$_cryptKey]"${lFuncs.decrypt.options})
+    select ${lFuncs.decrypt.func}(${lSeralizer.from}('^taint[$aString]'), '^taint[$_cryptKey]'${lFuncs.decrypt.options})
   }[][$.log{^ifdef[$aOptions.log]{-- Decrypt a string "$aString".}}]]
 
 @signString[aString] -> [signature.$aString]
@@ -121,6 +121,7 @@ locals
 @parseAndValidateToken[aToken;aOptions] -> [hash] <invalid.token>
 ## Расшифровывает и валидирует токен, сформированный функцией makeToken.
 ## Возвращает хеш с данными токена или выбрасывает исключение.
+## aOptions.serializer[default algorythm]
 ## aOptions.log — запись в sql-лог.
   ^cleanMethodArgument[]
   ^try{
@@ -128,7 +129,7 @@ locals
     $result[^json:parse[^taint[as-is][$result]]]
   }{
      ^if($exception.type eq "security.invalid.signature"){
-       ^throw[invalid.token;;Не удалось расшифровать и проверить токен "${aToken}".]
+       ^throw[security.invalid.token;;Не удалось расшифровать и проверить токен "${aToken}".]
      }
    }
 

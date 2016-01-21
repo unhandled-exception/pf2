@@ -185,7 +185,7 @@ locals
       ]]
     }
   }{
-     ^if($exception.type eq "security.invalid.signature"){
+     ^if($exception.type eq "security.invalid.token"){
        $exception.handled(true)
      }
    }
