@@ -255,7 +255,7 @@ pfClass
     ^if($_enableQueriesLog){
       $_stat.queries.[^_stat.queries._count[]][
         $.type[$aType]
-        $.query[^taint[^ifdef[$aOptions.log]{$aOptions.query}]]
+        $.query[^taint[^ifdef[$aOptions.log]{^self.connect{^apply-taint[sql][$aOptions.query]}}]]
         $.time($lEnd-$lStart)
         $.limit[$aOptions.limit]
         $.offset[$aOptions.offset]

@@ -71,6 +71,7 @@ locals
 ## Шифрует и сериализует строку.
 ## aOptions.serializer[default algorythm]
 ## aOptions.log — запись в sql-лог.
+  ^cleanMethodArgument[]
   $lFuncs[$self._sqlFunctions.[$CSQL.serverType]]
   $lSeralizer[$lFuncs.serializers.[^ifdef[$aOptions.serializer]{$self._serializer}]]
   ^pfAssert:isTrue($lSeralizer){Неизвестный метод сериализации "$aOptions.serializer".}
@@ -82,6 +83,7 @@ locals
 ## Расшифровывает строку, закодированную методом encrypt.
 ## aOptions.serializer[default algorythm]
 ## aOptions.log — запись в sql-лог.
+  ^cleanMethodArgument[]
   $lFuncs[$self._sqlFunctions.[$CSQL.serverType]]
   $lSeralizer[$lFuncs.serializers.[^ifdef[$aOptions.serializer]{$self._serializer}]]
   ^pfAssert:isTrue($lSeralizer){Неизвестный метод сериализации "$aOptions.serializer".}
@@ -112,6 +114,7 @@ locals
 ## aData[hash] — данные сериализуются в json.
 ## aOptions.serializer[default algorythm]
 ## aOptions.log — запись в sql-лог.
+  ^cleanMethodArgument[]
   $result[^self.signString[^json:string[$aData]]]
   $result[^self.encrypt[$result;$.serializer[$aOptions.serializer] $.log[$aOptions.log]]]
 
@@ -119,6 +122,7 @@ locals
 ## Расшифровывает и валидирует токен, сформированный функцией makeToken.
 ## Возвращает хеш с данными токена или выбрасывает исключение.
 ## aOptions.log — запись в sql-лог.
+  ^cleanMethodArgument[]
   ^try{
     $result[^self.validateSignatureAndReturnString[^self.decrypt[$aToken;$.serializer[$aOptions.serializer] $.log[$aOptions.log]]]]
     $result[^json:parse[^taint[as-is][$result]]]
