@@ -112,20 +112,28 @@ locals
 @makeToken[aData;aOptions]
 ## Формирует зашифрованный токен из данных и подписывает его с помощью sha256/hmac.
 ## aData[hash] — данные сериализуются в json.
+## aOptions.skipSign(false) — не подписывать токен
 ## aOptions.serializer[default algorythm]
 ## aOptions.log — запись в sql-лог.
   ^cleanMethodArgument[]
-  $result[^self.signString[^json:string[$aData]]]
+  $result[^json:string[$aData]]
+  ^if(!^aOptions.skipSign.bool(false)){
+    $result[^self.signString[$result]]
+  }
   $result[^self.encrypt[$result;$.serializer[$aOptions.serializer] $.log[$aOptions.log]]]
 
 @parseAndValidateToken[aToken;aOptions] -> [hash] <invalid.token>
 ## Расшифровывает и валидирует токен, сформированный функцией makeToken.
 ## Возвращает хеш с данными токена или выбрасывает исключение.
+## aOptions.skipSign(false) — не провирять подпись
 ## aOptions.serializer[default algorythm]
 ## aOptions.log — запись в sql-лог.
   ^cleanMethodArgument[]
   ^try{
-    $result[^self.validateSignatureAndReturnString[^self.decrypt[$aToken;$.serializer[$aOptions.serializer] $.log[$aOptions.log]]]]
+    $result[^self.decrypt[$aToken;$.serializer[$aOptions.serializer] $.log[$aOptions.log]]]
+    ^if(!^aOptions.skipSign.bool(false)){
+      $result[^self.validateSignatureAndReturnString[$result]]
+    }
     $result[^json:parse[^taint[as-is][$result]]]
   }{
      ^if($exception.type eq "security.invalid.signature"){
