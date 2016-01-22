@@ -136,9 +136,7 @@ locals
     }
     $result[^json:parse[^taint[as-is][$result]]]
   }{
-     ^if($exception.type eq "security.invalid.signature"){
-       ^throw[security.invalid.token;;Не удалось расшифровать и проверить токен "${aToken}".]
-     }
+     ^throw[security.invalid.token;;Не удалось расшифровать и проверить токен "${aToken}".]
    }
 
 @digest[aString;aOptions]
