@@ -129,7 +129,7 @@ pfClass
   ^cleanMethodArgument[]
   $result[
   ^@CLASS
-  ${_tableName}
+  ^_makeClassName[$_tableName]
 
   ^@USE
   pf2/lib/sql/models/structs.p
@@ -137,10 +137,14 @@ pfClass
   ^@BASE
   pfModelTable
 
+  ^@OPTIONS
+  locals
+
   ^@create^[aOptions^]
+  ## aOptions.tableName
     ^^BASE:create^[^^hash::create^[^$aOptions^]^if(def $_schema){^#0A      ^$.schema[$_schema]}
-      ^$.tableName[$_tableName]
-  #    ^$.allAsTable(true)
+      ^$.tableName[^^ifdef[^$aOptions.tableName]{$_tableName}]
+  ^if(def $_primary){#}    ^$.allAsTable(true)
     ^]
 
   ^_classBody[]
@@ -148,9 +152,13 @@ pfClass
   $result[^result.match[^^[ \t]{2}][gmx][]]
   $result[^result.match[(^^\s*^$){3,}][gmx][^#0A]]
 
+@_makeClassName[aTableName][locals]
+  $lParts[^aTableName.split[_;lv]]
+  $result[^lParts.foreach[_;v]{^pfString:changeCase[$v.piece;first-upper]}]
+
 @_classBody[][locals]
 $result[
-    ^^addFields^[
+    ^^self.addFields^[
       ^_fields.foreach[k;v]{^$.$k^[^v.foreach[n;m]{^$.$n^if($m is bool){(^if($m){true}{false})}{^if($m is double){^($m^)}{^[$m^]}}}[ ]^]}[^#0A      ]
     ^]
 
@@ -161,9 +169,9 @@ $result[
   ^if(^_fields.contains[isActive] && def $_primary){
   $lArgument[a^pfString:changeCase[$_primary;first-upper]]
   ^@delete^[$lArgument^]
-    ^$result^[^^modify^[^$$lArgument^;^$.isActive(false)^]^]
+    ^$result^[^^self.modify^[^$$lArgument^;^$.isActive(false)^]^]
 
   ^@restore^[$lArgument^]
-    ^$result^[^^modify^[^$$lArgument^;^$.isActive(true)^]^]
+    ^$result^[^^self.modify^[^$$lArgument^;^$.isActive(true)^]^]
   }
 ]
