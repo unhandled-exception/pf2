@@ -291,6 +291,8 @@ locals
     $.updatedAt[$.dbField[updated_at] $.processor[auto_now] $.widget[none]]
   ]
 
+  $self.permissions[^pfUsersPermissions::create[]]
+
 @delete[aUserID]
   $result[^modify[$aUserID;$.isActive(false)]]
 
@@ -305,3 +307,80 @@ locals
   ^if($aUser){
     $result($aUser.isAdmin)
   }
+
+@grant[aUser;aPermission;aOptions]
+  $result[]
+
+@revoke[aUser;aPermission;aOptions]
+  $result[]
+
+#--------------------------------------------------------------------------------------------------
+
+@CLASS
+pfUsersPermissions
+
+@BASE
+pfClass
+
+@OPTIONS
+locals
+
+@create[aOptions]
+  ^BASE:create[$aOptions]
+
+  $self._permissions[^hash::create[]]
+  $self._groups[
+    $.DEFAULT[$.title[] $.permissions[^hash::create[]]]
+  ]
+
+  $self._pnRegex1[^regex::create[\s*:\s+][]]
+  $self._pnRegex2[^regex::create[\s+][g]]
+
+@GET[aContext]
+  $result($self._permissions)
+
+@GET_all[]
+  $result[$self._permissions]
+
+@GET_groups[]
+  $result[$self._groups]
+
+@new[aName;aTitle;aOptions] -> []
+## Добавляет право в систему
+## aPermission[[group:]permission]
+  $result[]
+  $aName[^_processName[$aName]]
+  ^pfAssert:isTrue(def $aName)[Не задано имя права.]
+  ^pfAssert:isFalse(^self._permissions.contains[$aName])[Право "$aName" уже создано.]
+
+  $lPermission[^self._parsePermisson[$aName]]
+  $self._permissions.[$aName][$.title[^ifdef[$aTitle]{$aName}]]
+
+  ^pfAssert:isTrue(!def $lPermission.group || ^self._groups.contains[$lPermission.group])[Неизвестная группа прав "$lPermission.group".]
+  $self._groups.[^ifdef[$lPermission.group]{DEFAULT}].permissions.[$aName][1]
+
+@group[aName;aTitle;aOptions] -> []
+## Добавляет в систему группу
+  $result[]
+  $aName[^_processName[$aName]]
+  ^pfAssert:isTrue(def $aName)[Не задано имя группы прав.]
+  ^pfAssert:isFalse(^self._groups.contains[$aName])[Группа прав "$aName" уже создана.]
+
+  $self._groups.[$aName][$.title[^ifdef[$aTitle]{$aName}] $.permissions[^hash::create[]]]
+
+@_processName[aName] -> [string]
+  $result[^aName.trim[both]]
+  $result[^result.lower[]]
+  $result[^result.match[$_pnRegex1][][:]]
+  $result[^result.match[$_pnRegex2][][_]]
+
+@_parsePermisson[aName] -> [$.permission $.group]
+  $lPos(^aName.pos[:])
+  $result[
+    ^if($lPos > 0){
+      $.group[^aName.mid(0;$lPos)]
+      $.permission[^aName.mid($lPos+1)]
+    }{
+       $.permission[$aName]
+     }
+  ]

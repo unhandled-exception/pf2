@@ -100,6 +100,9 @@ find . -name "*.p" | sort | xargs grep "^@CLASS" -A 1 -H | awk '$0 !~ /(--|@CLAS
 ### ./web/auth2.p
 * pfAuthBase
 * pfRemoteUserAuth
+* pfUserRolesAuth
+* pfUsersModel
+* pfUsersPermissions
 
 ### ./web/controllers.p
 * pfModule
