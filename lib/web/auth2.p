@@ -104,6 +104,8 @@ locals
 ## aOptions.cryptoProvider
 ## aOptions.userFieldName[currentUser] — имя поля с объектом user в объекте запроса
 ## aOptions.usersTableName
+## aOptions.rolesTableName
+## aOptions.rolesToUsersTableName
 ## aOptions.usersModel[pfUsersModel]
 ## aOptions.authCookieName[auth_token] — имя куки для хранения сессий.
 ## aOptions.authCookieDomain — домен для куки сессии
@@ -122,6 +124,9 @@ locals
   $self._expires[^ifdef[$aOptions.expires]{365}]
 
   $self._usersTableName[^ifdef[$aOptions.usersTableName]{auth_users}]
+  $self._rolesTableName[^ifdef[$aOptions.rolesTableName]{auth_roles}]
+  $self._rolesToUsersTableName[^ifdef[$aOptions.rolesToUsersTableName]{auth_roles_to_users}]
+
   $self.users[^ifdef[$aOptions.usersModel]{^self._createUsersModel[]}]
 
   $self._currentUser[^self._makeUser[]]
@@ -136,6 +141,8 @@ locals
   $result[^pfUsersModel::create[
     $.sql[$CSQL]
     $.tableName[$self._usersTableName]]
+    $.rolesTableName[$self._rolesTableName]
+    $.rolesToUsersTableName[$self._rolesToUsersTableName]
   ]
 
 @processRequest[aAction;aRequest;aController;aProcessOptions] -> []
@@ -274,6 +281,10 @@ locals
 @create[aOptions]
 ## aOptions.tableName[auth_users]
 ## aOptions.cryptoProvider
+## aOptions.rolesTableName
+## aOptions.rolesModel[pfRolesModel[$.tableName[$aOptions.rolesTableName]]]
+## aOptions.rolesToUsersTableName
+## aOptions.rolesToUsersModel[pfRolesToUsersModel[$.tableName[$aOptions.rolesToUsersTableName]]]
   ^BASE:create[^hash::create[$aOptions]
     $.tableName[^ifdef[$aOptions.tableName]{auth_users}]
   ]
@@ -292,6 +303,8 @@ locals
   ]
 
   $self.permissions[^pfUsersPermissions::create[]]
+  $self.roles[^ifdef[$aOptions.roles]{^pfRolesModel::create[$.tableName[$aOptions.rolesTableName] $.sql[$CSQL]]}]
+  $self.roles[^ifdef[$aOptions.rolesToUsersModel]{^pfRolesToUsersModel::create[$.tableName[$aOptions.rolesToUsersTableName] $.sql[$CSQL]]}]
 
 @delete[aUserID]
   $result[^modify[$aUserID;$.isActive(false)]]
@@ -318,6 +331,8 @@ locals
 
 @CLASS
 pfUsersPermissions
+
+## Вспомогательный класс для хранеия групп и прав пользователей.
 
 @BASE
 pfClass
@@ -383,4 +398,61 @@ locals
     }{
        $.permission[$aName]
      }
+  ]
+
+#--------------------------------------------------------------------------------------------------
+
+@CLASS
+pfRolesModel
+
+@BASE
+pfModelTable
+
+@OPTIONS
+locals
+
+@create[aOptions]
+## aOptions.tableName
+  ^BASE:create[^hash::create[$aOptions]
+    $.tableName[^ifdef[$aOptions.tableName]{auth_roles}]
+    $.allAsTable(true)
+  ]
+
+  ^self.addFields[
+    $.roleID[$.dbField[role_id] $.processor[uint] $.primary(true) $.widget[none]]
+    $.name[$.label[]]
+    $.description[$.label[]]
+    $.permissions[$.label[]]
+    $.isActive[$.dbField[is_active] $.processor[bool] $.default(true) $.widget[none]]
+  ]
+
+  $self._defaultOrderBy[$.roleID[asc]]
+
+@delete[aRoleID]
+  $result[^self.modify[$aRoleID;$.isActive(false)]]
+
+@restore[aRoleID]
+  $result[^self.modify[$aRoleID;$.isActive(true)]]
+
+#--------------------------------------------------------------------------------------------------
+
+@CLASS
+pfRolesToUsersModel
+
+@BASE
+pfModelTable
+
+@OPTIONS
+locals
+
+@create[aOptions]
+## aOptions.tableName
+  ^BASE:create[^hash::create[$aOptions]
+    $.tableName[^ifdef[$aOptions.tableName]{auth_roles_to_users}]
+    $.allAsTable(true)
+  ]
+
+  ^self.addFields[
+    $.userID[$.dbField[user_id] $.processor[uint] $.label[]]
+    $.roleID[$.dbField[role_id] $.processor[uint] $.label[]]
   ]
