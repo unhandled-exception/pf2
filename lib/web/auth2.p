@@ -305,8 +305,20 @@ locals
   $self.permissions[^pfUsersPermissions::create[]]
   $self._grants[^hash::create[]]
 
-  $self.roles[^ifdef[$aOptions.roles]{^pfRolesModel::create[$.tableName[$aOptions.rolesTableName] $.sql[$CSQL]]}]
-  $self.rolesToUsers[^ifdef[$aOptions.rolesToUsersModel]{^pfRolesToUsersModel::create[$.tableName[$aOptions.rolesToUsersTableName] $.sql[$CSQL]]}]
+  $self.roles[^ifdef[$aOptions.roles]{
+    ^pfRolesModel::create[
+      $.tableName[$aOptions.rolesTableName]
+      $.sql[$CSQL]
+      $.usersModel[$self]
+    ]
+  }]
+  $self.rolesToUsers[^ifdef[$aOptions.rolesToUsersModel]{
+    ^pfRolesToUsersModel::create[
+      $.tableName[$aOptions.rolesToUsersTableName]
+      $.sql[$CSQL]
+      $.usersModel[$self]
+    ]
+  }]
 
 @delete[aUserID]
   $result[^modify[$aUserID;$.isActive(false)]]
@@ -352,6 +364,11 @@ locals
   ^if($lUserGrants && def $aPermission){
     ^lUserGrants.delete[$aPermission]
   }
+
+@assignRoles[aUser;aRoles]
+## Присваиваеv пользователю роли
+## Все старые роли удаляем
+  $result[]
 
 #--------------------------------------------------------------------------------------------------
 
@@ -437,11 +454,15 @@ pfRolesModel
 @BASE
 pfModelTable
 
+## Модель для ролей.
+## Права храним в поле permissions. Одна строка — одно право. Строка с правом начинается с плюса.
+
 @OPTIONS
 locals
 
 @create[aOptions]
 ## aOptions.tableName
+## aOptions.usersModel
   ^BASE:create[^hash::create[$aOptions]
     $.tableName[^ifdef[$aOptions.tableName]{auth_roles}]
     $.allAsTable(true)
@@ -452,16 +473,49 @@ locals
     $.name[$.label[]]
     $.description[$.label[]]
     $.permissions[$.label[]]
-    $.isActive[$.dbField[is_active] $.processor[bool] $.default(true) $.widget[none]]
+    $.createdAt[$.dbField[created_at] $.processor[auto_now] $.skipOnUpdate(true) $.widget[none]]
+    $.updatedAt[$.dbField[updated_at] $.processor[auto_now] $.widget[none]]
   ]
+  $self._defaultOrderBy[$.name[asc] $.roleID[asc]]
 
-  $self._defaultOrderBy[$.roleID[asc]]
+  $self.usersModel[$aOptions.usersModel]
 
 @delete[aRoleID]
-  $result[^self.modify[$aRoleID;$.isActive(false)]]
+  ^CSQL.transaction{
+    $result[^BASE:delete[$aRoleID]]
+    ^self.usersModel.rolesToUsers.deleteAll[$.roleID[$aRoleID]]
+  }
 
-@restore[aRoleID]
-  $result[^self.modify[$aRoleID;$.isActive(true)]]
+@fieldValue[aField;aValue]
+## aField — имя или хеш с полем
+  ^if($aField is string){$aField[$_fields.[$aField]]}
+  ^switch[$aField.name]{
+    ^case[permissions]{
+      $result[^BASE:fieldValue[$aField;^self.permissionsToString[$aValue]]]
+    }
+    ^case[DEFAULT]{$result[^BASE:fieldValue[$aField;$aValue]]}
+  }
+
+@permissionsToString[aPermissions;aOptions][lColumn;k;v]
+## Сериализует права в строку
+## aPermissions[string|table|hash]
+## aOptions.column[permission]
+  ^switch[$aPermissions.CLASS_NAME]{
+    ^case[DEFAULT;string]{$result[$aPermissions]}
+    ^case[table]{
+      $lColumn[^ifdef[$aOptions.column]{permission}]
+      $result[^aPermissions.menu{+$aPermissions.[$lColumn]^#0A}]
+    }
+    ^case[hash]{
+      $result[^aPermissions.foreach[k;v]{+${k}^#0A}]
+    }
+  }
+
+@parsePermissions[aRawPermissions]
+## Достаем права из строки в хеш
+  $result[^hash::create[]]
+  $lParsed[^aRawPermissions.match[^^\+(.+)^$][gm]]
+  ^lParsed.foreach[_;v]{$result.[$v.1](true)}
 
 #--------------------------------------------------------------------------------------------------
 
@@ -484,4 +538,7 @@ locals
   ^self.addFields[
     $.userID[$.dbField[user_id] $.processor[uint] $.label[]]
     $.roleID[$.dbField[role_id] $.processor[uint] $.label[]]
+    $.createdAt[$.dbField[created_at] $.processor[auto_now] $.skipOnUpdate(true) $.widget[none]]
   ]
+
+  $self.usersModel[$aOptions.usersModel]

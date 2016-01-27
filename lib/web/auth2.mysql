@@ -19,12 +19,14 @@ CREATE TABLE `auth_roles` (
   `name` varchar(250) NULL ,
   `description` text NULL ,
   `permissions` text NULL ,
-  `is_active` tinyint(1) unsigned NOT NULL DEFAULT '1',
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
   PRIMARY KEY (`role_id`)
 ) ENGINE=InnoDB;
 
 CREATE TABLE `auth_roles_to_users` (
   `user_id` int UNSIGNED NOT NULL ,
   `role_id` int UNSIGNED NOT NULL ,
+  `created_at` datetime DEFAULT NULL,
   PRIMARY KEY (`user_id`, `role_id`)
 ) ENGINE=InnoDB;
