@@ -58,12 +58,6 @@ pfClass
 
   $__context[]
 
-# Алиасы методов для совоместимости со старым кодом.
-  ^alias[_fieldValue;$fieldValue]
-  ^alias[_valuesArray;$valuesArray]
-  ^alias[_sqlFieldName;$sqlFieldName]
-  ^alias[_asContext;$asContext]
-
 #----- Статические методы и конструктор -----
 
 @auto[]
@@ -343,7 +337,12 @@ pfClass
 ## Возврашает автосгенерированное значение первичного ключа (last_insert_id) для sequence-полей.
   ^cleanMethodArgument[aData;aSQLOptions]
   ^asContext[update]{
-    $result[^CSQL.void{^_builder.insertStatement[$TABLE_NAME;$_fields;$aData;^hash::create[$aSQLOptions] $.skipFields[$_skipOnInsert] $.schema[$SCHEMA]]}]
+    $result[^CSQL.void{^_builder.insertStatement[$TABLE_NAME;$_fields;$aData;
+      ^hash::create[$aSQLOptions]
+      $.skipFields[$_skipOnInsert]
+      $.schema[$SCHEMA]
+      $.fieldValueFunction[$self.fieldValue]
+    ]}]
   }
   ^if(def $_primaryKey && $_fields.[$_primaryKey].sequence){
     $result[^CSQL.lastInsertID[]]
@@ -361,6 +360,7 @@ pfClass
         $.skipFields[$_skipOnUpdate]
         $.emptySetExpression[$PRIMARYKEY = $PRIMARYKEY]
         $.schema[$SCHEMA]
+        $.fieldValueFunction[$self.fieldValue]
       ]
     }
   }]
@@ -421,6 +421,7 @@ pfClass
         $.skipAbsent(true)
         $.skipFields[$_skipOnUpdate]
         $.emptySetExpression[]
+        $.fieldValueFunction[$self.fieldValue]
       ]
     }
   }]
@@ -804,16 +805,18 @@ pfClass
 ## aOptions.skipAbsent(false) - пропустить поля, данных для которых нет
 ## aOptions.skipFields[$.field[] ...] — хеш с полями, которые надо исключить из выражения
 ## aOptions.skipNames(false) - не выводить имена полей, только значения (для insert values)
+## aOptions.fieldValueFunction[self.fieldValue] — функция для преобразования полей
   ^pfAssert:isTrue(def $aFields){Не задан список полей.}
   ^cleanMethodArgument[aData;aOptions]
   $aOptions[^_processFieldsOptions[$aOptions]]
   $lAlias[^if(def $aOptions.alias){${aOptions.alias}}]
+  $lFieldValue[^if($aOptions.fieldValueFunction is junction){$aOptions.fieldValueFunction}{$self.fieldValue}]
 
   $result[^hash::create[]]
   ^aFields.foreach[k;v]{
     ^if(^aOptions.skipFields.contains[$k] || (^v.contains[expression] && !^v.contains[dbField])){^continue[]}
     ^if($aOptions.skipAbsent && !^aData.contains[$k] && !(def $v.processor && ^v.processor.pos[auto_] >= 0)){^continue[]}
-    $result.[^result._count[]][^if(!$aOptions.skipNames){^sqlFieldName[$v;$lAlias] = }^fieldValue[$v;^if(^aData.contains[$k]){$aData.[$k]}]]
+    $result.[^result._count[]][^if(!$aOptions.skipNames){^sqlFieldName[$v;$lAlias] = }^lFieldValue[$v;^if(^aData.contains[$k]){$aData.[$k]}]]
   }
   $result[^result.foreach[k;v]{$v}[, ]]
 

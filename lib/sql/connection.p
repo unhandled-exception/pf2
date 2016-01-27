@@ -70,15 +70,15 @@ pfClass
 @connect[aCode]
 ## Выполняет соединение с сервером и выполняет код, если оно еще не установлено.
 ## Выполняется автоматически при попытке отправить запрос или открыть транзакцию.
-  ^if($_connectionsCount){
+  ^if($self._connectionsCount){
     $result[$aCode]
   }{
      ^MAIN:connect[$_connectString]{
-       ^_connectionsCount.inc[]
+       ^self._connectionsCount.inc[]
        ^try{
          $result[$aCode]
        }{}{
-         ^_connectionsCount.dec[]
+         ^self._connectionsCount.dec[]
        }
      }
    }
@@ -93,16 +93,21 @@ pfClass
     ^if(^aOptions.disableQueriesLog.bool(false)){$self._enableQueriesLog(false)}
     ^self._transactionsCount.inc(1)
 
-    ^startTransaction[]
-    ^try{
+    ^if($self._transactionsCount > 1){
+##    Объединяем вложенные транзакции
       $result[$aCode]
-      ^commit[]
     }{
-       ^rollback[]
-    }{
-       ^self._transactionsCount.dec(1)
-       $self._enableQueriesLog($lIsEnabledQueryLog)
-     }
+      ^startTransaction[]
+      ^try{
+        $result[$aCode]
+        ^commit[]
+      }{
+         ^rollback[]
+      }{
+         ^self._transactionsCount.dec(1)
+         $self._enableQueriesLog($lIsEnabledQueryLog)
+       }
+    }
   }
 
 @startTransaction[]
