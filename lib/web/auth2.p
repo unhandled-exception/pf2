@@ -320,6 +320,9 @@ locals
     ]
   }]
 
+# Кеш с айдишниками пользователей для которых мы уже загрузили роли
+  $self._usersHasLoadedRoles[$.default(false)]
+
 @delete[aUserID]
   $result[^modify[$aUserID;$.isActive(false)]]
 
@@ -333,6 +336,10 @@ locals
   $result(false)
   ^if($aUser){
     $result($aUser.isAdmin)
+    ^if(!$result && $self.permissions){
+      ^self._fetchPermissionsFor[$aUser]
+      $result($self._grants.[$aUser.userID] && $self._grants.[$aUser.userID].[$aPermission])
+    }
   }
 
 @grant[aUser;aPermission;aOptions] -> []
@@ -401,6 +408,25 @@ locals
         }
       }
     }
+  }
+
+@_fetchPermissionsFor[aUser] -> []
+## Загружает роли и достает права для пользователя
+  $result[]
+  ^if(!$self._usersHasLoadedRoles.[$aUser.userID]){
+    $lRoles[^rolesToUsers.all[$.userID[$aUser.userID]]]
+    ^if($lRoles){
+      $lRoles[^roles.aggregate[_fields(permissions);
+        $.[roleID in][$lRoles]
+      ]]
+      ^if($lRoles){
+        $lPermissions[^roles.parsePermissions[^lRoles.foreach[_;v]{$v.permissions}[#0A]]]
+        ^lPermissions.foreach[k;_v]{
+          ^self.grant[$aUser;$k]
+        }
+      }
+    }
+    $self._usersHasLoadedRoles.[$aUser.userID](true)
   }
 
 #--------------------------------------------------------------------------------------------------
@@ -502,7 +528,7 @@ locals
   ]
 
   ^self.addFields[
-    $.roleID[$.dbField[role_id] $.processor[uint] $.primary(true) $.widget[none]]
+    $.roleID[$.dbField[role_id] $.plural[roles] $.processor[uint] $.primary(true) $.widget[none]]
     $.name[$.label[]]
     $.description[$.label[]]
     $.permissions[$.label[]]
@@ -520,7 +546,8 @@ locals
   }
 
 @fieldValue[aField;aValue]
-## aField — имя или хеш с полем
+## Обрабатывает поле permission. Вызывается автоматически методами модели
+## Если нам передали таблицу или хеш, то сериализуем права в строку
   ^if($aField is string){$aField[$_fields.[$aField]]}
   ^switch[$aField.name]{
     ^case[permissions]{
@@ -569,8 +596,8 @@ locals
   ]
 
   ^self.addFields[
-    $.userID[$.dbField[user_id] $.processor[uint] $.label[]]
-    $.roleID[$.dbField[role_id] $.processor[uint] $.label[]]
+    $.userID[$.dbField[user_id] $.plural[users] $.processor[uint] $.label[]]
+    $.roleID[$.dbField[role_id] $.plural[roles] $.processor[uint] $.label[]]
     $.createdAt[$.dbField[created_at] $.processor[auto_now] $.skipOnUpdate(true) $.widget[none]]
   ]
 
