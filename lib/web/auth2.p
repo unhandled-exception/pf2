@@ -335,7 +335,7 @@ locals
     $result($aUser.isAdmin)
   }
 
-@grant[aUser;aPermission;aOptions]
+@grant[aUser;aPermission;aOptions] -> []
 ## Разрешает пользователю воспользоваться правом aPermission.
 ## aOptions.ignoreNonExists(false) - не выдает ошибку, если права нет в системе
   $result[]
@@ -351,7 +351,7 @@ locals
     $self._grants.[$aUser.userID].[$aPermission](true)
   }
 
-@revoke[aUser;aPermission;aOptions]
+@revoke[aUser;aPermission;aOptions] -> []
 ## Запрещает пользователю воспользоваться правом aPermission.
 ## aOptions.ignoreNonExists(false) - не выдает ошибку, если права нет в системе
   $result[]
@@ -365,10 +365,43 @@ locals
     ^lUserGrants.delete[$aPermission]
   }
 
-@assignRoles[aUser;aRoles]
-## Присваиваеv пользователю роли
+@assignRoles[aUser;aRoles;aOptions] -> []
+## Присваиваем пользователю роли
 ## Все старые роли удаляем
+## aRoles[string|table|hash] — список ролей
+## aOptions.columnName[roleID] — имя колонки в таблице с ролями
   $result[]
+  $lUserID[^aUser.userID.int(0)]
+  ^if($lUserID){
+    ^CSQL.transaction{
+      ^rolesToUsers.deleteAll[$.userID[$lUserID]]
+      ^switch[$aRoles.CLASS_NAME]{
+        ^case[string;int;double]{
+          $lRoleID[^aRoles.int(0)]
+          ^if($lRoleID){
+            ^rolesToUsers.new[$.userID[$lUserID] $.roleID[$lRoleID]]
+          }
+        }
+        ^case[table]{
+          $lColumnName[^ifdef[$aOptions.columnName]{roleID}]
+          ^aRoles.foreach[_;v]{
+            $lRoleID[^v.[$lColumnName].int(0)]
+            ^if($lRoleID){
+              ^rolesToUsers.new[$.userID[$lUserID] $.roleID[$lRoleID]]
+            }
+          }
+        }
+        ^case[hash]{
+          ^aRoles.foreach[lRoleID;_]{
+            $lRoleID[^lRoleID.int(0)]
+            ^if($lRoleID){
+              ^rolesToUsers.new[$.userID[$lUserID] $.roleID[$lRoleID]]
+            }
+          }
+        }
+      }
+    }
+  }
 
 #--------------------------------------------------------------------------------------------------
 
