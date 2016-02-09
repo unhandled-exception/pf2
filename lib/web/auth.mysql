@@ -1,46 +1,32 @@
-/* Таблицы для pfAuthDBStorage */
 
-CREATE TABLE  `users` (
-  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
-  `login` varchar(100) NOT NULL DEFAULT '',
-  `password` varchar(100) DEFAULT NULL,
-  `is_active` enum('0','1') NOT NULL DEFAULT '1',
-  `is_admin` enum('0','1') NOT NULL DEFAULT '0',
+-- Таблица для модели lib/web/auth2.p@pfUsersModel
+
+CREATE TABLE `auth_users` (
+  `user_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `login` varchar(250) NOT NULL,
+  `password_hash` varchar(45) DEFAULT NULL,
+  `secure_token` varchar(250) DEFAULT NULL,
+  `is_admin` tinyint(1) unsigned NOT NULL DEFAULT '0',
+  `is_active` tinyint(1) unsigned NOT NULL DEFAULT '1',
   `created_at` datetime DEFAULT NULL,
   `updated_at` datetime DEFAULT NULL,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `login_unique` (`login`)
-);
+  PRIMARY KEY (`user_id`),
+  UNIQUE KEY `idx_login` (`login`)
+) ENGINE=InnoDB;
 
-CREATE TABLE  `sessions` (
-  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
-  `uid` varchar(64) NOT NULL DEFAULT '',
-  `sid` varchar(64) NOT NULL DEFAULT '',
-  `login` varchar(100) NOT NULL DEFAULT '',
-  `dt_create` datetime DEFAULT NULL,
-  `dt_access` datetime DEFAULT NULL,
-  `dt_close` datetime DEFAULT NULL,
-  `is_active` enum('0','1') NOT NULL DEFAULT '1',
-  `ip` int(10) unsigned DEFAULT NULL,
-  `is_persistent` enum('0','1') NOT NULL DEFAULT '0',
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `uid_sid_unique` (`uid`,`sid`)
-);
-
-/* Таблицы для хранения ролей для pfAuthDBRolesStorage */
-
-CREATE TABLE `roles` (
-  `role_id` INT UNSIGNED NOT NULL AUTO_INCREMENT ,
-  `name` VARCHAR(100) NULL ,
-  `permissions` TEXT NULL ,
-  `description` TEXT NULL ,
-  `is_active` ENUM('0','1') NOT NULL DEFAULT 1 ,
-  `sort_order` INT NOT NULL DEFAULT 0 ,
+CREATE TABLE `auth_roles` (
+  `role_id` int UNSIGNED NOT NULL AUTO_INCREMENT ,
+  `name` varchar(250) NULL ,
+  `description` text NULL ,
+  `permissions` text NULL ,
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
   PRIMARY KEY (`role_id`)
-);
+) ENGINE=InnoDB;
 
-CREATE TABLE `roles_to_users` (
-  `user_id` INT UNSIGNED NOT NULL ,
-  `role_id` INT UNSIGNED NOT NULL ,
+CREATE TABLE `auth_roles_to_users` (
+  `user_id` int UNSIGNED NOT NULL ,
+  `role_id` int UNSIGNED NOT NULL ,
+  `created_at` datetime DEFAULT NULL,
   PRIMARY KEY (`user_id`, `role_id`)
-);
+) ENGINE=InnoDB;

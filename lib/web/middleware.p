@@ -1,5 +1,5 @@
 @USE
-pf2/lib/web/controllers2.p
+pf2/lib/web/controllers.p
 
 
 @CLASS

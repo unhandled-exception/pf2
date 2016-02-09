@@ -89,16 +89,6 @@ find . -name "*.p" | sort | xargs grep "^@CLASS" -A 1 -H | awk '$0 !~ /(--|@CLAS
 
 ### ./web/auth.p
 * pfAuthBase
-* pfAuthStorage
-* pfAuthSecurity
-* pfAuthApache
-* pfAuthCookie
-* pfAuthDBStorage
-* pfAuthDBRolesStorage
-* pfAuthDBRolesSecurity
-
-### ./web/auth2.p
-* pfAuthBase
 * pfRemoteUserAuth
 * pfUserRolesAuth
 * pfUsersModel
@@ -107,23 +97,6 @@ find . -name "*.p" | sort | xargs grep "^@CLASS" -A 1 -H | awk '$0 !~ /(--|@CLAS
 * pfRolesToUsersModel
 
 ### ./web/controllers.p
-* pfModule
-* pfRouter
-* pfHTTPRequest
-* pfHTTPResponse
-* pfHTTPResponseRedirect
-* pfHTTPResponsePermanentRedirect
-* pfHTTPResponseNotFound
-* pfHTTPResponseBadRequest
-* pfHTTPResponseNotModified
-* pfHTTPResponseNotAllowed
-* pfHTTPResponseForbidden
-* pfHTTPResponseGone
-* pfHTTPResponseServerError
-* pfSiteModule
-* pfSiteApp
-
-### ./web/controllers2.p
 * pfController
 * pfRequest
 * pfResponse
