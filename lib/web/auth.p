@@ -176,7 +176,7 @@ locals
     $lToken[^self._cryptoProvider.parseAndValidateToken[$aRequest.cookie.[$self._authCookieName];
       $.log[-- Decrypt an auth cookie ($self._authCookieName).]
     ]]
-    $lUser[^self.users.one[
+    $lUser[^self.users.fetch[
       $.userID[$lToken.id]
       $.secureToken[$lToken.token]
       $.isActive(true)
@@ -210,7 +210,7 @@ locals
 
 @login[aRequest;aOptions] -> [bool]
   $result(false)
-  $lUser[^self.users.one[
+  $lUser[^self.users.fetch[
     $.login[$aRequest.login]
     $.isActive(true)
   ]]
@@ -322,6 +322,10 @@ locals
 
 # Кеш с айдишниками пользователей для которых мы уже загрузили роли
   $self._usersHasLoadedRoles[$.default(false)]
+
+@fetch[aOptions;aSQLOptions]
+## Перекрыть в наследниеке, если надо достать еще какие-то данные о пользователе
+  $result[^one[$aOptions;$aSQLOptions]]
 
 @delete[aUserID]
   $result[^modify[$aUserID;$.isActive(false)]]
