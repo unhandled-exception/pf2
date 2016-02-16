@@ -41,7 +41,7 @@ locals
   $self._parentController[$aOptions.parent]
   $self._rootController[^ifdef[$aOptions.rootController]{$self}]
 
-  $self.mountTo[^ifdef[^aOptions.mountTo.trim[both;/]]{/}]
+  $self.mountTo[^ifdef[^aOptions.mountTo.trim[end;/]]{/}]
   $self._appendSlash(^aOptions.appendSlash.bool(true))
 
   $self.uriPrefix[$self.mountTo]
