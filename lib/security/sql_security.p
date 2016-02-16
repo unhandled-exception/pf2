@@ -77,7 +77,7 @@ locals
   ^pfAssert:isTrue($lSeralizer){Неизвестный метод сериализации "$aOptions.serializer".}
   $result[^CSQL.string{
     select ${lSeralizer.to}(${lFuncs.encrypt.func}('^taint[$aString]', '^taint[$_cryptKey]'${lFuncs.encrypt.options}))
-  }[][$.log{^ifdef[$aOptions.log]{-- Encrypt a string "$aString".}}]]
+  }[][$.force(true) $.log{^ifdef[$aOptions.log]{-- Encrypt a string "$aString".}}]]
 
 @decrypt[aString;aOptions]
 ## Расшифровывает строку, закодированную методом encrypt.
@@ -89,7 +89,7 @@ locals
   ^pfAssert:isTrue($lSeralizer){Неизвестный метод сериализации "$aOptions.serializer".}
   $result[^CSQL.string{
     select ${lFuncs.decrypt.func}(${lSeralizer.from}('^taint[$aString]'), '^taint[$_cryptKey]'${lFuncs.decrypt.options})
-  }[][$.log{^ifdef[$aOptions.log]{-- Decrypt a string "$aString".}}]]
+  }[][$.force(true) $.log{^ifdef[$aOptions.log]{-- Decrypt a string "$aString".}}]]
 
 @signString[aString] -> [signature.$aString]
 ## Добавляет в начало строки цифровую подпись подпись hash/hmac/base64.

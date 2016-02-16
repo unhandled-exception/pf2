@@ -156,14 +156,25 @@ locals
 @create[aOptions]
 ## aOptions.enable(false) — включить вывод отладочной информации в конце страницы.
 ## aOptions.sql — класс с sql-соединением
+## aOptions.hideQueryLog(false) — не показывать лог соединений.
+## aOptions.enableHighlightJS(false) — подключить библиотеку highlight.js и подсветить синтаксис SQL.
   ^cleanMethodArgument[]
   $self._enabled(^aOptions.enable.bool(false))
   $self._sql[$aOptions.sql]
+  $self._enableHighlightJS(^aOptions.enableHighlightJS.bool(false))
+  $self._hideQueryLog(^aOptions.hideQueryLog.bool(false))
 
 @processResponse[aAction;aRequest;aResponse;aController;aProcessOptions] -> [response]
   $result[$aResponse]
   ^if($self._enabled && $aResponse.type eq "html"){
-    $result.body[^result.body.match[</body>][i]{^self._template[]</body>}]
+    $result.body[^result.body.match[(</body>)][i]{^self._template[]$match.1}]
+    $result.body[^result.body.match[(</head>)][i]{^self._links[]$match.1}]
+  }
+
+@_links[]
+  ^if($self._enableHighlightJS){
+    <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.1.0/styles/default.min.css">
+    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.1.0/highlight.min.js"></script>
   }
 
 @_template[]
@@ -184,13 +195,27 @@ locals
   </div>
 
 @_queriesStat[aStat]
-  <p class="sql-stat">SQL queries: ${aStat.queriesCount} (^aStat.queriesTime.format[%.6f] сек).
-       IM size: ${aStat.identityMap.size}.
-       IM usage: ${aStat.identityMap.usage}.
+  <p class="sql-stat">SQL queries: ${aStat.queriesCount} (^aStat.queriesTime.format[%.6f] sec).
+       Memory cache: size — ${aStat.memoryCache.size}, hits – ${aStat.memoryCache.usage}.
   </p>
 
-  <ol style="sql-queries">
-     ^aStat.queries.foreach[_;it]{
-       <li style="margin-bottom: 0.5em^; ^if(def $it.exception){color: #94333C}">(^it.time.format[%.6f] сек) $it.query ^if(def $it.limit){limit $it.limit} ^if(def $it.offset){offset $it.offset} ^if(def $it.exception){<span>[^taint[$it.exception.type - $it.exception.comment]]</span>} ($it.results rec, $it.memory KB, $it.type)</li>
-     }
-  </ol>
+  ^if(!$self._hideQueryLog){
+    <ol style="sql-queries">
+       ^aStat.queries.foreach[_;it]{
+         <li style="margin-bottom: 0.5em^; ^if(def $it.exception){color: #94333C}">
+           (^it.time.format[%.6f] sec, $it.results rec, $it.memory KB, $it.type)
+           ^if(def $it.exception){<span>[^taint[$it.exception.type - $it.exception.comment]]</span>}
+           <pre class="sql-log-query"><code class="sql">^it.query.trim[both]
+           ^if(def $it.limit){limit $it.limit} ^if(def $it.offset){offset $it.offset}
+           </code></pre>
+         </li>
+       }
+    </ol>
+    ^if($self._enableHighlightJS){
+      <script>
+        ^$('.sql-log-query').each(function(i, block) {
+          hljs.highlightBlock(block)^;
+        })^;
+      </script>
+    }
+  }

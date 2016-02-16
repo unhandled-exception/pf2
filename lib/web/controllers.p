@@ -880,7 +880,7 @@ locals
 @create[aOptions]
 
 @processRequest[aAction;aRequest;aController;aProcessOptions] -> [response|null]
-# если ничего не возвращает, то продолжаем обработку, если возвращает pfHTTPResponse, то прерываем обработку и не зовем дургие middleware.
+# если ничего не возвращает, то продолжаем обработку, если возвращает pfResponse, то прерываем обработку и не зовем другие middleware.
   $result[]
 
 @processResponse[aAction;aRequest;aResponse;aController;aProcessOptions] -> [response]
