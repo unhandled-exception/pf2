@@ -245,7 +245,7 @@ pfAntiFloodStorage
     }
     $lID[^CSQL.lastInsertID[]]
   }
-  $result[^_packTocken[$lID;$lSalt]]
+  $result[^_packToken[$lID;$lSalt]]
 
 @validateToken[aToken][lToken;lID;lNow]
 ## Проверяет валидность токена
@@ -282,7 +282,7 @@ pfAntiFloodStorage
               and date_sub("^lNow.sql-string[]", interval ^_expires.int[] + (60*60*12) second)
   }
 
-@_packTocken[aID;aSalt]
+@_packToken[aID;aSalt]
   $result[^CSQL.string{select lower(hex(aes_encrypt('^taint[$aID|$aSalt]', '$_password')))}[][$.log[-- Encrypt an antiflood token.]]]
 
 @_unpackToken[aToken][lString]
