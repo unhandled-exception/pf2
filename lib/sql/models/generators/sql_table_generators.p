@@ -68,6 +68,7 @@ pfClass
       ^case[date]{$lData.processor[date]}
       ^case[datetime]{$lData.processor[datetime]}
       ^case[time]{$lData.processor[time]}
+      ^case[json]{$lData.processor[json]}
     }
 
     ^if($lDDL.Key eq "PRI" && $lHasPrimary){
