@@ -147,6 +147,7 @@ locals
 ## aOptions.prefix
   $result[]
   $self.action[$aAction]
+  $self.request[$aRequest]
 
   ^self.MIDDLEWARE.foreach[_;lMiddleware]{
     $result[^lMiddleware.processRequest[$aAction;$aRequest;$self;$aOptions]]
