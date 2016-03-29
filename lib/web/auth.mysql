@@ -19,6 +19,7 @@ CREATE TABLE `auth_roles` (
   `name` varchar(250) NULL ,
   `description` text NULL ,
   `permissions` text NULL ,
+  `is_active` tinyint(1) unsigned NOT NULL DEFAULT '1',
   `created_at` datetime DEFAULT NULL,
   `updated_at` datetime DEFAULT NULL,
   PRIMARY KEY (`role_id`)

@@ -418,7 +418,10 @@ locals
 ## Загружает роли и достает права для пользователя
   $result[]
   ^if(!$self._usersHasLoadedRoles.[$aUser.userID]){
-    $lRoles[^rolesToUsers.all[$.userID[$aUser.userID]]]
+    $lRoles[^rolesToUsers.all[
+      $.userID[$aUser.userID]
+      $.having[isActive = 1]
+    ]]
     ^if($lRoles){
       $lRoles[^roles.aggregate[_fields(permissions);
         $.[roleID in][$lRoles]
@@ -536,6 +539,7 @@ locals
     $.name[$.label[]]
     $.description[$.label[]]
     $.permissions[$.label[]]
+    $.isActive[$.dbField[is_active] $.processor[bool] $.default(true) $.widget[none]]
     $.createdAt[$.dbField[created_at] $.processor[auto_now] $.skipOnUpdate(true) $.widget[none]]
     $.updatedAt[$.dbField[updated_at] $.processor[auto_now] $.widget[none]]
   ]
@@ -543,11 +547,21 @@ locals
 
   $self.usersModel[$aOptions.usersModel]
 
-@delete[aRoleID]
+@delete[aRoleID;aOptions]
+## aOptions.force(false) — удалить запись из таблиц
+  ^cleanMethodArgument[]
+  $lForce(^aOptions.force.bool(false))
   ^CSQL.transaction{
-    $result[^BASE:delete[$aRoleID]]
-    ^self.usersModel.rolesToUsers.deleteAll[$.roleID[$aRoleID]]
+    ^if($lForce){
+      $result[^BASE:delete[$aRoleID]]
+      ^self.usersModel.rolesToUsers.deleteAll[$.roleID[$aRoleID]]
+    }{
+       $result[^self.modify[$aRoleID;$.isActive(false)]]
+     }
   }
+
+@restore[aRoleID]
+  $result[^self.modify[$aRoleID;$.isActive(true)]]
 
 @fieldValue[aField;aValue]
 ## Обрабатывает поле permission. Вызывается автоматически методами модели
@@ -606,3 +620,17 @@ locals
   ]
 
   $self.usersModel[$aOptions.usersModel]
+
+  ^self.addFields[
+#   Виртуальное поле. Связь активна, если и пользователь и роль активны.
+    $.isActive[
+      $.expression[(case when $usersModel.isActive = 1 and $usersModel.roles.isActive = 1 then 1 else 0 end)]
+      $.processor[bool]
+    ]
+  ]
+
+@_allJoin[aOptions]
+  $result[
+    join $usersModel.TABLE_EXPRESSION on ($usersModel.userID = $self.userID)
+    join $usersModel.roles.TABLE_EXPRESSION on ($usersModel.roles.roleID = $self.roleID)
+  ]
