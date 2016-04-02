@@ -294,8 +294,8 @@ locals
   ^self.addFields[
     $.userID[$.dbField[user_id] $.processor[uint] $.primary(true) $.widget[none]]
     $.login[$.label[]]
-    $.passwordHash[$.dbField[password_hash] $.label[]]
-    $.secureToken[$.dbField[secure_token] $.label[]]
+    $.passwordHash[$.dbField[password_hash] $.label[] $.widget[none]]
+    $.secureToken[$.dbField[secure_token] $.label[] $.widget[none]]
     $.isAdmin[$.dbField[is_admin] $.processor[bool] $.default(false) $.label[]]
     $.isActive[$.dbField[is_active] $.processor[bool] $.default(true) $.widget[none]]
     $.createdAt[$.dbField[created_at] $.processor[auto_now] $.skipOnUpdate(true) $.widget[none]]
