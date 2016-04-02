@@ -420,7 +420,7 @@ locals
   ^if(!$self._usersHasLoadedRoles.[$aUser.userID]){
     $lRoles[^rolesToUsers.all[
       $.userID[$aUser.userID]
-      $.having[isActive = 1]
+      $.isActive[1]
     ]]
     ^if($lRoles){
       $lRoles[^roles.aggregate[_fields(permissions);
