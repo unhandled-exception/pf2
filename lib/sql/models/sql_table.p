@@ -837,11 +837,14 @@ pfClass
       ^case[time]{^if(def $aValue){'^if($aValue is date){^aValue.sql-string[time]}{^taint[$aValue]}'}{null}}
       ^case[json]{^if(def $aValue){'^taint[^json:string[$aValue]]'}{null}}
       ^case[null]{^if(def $aValue){'^taint[$aValue]'}{null}}
+      ^case[int_null]{^if(def $aValue){$lVal($aValue)^lVal.format[%d]}{null}}
       ^case[uint_null]{^if(def $aValue){$lVal($aValue)^lVal.format[%u]}{null}}
       ^case[uid;auto_uid]{'^taint[^if(def $aValue){$aValue}{^math:uuid[]}']}
       ^case[inet_ip]{^unsafe{^inet:aton[$aValue]}{null}}
       ^case[first_upper]{'^taint[^if(def $aValue){^aValue.match[$_PFSQLBUILDER_PROCESSOR_FIRST_UPPER][]{^match.1.upper[]$match.2}}(def $aField.default){$aField.default}]'}
       ^case[hash_md5]{'^taint[^if(def $aValue){^math:md5[$aValue]}]'}
+      ^case[lower_trim]{$lVal[^aValue.lower[]]'^taint[^lVal.trim[both]]'}
+      ^case[upper_trim]{$lVal[^aValue.lower[]]'^taint[^lVal.trim[both]]'}
       ^case[DEFAULT;auto_default]{'^taint[^if(def $aValue){$aValue}(def $aField.default){$aField.default}]'}
     }]
   }{

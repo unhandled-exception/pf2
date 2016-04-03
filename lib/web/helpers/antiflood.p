@@ -230,7 +230,7 @@ pfAntiFloodStorage
 @GET_CSQL[]
   $result[$_csql]
 
-@generateToken[][lID;lSalt]
+@generateToken[][locals]
 ## Генерирует новый токен
   ^CSQL.transaction{
     ^if($_autoCleanup && ^math:random(5) == 1){
@@ -239,9 +239,10 @@ pfAntiFloodStorage
 
     $lSalt[^math:uid64[]]
     $lSalt[^lSalt.lower[]]
+    $lNow[^date::now[]]
     ^CSQL.void{
-       insert into $_tableName (salt)
-            values ('$lSalt')
+       insert into $_tableName (salt, created_at)
+            values ('$lSalt', '^lNow.sql-string[]')
     }
     $lID[^CSQL.lastInsertID[]]
   }

@@ -1,6 +1,6 @@
 CREATE TABLE antiflood
 (
-    id BIGINT PRIMARY KEY NOT NULL,
+    id BIGSERIAL PRIMARY KEY NOT NULL,
     salt CHAR(16) NOT NULL,
     created_at TIMESTAMP DEFAULT now() NOT NULL,
     processed_at TIMESTAMP
