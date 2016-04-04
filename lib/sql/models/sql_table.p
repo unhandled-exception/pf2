@@ -65,19 +65,6 @@ pfClass
   $_PFSQLTABLE_BUILDER[]
   $_PFSQLTABLE_COMPARSION_REGEX[^regex::create[^^\s*(\S+)(?:\s+(\S+))?][]]
   $_PFSQLTABLE_AGR_REGEX[^regex::create[^^\s*(([^^\s(]+)(.*?))\s*(?:as\s+([^^\s\)]+))?\s*^$][i]]
-  $_PFSQLTABLE_OPS[
-    $.[<][<]
-    $.[>][>]
-    $.[<=][<=]
-    $.[>=][>=]
-    $.[!=][<>]
-    $.[!][<>]
-    $.[<>][<>]
-    $.like[like]
-    $.[=][=]
-    $.[==][=]
-    $._default[=]
-  ]
   $_PFSQLTABLE_LOGICAL[
     $.OR[or]
     $.AND[and]
@@ -557,10 +544,7 @@ pfClass
   ^aConds.foreach[k;v]{
     ^k.match[$_PFSQLTABLE_COMPARSION_REGEX][]{
       $lField[$_fields.[$match.1]]
-      ^if(^_fields.contains[$match.1] && !def $match.2 || ^_PFSQLTABLE_OPS.contains[$match.2]){
-#       $.[field operator][value]
-        $_res.[^_res._count[]][^sqlFieldName[$match.1] $_PFSQLTABLE_OPS.[$match.2] ^fieldValue[$lField;$v]]
-      }($match.2 eq "range" || $match.2 eq "!range"){
+      ^if($match.2 eq "range" || $match.2 eq "!range"){
 #       $.[field range][$.from $.to]
 #       $.[field !range][$.from $.to]
         $_res.[^_res._count[]][^if(^match.2.left(1) eq "!"){not }^(^sqlFieldName[$match.1] between ^fieldValue[$lField;$v.from] and ^fieldValue[$lField;$v.to])]
@@ -575,6 +559,10 @@ pfClass
       }($match.1 eq "OR" || $match.1 eq "AND" || $match.1 eq "NOT"){
 #       Рекурсивный вызов логического блока
         $_res.[^_res._count[]][^_buildConditions[$v;$match.1]]
+      }(^_fields.contains[$match.1]){
+#       Операторы
+#       $.[field operator][value]
+        $_res.[^_res._count[]][^sqlFieldName[$match.1] ^taint[^ifdef[$match.2]{=}] ^fieldValue[$lField;$v]]
       }
     }
   }
