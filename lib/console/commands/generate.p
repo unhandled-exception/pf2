@@ -49,7 +49,18 @@ pfConsoleCommandWithSubcommands
     }{
        $lTableName[$lParts.0]
      }
-    $lGenerator[^pfTableModelGenerator::create[$lTableName;$.sql[$CSQL] $.schema[$lSchema]]]
+    ^switch[$CSQL.serverType]{
+      ^case[mysql]{
+        $lGenerator[
+          ^pfMySQLTableModelGenerator::create[$lTableName;
+            $.sql[$CSQL]
+            $.schema[$lSchema]
+        ]]
+      }
+      ^case[DEFAULT]{
+        ^fail["$CSQL.serverType" is an unknown sql-server type.]
+      }
+    }
     ^print[^lGenerator.generate[]]
   }{
      ^if($exception.type eq "table.not.found"){

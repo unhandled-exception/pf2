@@ -3,8 +3,9 @@
 @USE
 pf2/lib/common.p
 
+
 @CLASS
-pfTableModelGenerator
+pfMySQLTableModelGenerator
 
 ## Генерирует текст класса модели по DDL.
 ## Класс умеет получать описания таблиц только из MySQL.
