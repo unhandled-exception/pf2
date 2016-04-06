@@ -64,7 +64,8 @@ find . -name "*.p" | sort | xargs grep "^@CLASS" -A 1 -H | awk '$0 !~ /(--|@CLAS
 * pfTableFormGeneratorSemanticUIWidgets
 
 ### ./sql/models/generators/sql_table_generators.p
-* pfTableModelGenerator
+* pfMySQLTableModelGenerator
+* pfPostgresTableModelGenerator
 
 ### ./sql/models/generics/queue/sql_queue.p
 * pfSQLQueue

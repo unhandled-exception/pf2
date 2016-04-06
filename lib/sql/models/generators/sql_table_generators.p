@@ -7,8 +7,7 @@ pf2/lib/common.p
 @CLASS
 pfMySQLTableModelGenerator
 
-## Генерирует текст класса модели по DDL.
-## Класс умеет получать описания таблиц только из MySQL.
+## Генерирует текст класса модели по DDL MySQL.
 
 @BASE
 pfClass
@@ -26,7 +25,7 @@ pfClass
 
   $_schema[$aOptions.schema]
   $_tableName[$aTableName]
-  ^if(!def $_tableName || !^CSQL.table{show tables ^if(def $_schema){from `$_schema`} like "$_tableName"}){
+  ^if(!def $_tableName || !^CSQL.table{show tables ^if(def $_schema){from `^taint[$_schema]`} like "^taint[$_tableName]"}){
     ^throw[table.not.found]
   }
 
@@ -120,6 +119,180 @@ pfClass
       $result.unsigned(true)
     }
   }
+
+@_makeName[aName]
+  $aName[^aName.lower[]]
+  $result[^aName.match[_(\w)][g]{^match.1.upper[]}]
+  $result[^result.match[Id^$][][ID]]
+  $result[^result.match[Ip^$][][IP]]
+
+@generate[aOptions]
+  ^cleanMethodArgument[]
+  $result[
+  ^@CLASS
+  ^_makeClassName[$_tableName]
+
+  ^@USE
+  pf2/lib/sql/models/structs.p
+
+  ^@BASE
+  pfModelTable
+
+  ^@OPTIONS
+  locals
+
+  ^@create^[aOptions^]
+  ## aOptions.tableName
+    ^^BASE:create^[^^hash::create^[^$aOptions^]^if(def $_schema){^#0A      ^$.schema[$_schema]}
+      ^$.tableName[^^ifdef[^$aOptions.tableName]{$_tableName}]
+  ^if(def $_primary){#}    ^$.allAsTable(true)
+    ^]
+
+  ^_classBody[]
+  ]
+  $result[^result.match[^^[ \t]{2}][gmx][]]
+  $result[^result.match[(^^\s*^$){3,}][gmx][^#0A]]
+
+@_makeClassName[aTableName][locals]
+  $lParts[^aTableName.split[_;lv]]
+  $result[^lParts.foreach[_;v]{^pfString:changeCase[$v.piece;first-upper]}]
+
+@_classBody[][locals]
+$result[
+    ^^self.addFields^[
+      ^_fields.foreach[k;v]{^$.$k^[^v.foreach[n;m]{^$.$n^if($m is bool){(^if($m){true}{false})}{^if($m is double){^($m^)}{^[$m^]}}}[ ]^]}[^#0A      ]
+    ^]
+
+  ^if(def $_primary){
+    ^$self._defaultOrderBy^[^$.${_primary}[asc]]
+  }
+
+  ^if(^_fields.contains[isActive] && def $_primary){
+  $lArgument[a^pfString:changeCase[$_primary;first-upper]]
+  ^@delete^[$lArgument^]
+    ^$result^[^^self.modify^[^$$lArgument^;^$.isActive(false)^]^]
+
+  ^@restore^[$lArgument^]
+    ^$result^[^^self.modify^[^$$lArgument^;^$.isActive(true)^]^]
+  }
+]
+
+#--------------------------------------------------------------------------------------------------
+
+@CLASS
+pfPostgresTableModelGenerator
+
+## Генерирует текст класса модели по DDL Постгреса.
+
+@BASE
+pfClass
+
+@create[aTableName;aOptions]
+## aOptions.sql
+## aOptions.schema
+  ^cleanMethodArgument[]
+  ^pfAssert:isTrue(def $aOptions.sql)[Не задан объект для соединения к СУБД.]
+  ^pfAssert:isTrue($aOptions.sql.serverType eq "pgsql")[Класс умеет получать описания таблиц только из Postgres.]
+  ^BASE:create[]
+
+  $_sql[$aOptions.sql]
+  ^defReadProperty[CSQL;_sql]
+
+  $_schema[$aOptions.schema]
+  $_tableName[$aTableName]
+  ^if(!def $_tableName
+    || !^CSQL.int{
+          select count(*)
+            from information_schema.tables
+           where table_schema = '^taint[^ifdef[$_schema]{public}]'
+                 and table_name = '^taint[$_tableName]'
+       }
+  ){
+    ^throw[table.not.found]
+  }
+
+  $_fields[^_getFields[]]
+
+@_getFields[][locals]
+  $result[^hash::create[]]
+  $lDDL[^CSQL.table{
+      select cols.*,
+             (case when i.column_name is not null then 'PRI' end) as key
+        from information_schema.columns as cols
+   left join information_schema.key_column_usage as i using (table_schema, table_name, column_name)
+       where cols.table_schema = '^taint[^ifdef[$_schema]{public}]'
+             and cols.table_name = '^taint[$_tableName]'
+    order by cols.ordinal_position asc
+  }]
+
+  $lHasPrimary(^lDDL.select($lDDL.key eq "PRI") == 1)
+  $self._primary[]
+
+  ^lDDL.menu{
+    $lName[^_makeName[$lDDL.column_name]]
+    $lData[^hash::create[]]
+
+    ^if($lDDL.column_name ne $lName){$lData.dbField[$lDDL.column_name]}
+
+    $lType[^_parseType[$lDDL.fields]]
+    ^switch[^lType.type.lower[]]{
+      ^case[int;integer;smallint]{
+        $lData.processor[int]
+        ^unsafe{$lData.default(^lType.default.int[])}
+      }
+      ^case[float;double;decimal;numeric]{
+        $lData.processor[double]
+        ^if(def $lType.numericScale){
+          $lData.format[%.${lType.numericScale}f]
+        }
+        ^unsafe{$lData.default(^lDDL.default.double[])}
+      }
+      ^case[date]{$lData.processor[date]}
+      ^case[timestamp]{$lData.processor[datetime]}
+      ^case[time]{$lData.processor[time]}
+      ^case[json;jsonb]{$lData.processor[json]}
+    }
+
+    ^if($lDDL.key eq "PRI" && $lHasPrimary){
+      $lData.primary(true)
+      $self._primary[$lName]
+      ^if(!^lDDL.column_default.match[^^nextval][in]){
+        $lData.sequence(false)
+      }
+      $lData.widget[none]
+    }
+
+    ^if($lName eq "createdAt"){
+      $lData.processor[auto_now]
+      $lData.skipOnUpdate(true)
+      $lData.widget[none]
+    }
+    ^if($lName eq "updatedAt"){
+      $lData.processor[auto_now]
+      $lData.widget[none]
+    }
+    ^if($lName eq "isActive"){
+      $lData.widget[none]
+    }
+    ^if(^lType.columnName.match[^^(?:is_|can_).+]){
+      $lData.processor[bool]
+      ^if(def $lData.default){
+        $lData.default(^lData.default.bool[])
+      }
+    }
+    ^if(!def $lData.widget){
+      $lData.label[]
+    }
+
+    $result.[$lName][$lData]
+  }
+
+@_parseType[aField]
+  $result[^hash::create[]]
+  $result.type[^aField.data_type.match[^^(\w+).*][]{$match.1}]
+  $result.default[$aField.column_default]
+  $result.columnName[$aField.column_name]
+  $result.numericScale[$aField.numeric_scale]
 
 @_makeName[aName]
   $aName[^aName.lower[]]

@@ -57,6 +57,13 @@ pfConsoleCommandWithSubcommands
             $.schema[$lSchema]
         ]]
       }
+      ^case[pgsql]{
+        $lGenerator[
+          ^pfPostgresTableModelGenerator::create[$lTableName;
+            $.sql[$CSQL]
+            $.schema[$lSchema]
+        ]]
+      }
       ^case[DEFAULT]{
         ^fail["$CSQL.serverType" is an unknown sql-server type.]
       }
