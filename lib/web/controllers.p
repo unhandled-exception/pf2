@@ -579,9 +579,9 @@ locals
 ## aBody
 ## aOptions.type[html] - тип ответа
 ## aOptions.status(200) - http-статус
-## aOptions.contentType[]
+## aOptions.contentType[text/html]
 ## aOptions.charset[]
-## aOptions.canDownload(false)
+## aOptions.download[] — если задан, то заменяет aBody
 ## aOptions.headers[]
 ## aOptions.cookie[]
   ^cleanMethodArgument[]
@@ -595,8 +595,8 @@ locals
   $self.status(^ifdef[$aOptions.status]{200})
   $self.charset[^ifdef[$aOptions.charset]{$response:charset}]
 
-  $self.headers[^hash::create[]]
-  $self.cookie[^hash::create[]]
+  $self.headers[^hash::create[$aOptions.headers]]
+  $self.cookie[^hash::create[$aOptions.cookie]]
 
 @GET_type[]
   $result[$self._type]
