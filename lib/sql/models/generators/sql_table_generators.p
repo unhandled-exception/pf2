@@ -129,11 +129,11 @@ pfClass
 @generate[aOptions]
   ^cleanMethodArgument[]
   $result[
-  ^@CLASS
-  ^_makeClassName[$_tableName]
-
   ^@USE
   pf2/lib/sql/models/structs.p
+
+  ^@CLASS
+  ^_makeClassName[$_tableName]
 
   ^@BASE
   pfModelTable
@@ -303,11 +303,11 @@ pfClass
 @generate[aOptions]
   ^cleanMethodArgument[]
   $result[
-  ^@CLASS
-  ^_makeClassName[$_tableName]
-
   ^@USE
   pf2/lib/sql/models/structs.p
+
+  ^@CLASS
+  ^_makeClassName[$_tableName]
 
   ^@BASE
   pfModelTable
