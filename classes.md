@@ -61,6 +61,7 @@
 * pfTableFormGeneratorSemanticUIWidgets
 
 ### ./lib/sql/models/generators/sql_table_generators.p
+* pfSQLModelGenerator
 * pfMySQLTableModelGenerator
 * pfPostgresTableModelGenerator
 

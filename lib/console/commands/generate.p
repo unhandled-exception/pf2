@@ -19,6 +19,7 @@ pfConsoleCommandWithSubcommands
 ## aOptions.sql — ссылка на класс соединение с БД.
 ## aOptions.core - ссылка на модель данных.
 ## aOptions.formWidgets[bootstrap3] — виджеты для генерации форм.
+## aOptions.modelClassPrefix[] — префикс класса модели.
   ^cleanMethodArgument[]
   ^BASE:create[$aOptions]
   ^pfModelChainMixin:mixin[$self;$aOptions]
@@ -33,9 +34,33 @@ pfConsoleCommandWithSubcommands
   $_defaultFormWidget[^if(def $aOptions.formWidgets){$aOptions.formWidgets}{bootstrap3}]
   ^pfAssert:isTrue(^_formWidgets.contains[$_defaultFormWidget]){"$_defaultFormWidget" is an unknown form widgets type.}
 
-  ^assignSubcommand[model [schema.]table_name;$model;$.help[Generate a model class by table DDL.]]
-  ^assignSubcommand[form core.model_name [widgets];$form;$.help[Generate a html-form by a model object. Available widgets: ^_formWidgets.foreach[k;_]{$k}[, ] (default: ${_defaultFormWidget}).]]
-  ^assignSubcommand[controller model.name [entity_name];$controller;$.help[Generate a controller class by a model object.]]
+  $_modelClassPrefix[$aOptions.modelClassPrefix]
+
+  ^assignSubcommand[model [schema.]table_name;$model;
+    $.help[Generate a model class by table DDL.]
+  ]
+  ^assignSubcommand[form core.model_name [widgets];$form;
+    $.help[Generate a html-form by a model object. Available widgets: ^_formWidgets.foreach[k;_]{$k}[, ] (default: ${_defaultFormWidget}).]
+  ]
+  ^assignSubcommand[controller model.name [entity_name];$controller;
+    $.help[Generate a controller class by a model object.]
+  ]
+
+@_getModelGenerator[aServerType;aTableName;aSchema][locals]
+  $lOptions[
+    $.sql[$CSQL]
+    $.schema[$aSchema]
+    $.classPrefix[$_modelClassPrefix]
+  ]
+  $result[
+    ^switch[$aServerType]{
+      ^case[mysql]{^pfMySQLTableModelGenerator::create[$aTableName;$lOptions]}
+      ^case[pgsql]{^pfPostgresTableModelGenerator::create[$aTableName;$lOptions]}
+      ^case[DEFAULT]{
+        ^fail["$CSQL.serverType" is an unknown sql-server type.]
+      }
+    }
+  ]
 
 @model[aArgs;aSwitches][locals]
 ## aArgs.1 — table_name
@@ -49,25 +74,7 @@ pfConsoleCommandWithSubcommands
     }{
        $lTableName[$lParts.0]
      }
-    ^switch[$CSQL.serverType]{
-      ^case[mysql]{
-        $lGenerator[
-          ^pfMySQLTableModelGenerator::create[$lTableName;
-            $.sql[$CSQL]
-            $.schema[$lSchema]
-        ]]
-      }
-      ^case[pgsql]{
-        $lGenerator[
-          ^pfPostgresTableModelGenerator::create[$lTableName;
-            $.sql[$CSQL]
-            $.schema[$lSchema]
-        ]]
-      }
-      ^case[DEFAULT]{
-        ^fail["$CSQL.serverType" is an unknown sql-server type.]
-      }
-    }
+    $lGenerator[^_getModelGenerator[$CSQL.serverType;$lTableName;$lSchema]]
     ^print[^lGenerator.generate[]]
   }{
      ^if($exception.type eq "table.not.found"){

@@ -5,19 +5,20 @@ pf2/lib/common.p
 
 
 @CLASS
-pfMySQLTableModelGenerator
+pfSQLModelGenerator
 
-## Генерирует текст класса модели по DDL MySQL.
+## Базовый предок генераторов. Для каждого сервера надо написать наследника,
+## реализующего методы _hasTable и _getFields.
 
 @BASE
 pfClass
 
 @create[aTableName;aOptions]
-## aOptions.sql
-## aOptions.schema
+## aOptions.sql — объект соединения с БД
+## aOptions.schema[] — схема в БД
+## aOptions.classPrefix[] — префикс класса
   ^cleanMethodArgument[]
   ^pfAssert:isTrue(def $aOptions.sql)[Не задан объект для соединения к СУБД.]
-  ^pfAssert:isTrue($aOptions.sql.serverType eq "mysql")[Класс умеет получать описания таблиц только из MySQL.]
   ^BASE:create[]
 
   $_sql[$aOptions.sql]
@@ -25,11 +26,97 @@ pfClass
 
   $_schema[$aOptions.schema]
   $_tableName[$aTableName]
-  ^if(!def $_tableName || !^CSQL.table{show tables ^if(def $_schema){from `^taint[$_schema]`} like "^taint[$_tableName]"}){
+  $_classPrefix[$aOptions.classPrefix]
+
+  ^if(^_hasTable[]){
     ^throw[table.not.found]
   }
 
   $_fields[^_getFields[]]
+
+@_hasTable[]
+  ^throw[abstract.method]
+
+@_getFields[aOptions]
+  ^throw[abstract.method]
+
+@_makeName[aName]
+  $aName[^aName.lower[]]
+  $result[^aName.match[_(\w)][g]{^match.1.upper[]}]
+  $result[^result.match[Id^$][][ID]]
+  $result[^result.match[Ip^$][][IP]]
+
+@generate[aOptions]
+  ^cleanMethodArgument[]
+  $result[
+  ^@USE
+  pf2/lib/sql/models/structs.p
+
+  ^@CLASS
+  ^_makeClassName[$_tableName]
+
+  ^@BASE
+  pfModelTable
+
+  ^@OPTIONS
+  locals
+
+  ^@create^[aOptions^]
+  ## aOptions.tableName
+    ^^BASE:create^[^^hash::create^[^$aOptions^]^if(def $_schema){^#0A      ^$.schema[$_schema]}
+      ^$.tableName[^^ifdef[^$aOptions.tableName]{$_tableName}]
+  ^if(def $_primary){#}    ^$.allAsTable(true)
+    ^]
+
+  ^_classBody[]
+  ]
+  $result[^result.match[^^[ \t]{2}][gmx][]]
+  $result[^result.match[(^^\s*^$){3,}][gmx][^#0A]]
+
+@_makeClassName[aTableName][locals]
+  $lParts[^aTableName.split[_;lv]]
+  $result[${_classPrefix}^lParts.foreach[_;v]{^pfString:changeCase[$v.piece;first-upper]}]
+
+@_classBody[][locals]
+$result[
+    ^^self.addFields^[
+      ^_fields.foreach[k;v]{^$.$k^[^v.foreach[n;m]{^$.$n^if($m is bool){(^if($m){true}{false})}{^if($m is double){^($m^)}{^[$m^]}}}[ ]^]}[^#0A      ]
+    ^]
+
+  ^if(def $_primary){
+    ^$self._defaultOrderBy^[^$.${_primary}[asc]]
+  }
+
+  ^if(^_fields.contains[isActive] && def $_primary){
+  $lArgument[a^pfString:changeCase[$_primary;first-upper]]
+  ^@delete^[$lArgument^]
+    ^$result^[^^self.modify^[^$$lArgument^;^$.isActive(false)^]^]
+
+  ^@restore^[$lArgument^]
+    ^$result^[^^self.modify^[^$$lArgument^;^$.isActive(true)^]^]
+  }
+]
+
+#--------------------------------------------------------------------------------------------------
+
+@CLASS
+pfMySQLTableModelGenerator
+
+## Генерирует текст класса модели по DDL MySQL.
+
+@BASE
+pfSQLModelGenerator
+
+@create[aTableName;aOptions]
+  ^cleanMethodArgument[]
+  ^BASE:create[$aTableName;$aOptions]
+  ^pfAssert:isTrue($CSQL.serverType eq "mysql")[Класс умеет получать описания таблиц только из MySQL.]
+
+@_hasTable[]
+  $result(
+    !def $_tableName
+    || !^CSQL.table{show tables ^if(def $_schema){from `^taint[$_schema]`} like "^taint[$_tableName]"}
+  )
 
 @_getFields[][locals]
   $result[^hash::create[]]
@@ -120,63 +207,6 @@ pfClass
     }
   }
 
-@_makeName[aName]
-  $aName[^aName.lower[]]
-  $result[^aName.match[_(\w)][g]{^match.1.upper[]}]
-  $result[^result.match[Id^$][][ID]]
-  $result[^result.match[Ip^$][][IP]]
-
-@generate[aOptions]
-  ^cleanMethodArgument[]
-  $result[
-  ^@USE
-  pf2/lib/sql/models/structs.p
-
-  ^@CLASS
-  ^_makeClassName[$_tableName]
-
-  ^@BASE
-  pfModelTable
-
-  ^@OPTIONS
-  locals
-
-  ^@create^[aOptions^]
-  ## aOptions.tableName
-    ^^BASE:create^[^^hash::create^[^$aOptions^]^if(def $_schema){^#0A      ^$.schema[$_schema]}
-      ^$.tableName[^^ifdef[^$aOptions.tableName]{$_tableName}]
-  ^if(def $_primary){#}    ^$.allAsTable(true)
-    ^]
-
-  ^_classBody[]
-  ]
-  $result[^result.match[^^[ \t]{2}][gmx][]]
-  $result[^result.match[(^^\s*^$){3,}][gmx][^#0A]]
-
-@_makeClassName[aTableName][locals]
-  $lParts[^aTableName.split[_;lv]]
-  $result[^lParts.foreach[_;v]{^pfString:changeCase[$v.piece;first-upper]}]
-
-@_classBody[][locals]
-$result[
-    ^^self.addFields^[
-      ^_fields.foreach[k;v]{^$.$k^[^v.foreach[n;m]{^$.$n^if($m is bool){(^if($m){true}{false})}{^if($m is double){^($m^)}{^[$m^]}}}[ ]^]}[^#0A      ]
-    ^]
-
-  ^if(def $_primary){
-    ^$self._defaultOrderBy^[^$.${_primary}[asc]]
-  }
-
-  ^if(^_fields.contains[isActive] && def $_primary){
-  $lArgument[a^pfString:changeCase[$_primary;first-upper]]
-  ^@delete^[$lArgument^]
-    ^$result^[^^self.modify^[^$$lArgument^;^$.isActive(false)^]^]
-
-  ^@restore^[$lArgument^]
-    ^$result^[^^self.modify^[^$$lArgument^;^$.isActive(true)^]^]
-  }
-]
-
 #--------------------------------------------------------------------------------------------------
 
 @CLASS
@@ -185,33 +215,23 @@ pfPostgresTableModelGenerator
 ## Генерирует текст класса модели по DDL Постгреса.
 
 @BASE
-pfClass
+pfSQLModelGenerator
 
 @create[aTableName;aOptions]
-## aOptions.sql
-## aOptions.schema
   ^cleanMethodArgument[]
-  ^pfAssert:isTrue(def $aOptions.sql)[Не задан объект для соединения к СУБД.]
-  ^pfAssert:isTrue($aOptions.sql.serverType eq "pgsql")[Класс умеет получать описания таблиц только из Postgres.]
-  ^BASE:create[]
+  ^BASE:create[$aTableName;$aOptions]
+  ^pfAssert:isTrue($CSQL.serverType eq "pgsql")[Класс умеет получать описания таблиц только из Postgres.]
 
-  $_sql[$aOptions.sql]
-  ^defReadProperty[CSQL;_sql]
-
-  $_schema[$aOptions.schema]
-  $_tableName[$aTableName]
-  ^if(!def $_tableName
+@_hasTable[]
+  $result(
+    !def $_tableName
     || !^CSQL.int{
           select count(*)
             from information_schema.tables
            where table_schema = '^taint[^ifdef[$_schema]{public}]'
                  and table_name = '^taint[$_tableName]'
        }
-  ){
-    ^throw[table.not.found]
-  }
-
-  $_fields[^_getFields[]]
+  )
 
 @_getFields[][locals]
   $result[^hash::create[]]
@@ -293,60 +313,3 @@ pfClass
   $result.default[$aField.column_default]
   $result.columnName[$aField.column_name]
   $result.numericScale[$aField.numeric_scale]
-
-@_makeName[aName]
-  $aName[^aName.lower[]]
-  $result[^aName.match[_(\w)][g]{^match.1.upper[]}]
-  $result[^result.match[Id^$][][ID]]
-  $result[^result.match[Ip^$][][IP]]
-
-@generate[aOptions]
-  ^cleanMethodArgument[]
-  $result[
-  ^@USE
-  pf2/lib/sql/models/structs.p
-
-  ^@CLASS
-  ^_makeClassName[$_tableName]
-
-  ^@BASE
-  pfModelTable
-
-  ^@OPTIONS
-  locals
-
-  ^@create^[aOptions^]
-  ## aOptions.tableName
-    ^^BASE:create^[^^hash::create^[^$aOptions^]^if(def $_schema){^#0A      ^$.schema[$_schema]}
-      ^$.tableName[^^ifdef[^$aOptions.tableName]{$_tableName}]
-  ^if(def $_primary){#}    ^$.allAsTable(true)
-    ^]
-
-  ^_classBody[]
-  ]
-  $result[^result.match[^^[ \t]{2}][gmx][]]
-  $result[^result.match[(^^\s*^$){3,}][gmx][^#0A]]
-
-@_makeClassName[aTableName][locals]
-  $lParts[^aTableName.split[_;lv]]
-  $result[^lParts.foreach[_;v]{^pfString:changeCase[$v.piece;first-upper]}]
-
-@_classBody[][locals]
-$result[
-    ^^self.addFields^[
-      ^_fields.foreach[k;v]{^$.$k^[^v.foreach[n;m]{^$.$n^if($m is bool){(^if($m){true}{false})}{^if($m is double){^($m^)}{^[$m^]}}}[ ]^]}[^#0A      ]
-    ^]
-
-  ^if(def $_primary){
-    ^$self._defaultOrderBy^[^$.${_primary}[asc]]
-  }
-
-  ^if(^_fields.contains[isActive] && def $_primary){
-  $lArgument[a^pfString:changeCase[$_primary;first-upper]]
-  ^@delete^[$lArgument^]
-    ^$result^[^^self.modify^[^$$lArgument^;^$.isActive(false)^]^]
-
-  ^@restore^[$lArgument^]
-    ^$result^[^^self.modify^[^$$lArgument^;^$.isActive(true)^]^]
-  }
-]
