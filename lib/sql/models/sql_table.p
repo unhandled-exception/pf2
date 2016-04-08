@@ -248,23 +248,19 @@ pfClass
 ##   aSQLOptions.skipFields — пропустить поля
 ##   aSQLOptions.force — отменить кеширование результата запроса
 ##   + Все опции pfSQL.
- ^cleanMethodArgument[aOptions;aSQLOptions]
- $lResultType[^__getResultType[$aOptions]]
- $lExpression[^_selectExpression[
-   ^__allSelectFieldsExpression[$lResultType;$aOptions;$aSQLOptions]
- ][$lResultType;$aOptions;$aSQLOptions]]
- $result[^CSQL.[$lResultType]{$lExpression}[][$aSQLOptions]]]
+  ^cleanMethodArgument[aOptions;aSQLOptions]
+  $lResultType[^__getResultType[$aOptions]]
+  $result[^CSQL.[$lResultType]{^__allSQLExpression[$lResultType;$aOptions;$aSQLOptions]}[][$aSQLOptions]]
 
- ^if($result is table && def $aOptions.asHashOn){
-   $result[^result.hash[$aOptions.asHashOn;$.type[table] $.distinct(true)]]
- }
+  ^if($result is table && def $aOptions.asHashOn){
+    $result[^result.hash[$aOptions.asHashOn;$.type[table] $.distinct(true)]]
+  }
 
-@__getResultType[aOptions]
-  $result[^switch(true){
-    ^case(^aOptions.asTable.bool(false)){table}
-    ^case(^aOptions.asHash.bool(false)){hash}
-    ^case[DEFAULT]{$_defaultResultType}
-  }]
+@allSQL[aOptions;aSQLOptions][locals]
+## Возвращает текст запроса из метода all.
+  ^cleanMethodArgument[aOptions;aSQLOptions]
+  $lResultType[^__getResultType[$aOptions]]
+  $result[^__allSQLExpression[$lResultType;$aOptions;$aSQLOptions]]
 
 @union[*aConds][locals]
 ## Выполняет несколько запросов и объединяет их в один результат.
@@ -307,14 +303,19 @@ pfClass
 ## aConds.asHashOn[fieldName] — возвращаем хеш таблиц, ключем которого будет fieldName
   $lConds[^__getAgrConds[$aConds]]
   $lResultType[^__getResultType[$lConds.options]]
-  $lExpression[^_selectExpression[
-    ^asContext[select]{^__getAgrFields[$lConds.fields]}
-  ][$lResultType;$lConds.options;$lConds.sqlOptions]]
+  $lExpression[^__aggregateSQLExpression[$lResultType;$lConds]]
   $result[^CSQL.[$lResultType]{$lExpression}[][$lConds.sqlOptions]]
 
   ^if($result is table && def $lConds.options.asHashOn){
     $result[^result.hash[$lConds.options.asHashOn;$.type[table] $.distinct(true)]]
   }
+
+@aggregateSQL[*aConds][locals]
+## Возвращает текст запроса из метода aggregate.
+  $lConds[^__getAgrConds[$aConds]]
+  $lResultType[^__getResultType[$lConds.options]]
+  $lExpression[^__aggregateSQLExpression[$lResultType;$lConds]]
+  $result[^CSQL.connect{^apply-taint[$lExpression]}]
 
 #----- Манипуляции с данными -----
 
@@ -607,9 +608,26 @@ pfClass
   ]
 
 #----- Вспомогательные методы (deep private :) -----
-## Методы, начинаююшиеся с двух подчеркиваний сугубо внутренние,
+## Методы, начинаююшиеся с двух подчеркиваний, сугубо внутренние,
 ## желательно их не перекрывать и ни при каких условиях не использовать
 ## во внешнем коде.
+
+@__getResultType[aOptions]
+  $result[^switch(true){
+    ^case(^aOptions.asTable.bool(false)){table}
+    ^case(^aOptions.asHash.bool(false)){hash}
+    ^case[DEFAULT]{$_defaultResultType}
+  }]
+
+@__allSQLExpression[aResultType;aOptions;aSQLOptions]
+  $result[^_selectExpression[
+    ^__allSelectFieldsExpression[$aResultType;$aOptions;$aSQLOptions]
+  ][$aResultType;$aOptions;$aSQLOptions]]
+
+@__aggregateSQLExpression[aResultType;aConds]
+  $result[^_selectExpression[
+    ^asContext[select]{^__getAgrFields[$aConds.fields]}
+  ][$aResultType;$aConds.options;$aConds.sqlOptions]]
 
 @__allSelectFieldsExpression[aResultType;aOptions;aSQLOptions]
   $result[
@@ -630,6 +648,7 @@ pfClass
   ]
 
 @__getAgrConds[aConds][locals]
+  $aConds[^hash::create[$aConds]]
   $result[$.fields[^hash::create[]] $.options[] $.sqlOptions[]]
   ^aConds.foreach[k;v]{
     ^switch[$v.CLASS_NAME]{
@@ -650,6 +669,10 @@ pfClass
 
 @__getAgrFields[aFields][locals]
   $result[^hash::create[]]
+  ^if(!$aFields){
+#   Если нам не передали поля, то подставляем все поля модели.
+    $aFields[^hash::create[$.0[_fields(*)]]]
+  }
   ^aFields.foreach[k;v]{
     ^v.match[$_PFSQLTABLE_AGR_REGEX][]{
       $lField[
