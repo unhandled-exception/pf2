@@ -512,7 +512,7 @@ pfClass
     && def $lField.expression
    ){
      ^if($__context eq "group"){
-       $result[$lField.name]
+       $result[^_builder.quoteIdentifier[$lField.name]]
      }{
         $result[$lField.expression]
       }
@@ -766,7 +766,7 @@ pfClass
   $result.skipFields[^hash::create[$aOptions.skipFields]]
 
 @quoteIdentifier[aIdent]
-  $result[${_quote}${aIdent}${_quote}]
+  $result[${_quote}^taint[${aIdent}]${_quote}]
 
 @sqlFieldName[aField;aTableAlias][locals]
   $result[^if(def $aTableAlias){${_quote}${aTableAlias}${_quote}.}${_quote}^taint[$aField.dbField]${_quote}]
