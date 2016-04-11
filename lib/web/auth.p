@@ -622,9 +622,9 @@ locals
   $self.usersModel[$aOptions.usersModel]
 
   ^self.addFields[
-#   Виртуальное поле. Связь активна, если и пользователь и роль активны.
+#   Виртуальное поле. Связь активна, если роль активна.
     $.isActive[
-      $.expression[(case when $usersModel.isActive = 1 and $usersModel.roles.isActive = 1 then 1 else 0 end)]
+      $.expression[(case when $usersModel.roles.isActive = 1 then 1 else 0 end)]
       $.processor[bool]
     ]
   ]
