@@ -24,6 +24,7 @@ locals
 ## aOptions.template[]
 ## aOptions.templateFolder[]
 ## aOptions.templatePrefix[]
+## aOptions.request — объект запроса, если мы хотим передать его не в метод run, а в конструктор.
 
   ^cleanMethodArgument[]
 
@@ -55,7 +56,7 @@ locals
 
   $self.activeModule[]
   $self.action[]
-  $self.request[]
+  $self.request[$aOptions.request]
 
   $self.router[$aOptions.router]
   ^if(!def $aOptions.router){
@@ -97,7 +98,7 @@ locals
 ## Запускает процесс. Если вызван метод run, то модуль становится «менеджером».
   ^cleanMethodArgument[]
   $result[]
-  $aRequest[^ifdef[$aRequest]{^pfRequest::create[]}]
+  $aRequest[^ifdef[$aRequest]{^ifdef[$self.request]{^pfRequest::create[]}}]
   $self.asRoot(true)
   $lResponse[^self.dispatch[$aRequest.ACTION;$aRequest]]
   ^lResponse.apply[]
