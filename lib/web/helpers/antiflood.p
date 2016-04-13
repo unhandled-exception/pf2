@@ -202,27 +202,27 @@ pfAntiFloodStorage
 pfAntiFloodDBStorage
 
 ## Хранилище токенов в базе данных.
-## Только для MySQL, лучше использовать innodb-engine.
-## token = hex(aes('id|salt', password))
+## Поддерживает MySQL и Postgres.
+## В PG надо подключить расширение pgcrypto.
 
 @BASE
 pfAntiFloodStorage
 
 @create[aOptions]
 ## aOptions.sql[] - sql-класс
+## aOptions.cryptoProvider — класс шифрования
 ## aOptions.table[antiflood]
-## aOptions.password[] - пароль для шифрования токена
 ## aOptions.expires(15*60) - сколько секунд хранить пару ключ/значение
 ## aOptions.autoCleanup(true) - автоматически очищать неиспользуемые пары
   ^cleanMethodArgument[]
   ^pfAssert:isTrue(def $aOptions.sql)[Не задан sql-класс.]
-  ^pfAssert:isTrue(def $aOptions.password)[Не задан пароль для шифрования токена.]
+  ^pfAssert:isTrue(def $aOptions.cryptoProvider)[Не задан класс для шифрования токена.]
 
   ^BASE:create[$aOptions]
 
   $_csql[$aOptions.sql]
   $_tableName[^if(def $aOptions.table){$aOptions.table}{antiflood}]
-  $_password[$aOptions.password]
+  $_cryptoProvider[$aOptions.cryptoProvider]
 
   $_expires(^aOptions.expires.int(15*60))
   $_autoCleanup(^aOptions.autoCleanup.bool(true))
@@ -230,7 +230,7 @@ pfAntiFloodStorage
 @GET_CSQL[]
   $result[$_csql]
 
-@generateToken[][lID;lSalt]
+@generateToken[][locals]
 ## Генерирует новый токен
   ^CSQL.transaction{
     ^if($_autoCleanup && ^math:random(5) == 1){
@@ -239,13 +239,14 @@ pfAntiFloodStorage
 
     $lSalt[^math:uid64[]]
     $lSalt[^lSalt.lower[]]
+    $lNow[^date::now[]]
     ^CSQL.void{
-       insert into $_tableName (salt)
-            values (0x$lSalt)
+       insert into $_tableName (salt, created_at)
+            values ('$lSalt', '^lNow.sql-string[]')
     }
     $lID[^CSQL.lastInsertID[]]
   }
-  $result[^_packTocken[$lID;$lSalt]]
+  $result[^_packToken[$lID;$lSalt]]
 
 @validateToken[aToken][lToken;lID;lNow]
 ## Проверяет валидность токена
@@ -254,42 +255,48 @@ pfAntiFloodStorage
   ^if($lToken){
     ^CSQL.transaction{
       $lNow[^date::now[]]
+      $lExpires[^date::create($lNow - (^_expires.int[]/24/60/60))]
       $lID[^CSQL.string{
         select id
           from $_tableName
-         where id = "^taint[$lToken.id]"
-               and salt = 0x^taint[$lToken.salt]
+         where id = '^taint[$lToken.id]'
+               and salt = '^taint[$lToken.salt]'
                and processed_at is null
-               and created_at >= date_sub("^lNow.sql-string[]", interval ^_expires.int[] second)
+               and created_at >= '^lExpires.sql-string[]'
          limit 1
          for update
       }[$.default{}][$.isForce(true)]]
       ^if(def $lID){
         $result(true)
-        ^CSQL.void{update $_tableName set processed_at = "^_now.sql-string[]" where id ="$lID"}
+        ^CSQL.void{update $_tableName set processed_at = '^_now.sql-string[]' where id ='$lID'}
       }
     }
   }
 
-@cleanup[][lNow]
+@cleanup[][lExpires]
 ## Удаляет из стораджа устаревшие записи (expires sec + 12 hours)
   $result[]
-  $lNow[^date::now[]]
+  $lExpires[^date::create(
+    ^date::now[]
+    - (^_expires.int[]/24/60/60)
+    - 0.5
+  )]
+
   ^CSQL.void{
      delete from $_tableName
-      where created_at between
-              date_sub("^lNow.sql-string[]", interval 10 year)
-              and date_sub("^lNow.sql-string[]", interval ^_expires.int[] + (60*60*12) second)
+      where created_at < '^lExpires.sql-string[]'
   }
 
-@_packTocken[aID;aSalt]
-  $result[^CSQL.string{select lower(hex(aes_encrypt('^taint[$aID|$aSalt]', '$_password')))}]
+@_packToken[aID;aSalt]
+  $result[^_cryptoProvider.makeToken[
+    $.id[$aID]
+    $.salt[$aSalt]
+  ][
+    $.log[-- Encrypt an antiflood token.]
+  ]]
 
 @_unpackToken[aToken][lString]
 ## result[$.id $.salt]
-  $result[^hash::create[]]
-  $lString[^CSQL.string{select aes_decrypt(unhex('^taint[$aToken]'), '$_password')}]
-  ^lString.match[^^(\d+)\|([a-f0-9]{16})^$][]{
-    $result.id[$match.1]
-    $result.salt[$match.2]
-  }
+  $result[^_cryptoProvider.parseAndValidateToken[$aToken;
+    $.log[-- Decrypt an antiflood token.]
+  ]]
