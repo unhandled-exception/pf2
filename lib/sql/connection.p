@@ -42,6 +42,7 @@ pfClass
 # Регулярное вражение, которое проверят эксепшн при дублировании записей в safeInsert.
   $_duplicateKeyExceptionRegex[^switch[$_serverType]{
     ^case[sqlite]{^regex::create[SQL logic error][i]}
+    ^case[pgsql]{^regex::create[duplicate key value][i]}
     ^case[DEFAULT]{^regex::create[duplicate entry][i]}
   }]
 

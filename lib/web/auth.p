@@ -292,8 +292,8 @@ locals
   $self._cryptoProvider[$aOptions.cryptoProvider]
 
   ^self.addFields[
-    $.userID[$.dbField[user_id] $.processor[uint] $.primary(true) $.widget[none]]
-    $.login[$.label[]]
+    $.userID[$.dbField[user_id] $.processor[int] $.primary(true) $.widget[none]]
+    $.login[$.label[] $.processor[lower_trim]]
     $.passwordHash[$.dbField[password_hash] $.label[] $.widget[none]]
     $.secureToken[$.dbField[secure_token] $.label[] $.widget[none]]
     $.isAdmin[$.dbField[is_admin] $.processor[bool] $.default(false) $.label[]]
@@ -420,7 +420,7 @@ locals
   ^if(!$self._usersHasLoadedRoles.[$aUser.userID]){
     $lRoles[^rolesToUsers.all[
       $.userID[$aUser.userID]
-      $.having[isActive = 1]
+      $.isActive[1]
     ]]
     ^if($lRoles){
       $lRoles[^roles.aggregate[_fields(permissions);
@@ -535,7 +535,7 @@ locals
   ]
 
   ^self.addFields[
-    $.roleID[$.dbField[role_id] $.plural[roles] $.processor[uint] $.primary(true) $.widget[none]]
+    $.roleID[$.dbField[role_id] $.plural[roles] $.processor[int] $.primary(true) $.widget[none]]
     $.name[$.label[]]
     $.description[$.label[]]
     $.permissions[$.label[]]
@@ -614,17 +614,17 @@ locals
   ]
 
   ^self.addFields[
-    $.userID[$.dbField[user_id] $.plural[users] $.processor[uint] $.label[]]
-    $.roleID[$.dbField[role_id] $.plural[roles] $.processor[uint] $.label[]]
+    $.userID[$.dbField[user_id] $.plural[users] $.processor[int] $.label[]]
+    $.roleID[$.dbField[role_id] $.plural[roles] $.processor[int] $.label[]]
     $.createdAt[$.dbField[created_at] $.processor[auto_now] $.skipOnUpdate(true) $.widget[none]]
   ]
 
   $self.usersModel[$aOptions.usersModel]
 
   ^self.addFields[
-#   Виртуальное поле. Связь активна, если и пользователь и роль активны.
+#   Виртуальное поле. Связь активна, если роль активна.
     $.isActive[
-      $.expression[(case when $usersModel.isActive = 1 and $usersModel.roles.isActive = 1 then 1 else 0 end)]
+      $.expression[(case when $usersModel.roles.isActive = 1 then 1 else 0 end)]
       $.processor[bool]
     ]
   ]

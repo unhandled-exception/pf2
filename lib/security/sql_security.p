@@ -43,29 +43,32 @@ locals
   $self._sqlFunctions[
     $.mysql[
       $.encrypt[
-        $.func[aes_encrypt]
-        $.options[]
+        $.hex[hex(aes_encrypt('{data}', '{key}'))]
+        $.base64[to_base64(aes_encrypt('{data}', '{key}'))]
       ]
       $.decrypt[
-        $.func[aes_decrypt]
-        $.options[]
+        $.hex[aes_decrypt(unhex('{data}'), '{key}')]
+        $.base64[aes_decrypt(from_base64('{data}'), '{key}')]
       ]
-      $.serializers[
-        $.hex[
-          $.to[hex]
-          $.from[unhex]
-        ]
-        $.base64[
-          $.to[to_base64]
-          $.from[from_base64]
-        ]
+    ]
+    $.pgsql[
+      $.encrypt[
+        $.hex[encode(encrypt(convert_to('{data}', 'utf8'), convert_to('{key}', 'utf8'), 'aes'), 'hex')]
+        $.base64[encode(encrypt(convert_to('{data}', 'utf8'), convert_to('{key}', 'utf8'), 'aes'), 'base64')]
+      ]
+      $.decrypt[
+        $.hex[convert_from(decrypt(decode('{data}', 'base64'), convert_to('{key}', 'utf8'), 'aes'), 'utf8')]
+        $.base64[convert_from(decrypt(decode('{data}', 'base64'), convert_to('{key}', 'utf8'), 'aes'), 'utf8')]
       ]
     ]
   ]
+
   $self._serializer[^ifdef[$aOptions.serializer]{hex}]
   $self._hashAlgorythm[sha256]
 
   ^pfAssert:isTrue(^self._sqlFunctions.contains[$self.CSQL.serverType]){Неизвестный тип sql-сервера — "${self.CSQL.serverType}". Класс $CLASS_NAME поддерживает шифрование через серверы ^self._sqlFunctions.foreach[k;v]{"$k"}[, ]}
+
+  $self._pattern[^regex::create[\{(.+?)\}][g]]
 
 @encrypt[aString;aOptions]
 ## Шифрует и сериализует строку.
@@ -73,11 +76,18 @@ locals
 ## aOptions.log — запись в sql-лог.
   ^cleanMethodArgument[]
   $lFuncs[$self._sqlFunctions.[$CSQL.serverType]]
-  $lSeralizer[$lFuncs.serializers.[^ifdef[$aOptions.serializer]{$self._serializer}]]
-  ^pfAssert:isTrue($lSeralizer){Неизвестный метод сериализации "$aOptions.serializer".}
+  $lSeralizer[$lFuncs.encrypt.[^ifdef[$aOptions.serializer]{$self._serializer}]]
+  ^pfAssert:isTrue(def $lSeralizer){Неизвестный метод сериализации "$aOptions.serializer".}
   $result[^CSQL.string{
-    select ${lSeralizer.to}(${lFuncs.encrypt.func}('^taint[$aString]', '^taint[$_cryptKey]'${lFuncs.encrypt.options}))
-  }[][$.force(true) $.log{^ifdef[$aOptions.log]{-- Encrypt a string "$aString".}}]]
+    select
+      ^self._applyPattern[$lSeralizer;
+        $.data[$aString]
+        $.key[$self._cryptKey]
+      ]
+  }[][
+    $.force(true)
+    $.log{^ifdef[$aOptions.log]{-- Encrypt a string "$aString".}}
+  ]]
 
 @decrypt[aString;aOptions]
 ## Расшифровывает строку, закодированную методом encrypt.
@@ -85,11 +95,18 @@ locals
 ## aOptions.log — запись в sql-лог.
   ^cleanMethodArgument[]
   $lFuncs[$self._sqlFunctions.[$CSQL.serverType]]
-  $lSeralizer[$lFuncs.serializers.[^ifdef[$aOptions.serializer]{$self._serializer}]]
-  ^pfAssert:isTrue($lSeralizer){Неизвестный метод сериализации "$aOptions.serializer".}
+  $lSeralizer[$lFuncs.decrypt.[^ifdef[$aOptions.serializer]{$self._serializer}]]
+  ^pfAssert:isTrue(def $lSeralizer){Неизвестный метод сериализации "$aOptions.serializer".}
   $result[^CSQL.string{
-    select ${lFuncs.decrypt.func}(${lSeralizer.from}('^taint[$aString]'), '^taint[$_cryptKey]'${lFuncs.decrypt.options})
-  }[][$.force(true) $.log{^ifdef[$aOptions.log]{-- Decrypt a string "$aString".}}]]
+    select
+      ^self._applyPattern[$lSeralizer;
+        $.data[$aString]
+        $.key[$self._cryptKey]
+      ]
+  }[][
+    $.force(true)
+    $.log{^ifdef[$aOptions.log]{-- Decrypt a string "$aString".}}
+  ]]
 
 @signString[aString] -> [signature.$aString]
 ## Добавляет в начало строки цифровую подпись подпись hash/hmac/base64.
@@ -143,3 +160,8 @@ locals
 ## Возвращает hmac-хеш строки.
 ## aOptions.format[base64|hex] — формат дайджеста. По-умолчанию base64.
   $result[^math:digest[$self._hashAlgorythm;$aString;$.format[^ifdef[$aOptions.format]{base64}]]]
+
+#----- Private -----
+
+@_applyPattern[aPattern;aData]
+  $result[^aPattern.match[$self._pattern][]{^taint[$aData.[$match.1]]}]

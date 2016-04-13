@@ -195,7 +195,7 @@ locals
   </div>
 
 @_queriesStat[aStat]
-  <p class="sql-stat">SQL queries: ${aStat.queriesCount} (^aStat.queriesTime.format[%.6f] sec).
+  <p class="sql-stat">SQL queries ($self._sql.serverType): ${aStat.queriesCount} (^aStat.queriesTime.format[%.6f] sec).
        Memory cache: size — ${aStat.memoryCache.size}, hits – ${aStat.memoryCache.usage}.
   </p>
 
