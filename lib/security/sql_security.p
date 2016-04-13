@@ -4,9 +4,16 @@
 pfSQLSecurityCrypt
 
 ## Шифрование и работа с токенами.
-## Вызывает функции шифрования MySQL-совместимых серверов.
+## Вызывает функции шифрования через sql-серверы.
+## Сервер должен пожжерживать функции шифрования и сераилизации в текстовый формат.
 
+## MySQL:
+## Шифрование — aes_encrypt/aes_decrypt. Сериализация — hex/base64.
 ## Сериализация токенов в base64 доступна начиная с MySQL 5.6.10 и MariaDB 10.0.5.
+
+## Ключи лучше не вбивать с клавиатуры, а сгенерировать с помощью системного генератора случайных чисел:
+## В unix/linux ключи можно сгенерировать через urandom:
+## > python3 -c "import os, base64; print(base64.b64encode(os.urandom(24)))"
 
 @USE
 pf2/lib/common.p
@@ -15,82 +22,146 @@ pf2/lib/sql/connection.p
 @BASE
 pfClass
 
+@OPTIONS
+locals
+
 @create[aOptions]
 ## aOptions.sql — объект для соединениея с БД.
-## aOptions.cryptKey — ключ шифрования
-## aOptions.secretKey — ключ для подписи
-## aOptions.serializationAlgorythm[hex] — алгоритм сериализации (hex|base64)
+## aOptions.secretKey — ключ для подписи и шифрования.
+## aOptions.cryptKey[aOptions.secretKey] — ключ шифрования. Если не задан, то используем secretKey.
+## aOptions.serializer[hex] — алгоритм сериализации зашифрованного текста (hex|base64)
   ^cleanMethodArgument[]
   ^BASE:create[]
 
-  ^pfAssert:isTrue(def $aOptions.sql)[На задан объект для доступа к sql-серверу.]
-  ^pfAssert:isTrue($aOptions.sql.serverType eq "mysql")[Класс $CLASS_NAME работает только с MySQL-совместимыми серверами.]
-  ^pfAssert:isTrue(def $aOptions.cryptKey)[Не задан ключ шифрования.]
-  ^pfAssert:isTrue(def $aOptions.secretKey)[Не задан ключ для подписи.]
+  ^pfAssert:isTrue(def $aOptions.sql){На задан объект для доступа к sql-серверу.}
+  ^pfAssert:isTrue(def $aOptions.secretKey){Не задан секретный ключ.}
 
-  $_sql[$aOptions.sql]
-  $_secretKey[$aOptions.secretKey]
-  $_cryptKey[$aOptions.cryptKey]
+  $self.CSQL[$aOptions.sql]
+  $self._secretKey[$aOptions.secretKey]
+  $self._cryptKey[^ifdef[$aOptions.cryptKey]{$self._secretKey}]
 
-  $_funcs[^_getFunctionsNames[$aOptions.serializationAlgorythm]]
+  $self._sqlFunctions[
+    $.mysql[
+      $.encrypt[
+        $.hex[hex(aes_encrypt('{data}', '{key}'))]
+        $.base64[to_base64(aes_encrypt('{data}', '{key}'))]
+      ]
+      $.decrypt[
+        $.hex[aes_decrypt(unhex('{data}'), '{key}')]
+        $.base64[aes_decrypt(from_base64('{data}'), '{key}')]
+      ]
+    ]
+    $.pgsql[
+      $.encrypt[
+        $.hex[encode(encrypt(convert_to('{data}', 'utf8'), convert_to('{key}', 'utf8'), 'aes'), 'hex')]
+        $.base64[encode(encrypt(convert_to('{data}', 'utf8'), convert_to('{key}', 'utf8'), 'aes'), 'base64')]
+      ]
+      $.decrypt[
+        $.hex[convert_from(decrypt(decode('{data}', 'base64'), convert_to('{key}', 'utf8'), 'aes'), 'utf8')]
+        $.base64[convert_from(decrypt(decode('{data}', 'base64'), convert_to('{key}', 'utf8'), 'aes'), 'utf8')]
+      ]
+    ]
+  ]
 
-@GET_CSQL[]
-  $result[$_sql]
+  $self._serializer[^ifdef[$aOptions.serializer]{hex}]
+  $self._hashAlgorythm[sha256]
 
-@encrypt[aString]
-## Шифрует строку и сериализует её.
+  ^pfAssert:isTrue(^self._sqlFunctions.contains[$self.CSQL.serverType]){Неизвестный тип sql-сервера — "${self.CSQL.serverType}". Класс $CLASS_NAME поддерживает шифрование через серверы ^self._sqlFunctions.foreach[k;v]{"$k"}[, ]}
+
+  $self._pattern[^regex::create[\{(.+?)\}][g]]
+
+@encrypt[aString;aOptions]
+## Шифрует и сериализует строку.
+## aOptions.serializer[default algorythm]
+## aOptions.log — запись в sql-лог.
+  ^cleanMethodArgument[]
+  $lFuncs[$self._sqlFunctions.[$CSQL.serverType]]
+  $lSeralizer[$lFuncs.encrypt.[^ifdef[$aOptions.serializer]{$self._serializer}]]
+  ^pfAssert:isTrue(def $lSeralizer){Неизвестный метод сериализации "$aOptions.serializer".}
   $result[^CSQL.string{
-    select sql_no_cache ${_funcs.serialize}(${_funcs.encrypt}("^taint[$aString]", "^taint[$_cryptKey]"))
-  }]
+    select
+      ^self._applyPattern[$lSeralizer;
+        $.data[$aString]
+        $.key[$self._cryptKey]
+      ]
+  }[][
+    $.force(true)
+    $.log{^ifdef[$aOptions.log]{-- Encrypt a string "$aString".}}
+  ]]
 
-@decrypt[aString]
+@decrypt[aString;aOptions]
 ## Расшифровывает строку, закодированную методом encrypt.
+## aOptions.serializer[default algorythm]
+## aOptions.log — запись в sql-лог.
+  ^cleanMethodArgument[]
+  $lFuncs[$self._sqlFunctions.[$CSQL.serverType]]
+  $lSeralizer[$lFuncs.decrypt.[^ifdef[$aOptions.serializer]{$self._serializer}]]
+  ^pfAssert:isTrue(def $lSeralizer){Неизвестный метод сериализации "$aOptions.serializer".}
   $result[^CSQL.string{
-    select sql_no_cache ${_funcs.decrypt}(${_funcs.unserialize}("^taint[$aString]"), "^taint[$_cryptKey]")
-  }]
+    select
+      ^self._applyPattern[$lSeralizer;
+        $.data[$aString]
+        $.key[$self._cryptKey]
+      ]
+  }[][
+    $.force(true)
+    $.log{^ifdef[$aOptions.log]{-- Decrypt a string "$aString".}}
+  ]]
 
-@makeToken[aTokenData;aOptions][locals]
-## Формирует токен из данных и подписывает его.
-## Разделитель данных — вертикальная черта.
-  $result[^aTokenData.foreach[k;v]{$v}[|]]
-  $result[^encrypt[${result}|^math:crypt[$result|$_secretKey;^$apr1^$]]]
+@signString[aString] -> [signature.$aString]
+## Добавляет в начало строки цифровую подпись подпись hash/hmac/base64.
+  $lSignature[^math:digest[$self._hashAlgorythm;$aString;$.hmac[$self._secretKey] $.format[base64]]]
+  $result[${lSignature}.$aString]
 
-@parseAndValidateToken[aToken;aOptions][locals]
+@validateSignatureAndReturnString[aSignString] -> [string] <security.invalid.signature>
+## Проверяет цифровую подпись и возвращает строку без подписи.
+## Если проверка подписи не прошла, выбрасывает исключение security.invalid.signature.
+  $result[]
+  $lPos(^aSignString.pos[.])
+  $lSignature[^aSignString.left($lPos)]
+  $lString[^aSignString.mid($lPos + 1)]
+  ^if(def $lSignature && $lSignature eq ^math:digest[sha256;$lString;$.hmac[$self._secretKey] $.format[base64]]){
+    $result[$lString]
+  }{
+     ^throw[security.invalid.signature;;Цифровая подпись не соответствует данным в строке.]
+   }
+
+@makeToken[aData;aOptions]
+## Формирует зашифрованный токен из данных и подписывает его с помощью sha256/hmac.
+## aData[hash] — данные сериализуются в json.
+## aOptions.skipSign(false) — не подписывать токен
+## aOptions.serializer[default algorythm]
+## aOptions.log — запись в sql-лог.
+  ^cleanMethodArgument[]
+  $result[^json:string[$aData]]
+  ^if(!^aOptions.skipSign.bool(false)){
+    $result[^self.signString[$result]]
+  }
+  $result[^self.encrypt[$result;$.serializer[$aOptions.serializer] $.log[$aOptions.log]]]
+
+@parseAndValidateToken[aToken;aOptions] -> [hash] <invalid.token>
 ## Расшифровывает и валидирует токен, сформированный функцией makeToken.
 ## Возвращает хеш с данными токена или выбрасывает исключение.
-  $result[^hash::create[]]
-  $aToken[^decrypt[^aToken.trim[both]]]
-  $lParts[^aToken.split[|;lv]]
-  ^if($lParts < 2){^throw[invalid.token]}
-  ^lParts.foreach[k;v]{
-    ^if($k == ($lParts - 1)){
-      $lSignature[$v.piece]
-      ^break[]
+## aOptions.skipSign(false) — не провирять подпись
+## aOptions.serializer[default algorythm]
+## aOptions.log — запись в sql-лог.
+  ^cleanMethodArgument[]
+  ^try{
+    $result[^self.decrypt[$aToken;$.serializer[$aOptions.serializer] $.log[$aOptions.log]]]
+    ^if(!^aOptions.skipSign.bool(false)){
+      $result[^self.validateSignatureAndReturnString[$result]]
     }
-    $result.[$k][$v.piece]
-  }
-  $lData[^aToken.left(^aToken.length[] - ^lSignature.length[] - 1)]
-  ^if(!def $lSignature || $lSignature ne ^math:crypt[${lData}|$_secretKey;$lSignature]){
-    ^throw[invalid.token]
-  }
+    $result[^json:parse[^taint[as-is][$result]]]
+  }{
+     ^throw[security.invalid.token;;Не удалось расшифровать и проверить токен "${aToken}".]
+   }
 
-@_getFunctionsNames[aSerAlgorythm]
-  $result[^hash::create[]]
+@digest[aString;aOptions]
+## Возвращает hmac-хеш строки.
+## aOptions.format[base64|hex] — формат дайджеста. По-умолчанию base64.
+  $result[^math:digest[$self._hashAlgorythm;$aString;$.format[^ifdef[$aOptions.format]{base64}]]]
 
-  $result.encrypt[aes_encrypt]
-  $result.decrypt[aes_decrypt]
+#----- Private -----
 
-  ^switch[^aSerAlgorythm.lower[]]{
-    ^case[;hex]{
-      $result.serialize[hex]
-      $result.unserialize[unhex]
-    }
-    ^case[base64]{
-      $result.serialize[to_base64]
-      $result.unserialize[from_base64]
-    }
-    ^case[DEFAULT]{
-      ^throw[unknown.serialization.algorythm;"$aAlgorythm" is an unknown serialization algorythm.]
-    }
-  }
-
+@_applyPattern[aPattern;aData]
+  $result[^aPattern.match[$self._pattern][]{^taint[$aData.[$match.1]]}]

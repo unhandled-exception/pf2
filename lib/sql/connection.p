@@ -42,6 +42,7 @@ pfClass
 # Регулярное вражение, которое проверят эксепшн при дублировании записей в safeInsert.
   $_duplicateKeyExceptionRegex[^switch[$_serverType]{
     ^case[sqlite]{^regex::create[SQL logic error][i]}
+    ^case[pgsql]{^regex::create[duplicate key value][i]}
     ^case[DEFAULT]{^regex::create[duplicate entry][i]}
   }]
 
@@ -70,15 +71,15 @@ pfClass
 @connect[aCode]
 ## Выполняет соединение с сервером и выполняет код, если оно еще не установлено.
 ## Выполняется автоматически при попытке отправить запрос или открыть транзакцию.
-  ^if($_connectionsCount){
+  ^if($self._connectionsCount){
     $result[$aCode]
   }{
      ^MAIN:connect[$_connectString]{
-       ^_connectionsCount.inc[]
+       ^self._connectionsCount.inc[]
        ^try{
          $result[$aCode]
        }{}{
-         ^_connectionsCount.dec[]
+         ^self._connectionsCount.dec[]
        }
      }
    }
@@ -93,16 +94,21 @@ pfClass
     ^if(^aOptions.disableQueriesLog.bool(false)){$self._enableQueriesLog(false)}
     ^self._transactionsCount.inc(1)
 
-    ^startTransaction[]
-    ^try{
+    ^if($self._transactionsCount > 1){
+##    Объединяем вложенные транзакции
       $result[$aCode]
-      ^commit[]
     }{
-       ^rollback[]
-    }{
-       ^self._transactionsCount.dec(1)
-       $self._enableQueriesLog($lIsEnabledQueryLog)
-     }
+      ^startTransaction[]
+      ^try{
+        $result[$aCode]
+        ^commit[]
+      }{
+         ^rollback[]
+      }{
+         ^self._transactionsCount.dec(1)
+         $self._enableQueriesLog($lIsEnabledQueryLog)
+       }
+    }
   }
 
 @startTransaction[]
@@ -124,6 +130,7 @@ pfClass
 @table[aQuery;aSQLOptions;aOptions][locals]
 ## aOptions.force — отключить кеширование в памяти
 ## aOptions.cacheKey — ключ для кешироапния. Если не задан, то вычисляется автоматически.
+## aOptions.log[] — запись, которую надо сделать в логе вместо текста запроса.
   $lQuery[$aQuery]
   $lOptions[^_getOptions[$lQuery;table;$aSQLOptions;$aOptions]]
   $result[^_processMemoryCache{^_sql[table]{^table::sql{$lQuery}[$aSQLOptions]}[$lOptions]}[$lOptions]]
@@ -131,6 +138,7 @@ pfClass
 @hash[aQuery;aSQLOptions;aOptions][locals]
 ## aOptions.force — отключить кеширование в памяти
 ## aOptions.cacheKey — ключ для кешироапния. Если не задан, то вычисляется автоматически.
+## aOptions.log[] — запись, которую надо сделать в логе вместо текста запроса.
   $lQuery[$aQuery]
   $lOptions[^_getOptions[$lQuery;hash;$aSQLOptions;$aOptions]]
   $result[^_processMemoryCache{^_sql[hash]{^hash::sql{$lQuery}[$aSQLOptions]}[$lOptions]}[$lOptions]]
@@ -138,6 +146,7 @@ pfClass
 @file[aQuery;aSQLOptions;aOptions][locals]
 ## aOptions.force — отключить кеширование в памяти
 ## aOptions.cacheKey — ключ для кешироапния. Если не задан, то вычисляется автоматически.
+## aOptions.log[] — запись, которую надо сделать в логе вместо текста запроса.
   $lQuery[$aQuery]
   $lOptions[^_getOptions[$lQuery;file;$aSQLOptions;$aOptions]]
   $result[^_processMemoryCache{^_sql[file]{^file::sql{$lQuery}[$aSQLOptions]}[$lOptions]}[$lOptions]]
@@ -145,6 +154,7 @@ pfClass
 @string[aQuery;aSQLOptions;aOptions][locals]
 ## aOptions.force — отключить кеширование в памяти
 ## aOptions.cacheKey — ключ для кешироапния. Если не задан, то вычисляется автоматически.
+## aOptions.log[] — запись, которую надо сделать в логе вместо текста запроса.
   $lQuery[$aQuery]
   $lOptions[^_getOptions[$lQuery;string;$aSQLOptions;$aOptions]]
   $result[^_processMemoryCache{^_sql[string]{^string:sql{$lQuery}[$aSQLOptions]}[$lOptions]}[$lOptions]]
@@ -152,6 +162,7 @@ pfClass
 @double[aQuery;aSQLOptions;aOptions][locals]
 ## aOptions.force — отключить кеширование в памяти
 ## aOptions.cacheKey — ключ для кешироапния. Если не задан, то вычисляется автоматически.
+## aOptions.log[] — запись, которую надо сделать в логе вместо текста запроса.
   $lQuery[$aQuery]
   $lOptions[^_getOptions[$lQuery;double;$aSQLOptions;$aOptions]]
   $result(^_processMemoryCache{^_sql[double]{^double:sql{$lQuery}[$aSQLOptions]}[$lOptions]}[$lOptions])
@@ -159,11 +170,13 @@ pfClass
 @int[aQuery;aSQLOptions;aOptions][locals]
 ## aOptions.force — отключить кеширование в памяти
 ## aOptions.cacheKey — ключ для кешироапния. Если не задан, то вычисляется автоматически.
+## aOptions.log[] — запись, которую надо сделать в логе вместо текста запроса.
   $lQuery[$aQuery]
   $lOptions[^_getOptions[$lQuery;int;$aSQLOptions;$aOptions]]
   $result(^_processMemoryCache{^_sql[int]{^int:sql{$lQuery}[$aSQLOptions]}[$lOptions]}[$lOptions])
 
 @void[aQuery;aSQLOptions;aOptions][locals]
+## aOptions.log[] — запись, которую надо сделать в логе вместо текста запроса.
   $lQuery[$aQuery]
   $lOptions[^_getOptions[$lQuery;int;$aSQLOptions;$aOptions]]
   $result[^_sql[void]{^void:sql{$lQuery}[$aSQLOptions]}[^hash::create[$lOptions]]]
@@ -235,25 +248,30 @@ pfClass
   $lMemStart($status:memory.used)
   $lStart($status:rusage.tv_sec + $status:rusage.tv_usec/1000000.0)
 
-  $result[^self.connect{$aCode}]
+  ^try{
+    $result[^self.connect{$aCode}]
+  }{
+    $lException[$exception]
+  }{
+    $lEnd($status:rusage.tv_sec + $status:rusage.tv_usec/1000000.0)
+    $lMemEnd($status:memory.used)
 
-  $lEnd($status:rusage.tv_sec + $status:rusage.tv_usec/1000000.0)
-  $lMemEnd($status:memory.used)
-
-  $_stat.queriesTime($_stat.queriesTime + ($lEnd-$lStart))
-  ^_stat.queriesCount.inc[]
-  ^if($_enableQueriesLog){
-    $_stat.queries.[^_stat.queries._count[]][
-      $.type[$aType]
-      $.query[^taint[$aOptions.query]]
-      $.time($lEnd-$lStart)
-      $.limit[$aOptions.limit]
-      $.offset[$aOptions.offset]
-      $.memory($lMemEnd - $lMemStart)
-      $.results(^switch[$aType]{
-        ^case[DEFAULT;void]{0}
-        ^case[int;double;string;file]{1}
-        ^case[table;hash]{^eval($result)}
-      })
-    ]
+    $_stat.queriesTime($_stat.queriesTime + ($lEnd-$lStart))
+    ^_stat.queriesCount.inc[]
+    ^if($_enableQueriesLog){
+      $_stat.queries.[^_stat.queries._count[]][
+        $.type[$aType]
+        $.query[^taint[^ifdef[$aOptions.log]{^self.connect{^apply-taint[sql][$aOptions.query]}}]]
+        $.time($lEnd-$lStart)
+        $.limit[$aOptions.limit]
+        $.offset[$aOptions.offset]
+        $.memory($lMemEnd - $lMemStart)
+        $.results(^switch[$aType]{
+          ^case[DEFAULT;void]{0}
+          ^case[int;double;string;file]{1}
+          ^case[table;hash]{^eval($result)}
+        })
+        $.exception[$lException]
+      ]
+    }
   }

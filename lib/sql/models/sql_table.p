@@ -58,12 +58,6 @@ pfClass
 
   $__context[]
 
-# Алиасы методов для совоместимости со старым кодом.
-  ^alias[_fieldValue;$fieldValue]
-  ^alias[_valuesArray;$valuesArray]
-  ^alias[_sqlFieldName;$sqlFieldName]
-  ^alias[_asContext;$asContext]
-
 #----- Статические методы и конструктор -----
 
 @auto[]
@@ -71,19 +65,6 @@ pfClass
   $_PFSQLTABLE_BUILDER[]
   $_PFSQLTABLE_COMPARSION_REGEX[^regex::create[^^\s*(\S+)(?:\s+(\S+))?][]]
   $_PFSQLTABLE_AGR_REGEX[^regex::create[^^\s*(([^^\s(]+)(.*?))\s*(?:as\s+([^^\s\)]+))?\s*^$][i]]
-  $_PFSQLTABLE_OPS[
-    $.[<][<]
-    $.[>][>]
-    $.[<=][<=]
-    $.[>=][>=]
-    $.[!=][<>]
-    $.[!][<>]
-    $.[<>][<>]
-    $.like[like]
-    $.[=][=]
-    $.[==][=]
-    $._default[=]
-  ]
   $_PFSQLTABLE_LOGICAL[
     $.OR[or]
     $.AND[and]
@@ -267,23 +248,19 @@ pfClass
 ##   aSQLOptions.skipFields — пропустить поля
 ##   aSQLOptions.force — отменить кеширование результата запроса
 ##   + Все опции pfSQL.
- ^cleanMethodArgument[aOptions;aSQLOptions]
- $lResultType[^__getResultType[$aOptions]]
- $lExpression[^_selectExpression[
-   ^__allSelectFieldsExpression[$lResultType;$aOptions;$aSQLOptions]
- ][$lResultType;$aOptions;$aSQLOptions]]
- $result[^CSQL.[$lResultType]{$lExpression}[][$aSQLOptions]]]
+  ^cleanMethodArgument[aOptions;aSQLOptions]
+  $lResultType[^__getResultType[$aOptions]]
+  $result[^CSQL.[$lResultType]{^__allSQLExpression[$lResultType;$aOptions;$aSQLOptions]}[][$aSQLOptions]]
 
- ^if($result is table && def $aOptions.asHashOn){
-   $result[^result.hash[$aOptions.asHashOn;$.type[table] $.distinct(true)]]
- }
+  ^if($result is table && def $aOptions.asHashOn){
+    $result[^result.hash[$aOptions.asHashOn;$.type[table] $.distinct(true)]]
+  }
 
-@__getResultType[aOptions]
-  $result[^switch(true){
-    ^case(^aOptions.asTable.bool(false)){table}
-    ^case(^aOptions.asHash.bool(false)){hash}
-    ^case[DEFAULT]{$_defaultResultType}
-  }]
+@allSQL[aOptions;aSQLOptions][locals]
+## Возвращает текст запроса из метода all.
+  ^cleanMethodArgument[aOptions;aSQLOptions]
+  $lResultType[^__getResultType[$aOptions]]
+  $result[^__allSQLExpression[$lResultType;$aOptions;$aSQLOptions]]
 
 @union[*aConds][locals]
 ## Выполняет несколько запросов и объединяет их в один результат.
@@ -326,14 +303,19 @@ pfClass
 ## aConds.asHashOn[fieldName] — возвращаем хеш таблиц, ключем которого будет fieldName
   $lConds[^__getAgrConds[$aConds]]
   $lResultType[^__getResultType[$lConds.options]]
-  $lExpression[^_selectExpression[
-    ^asContext[select]{^__getAgrFields[$lConds.fields]}
-  ][$lResultType;$lConds.options;$lConds.sqlOptions]]
+  $lExpression[^__aggregateSQLExpression[$lResultType;$lConds]]
   $result[^CSQL.[$lResultType]{$lExpression}[][$lConds.sqlOptions]]
 
   ^if($result is table && def $lConds.options.asHashOn){
     $result[^result.hash[$lConds.options.asHashOn;$.type[table] $.distinct(true)]]
   }
+
+@aggregateSQL[*aConds][locals]
+## Возвращает текст запроса из метода aggregate.
+  $lConds[^__getAgrConds[$aConds]]
+  $lResultType[^__getResultType[$lConds.options]]
+  $lExpression[^__aggregateSQLExpression[$lResultType;$lConds]]
+  $result[^CSQL.connect{^apply-taint[$lExpression]}]
 
 #----- Манипуляции с данными -----
 
@@ -343,7 +325,12 @@ pfClass
 ## Возврашает автосгенерированное значение первичного ключа (last_insert_id) для sequence-полей.
   ^cleanMethodArgument[aData;aSQLOptions]
   ^asContext[update]{
-    $result[^CSQL.void{^_builder.insertStatement[$TABLE_NAME;$_fields;$aData;^hash::create[$aSQLOptions] $.skipFields[$_skipOnInsert] $.schema[$SCHEMA]]}]
+    $result[^CSQL.void{^_builder.insertStatement[$TABLE_NAME;$_fields;$aData;
+      ^hash::create[$aSQLOptions]
+      $.skipFields[$_skipOnInsert]
+      $.schema[$SCHEMA]
+      $.fieldValueFunction[$self.fieldValue]
+    ]}]
   }
   ^if(def $_primaryKey && $_fields.[$_primaryKey].sequence){
     $result[^CSQL.lastInsertID[]]
@@ -361,6 +348,7 @@ pfClass
         $.skipFields[$_skipOnUpdate]
         $.emptySetExpression[$PRIMARYKEY = $PRIMARYKEY]
         $.schema[$SCHEMA]
+        $.fieldValueFunction[$self.fieldValue]
       ]
     }
   }]
@@ -421,6 +409,7 @@ pfClass
         $.skipAbsent(true)
         $.skipFields[$_skipOnUpdate]
         $.emptySetExpression[]
+        $.fieldValueFunction[$self.fieldValue]
       ]
     }
   }]
@@ -523,7 +512,7 @@ pfClass
     && def $lField.expression
    ){
      ^if($__context eq "group"){
-       $result[$lField.name]
+       $result[^_builder.quoteIdentifier[$lField.name]]
      }{
         $result[$lField.expression]
       }
@@ -556,10 +545,7 @@ pfClass
   ^aConds.foreach[k;v]{
     ^k.match[$_PFSQLTABLE_COMPARSION_REGEX][]{
       $lField[$_fields.[$match.1]]
-      ^if(^_fields.contains[$match.1] && !def $match.2 || ^_PFSQLTABLE_OPS.contains[$match.2]){
-#       $.[field operator][value]
-        $_res.[^_res._count[]][^sqlFieldName[$match.1] $_PFSQLTABLE_OPS.[$match.2] ^fieldValue[$lField;$v]]
-      }($match.2 eq "range" || $match.2 eq "!range"){
+      ^if($match.2 eq "range" || $match.2 eq "!range"){
 #       $.[field range][$.from $.to]
 #       $.[field !range][$.from $.to]
         $_res.[^_res._count[]][^if(^match.2.left(1) eq "!"){not }^(^sqlFieldName[$match.1] between ^fieldValue[$lField;$v.from] and ^fieldValue[$lField;$v.to])]
@@ -574,6 +560,10 @@ pfClass
       }($match.1 eq "OR" || $match.1 eq "AND" || $match.1 eq "NOT"){
 #       Рекурсивный вызов логического блока
         $_res.[^_res._count[]][^_buildConditions[$v;$match.1]]
+      }(^_fields.contains[$match.1]){
+#       Операторы
+#       $.[field operator][value]
+        $_res.[^_res._count[]][^sqlFieldName[$match.1] ^taint[^ifdef[$match.2]{=}] ^fieldValue[$lField;$v]]
       }
     }
   }
@@ -618,9 +608,26 @@ pfClass
   ]
 
 #----- Вспомогательные методы (deep private :) -----
-## Методы, начинаююшиеся с двух подчеркиваний сугубо внутренние,
+## Методы, начинаююшиеся с двух подчеркиваний, сугубо внутренние,
 ## желательно их не перекрывать и ни при каких условиях не использовать
 ## во внешнем коде.
+
+@__getResultType[aOptions]
+  $result[^switch(true){
+    ^case(^aOptions.asTable.bool(false)){table}
+    ^case(^aOptions.asHash.bool(false)){hash}
+    ^case[DEFAULT]{$_defaultResultType}
+  }]
+
+@__allSQLExpression[aResultType;aOptions;aSQLOptions]
+  $result[^_selectExpression[
+    ^__allSelectFieldsExpression[$aResultType;$aOptions;$aSQLOptions]
+  ][$aResultType;$aOptions;$aSQLOptions]]
+
+@__aggregateSQLExpression[aResultType;aConds]
+  $result[^_selectExpression[
+    ^asContext[select]{^__getAgrFields[$aConds.fields]}
+  ][$aResultType;$aConds.options;$aConds.sqlOptions]]
 
 @__allSelectFieldsExpression[aResultType;aOptions;aSQLOptions]
   $result[
@@ -641,6 +648,7 @@ pfClass
   ]
 
 @__getAgrConds[aConds][locals]
+  $aConds[^hash::create[$aConds]]
   $result[$.fields[^hash::create[]] $.options[] $.sqlOptions[]]
   ^aConds.foreach[k;v]{
     ^switch[$v.CLASS_NAME]{
@@ -661,6 +669,10 @@ pfClass
 
 @__getAgrFields[aFields][locals]
   $result[^hash::create[]]
+  ^if(!$aFields){
+#   Если нам не передали поля, то подставляем все поля модели.
+    $aFields[^hash::create[$.0[_fields(*)]]]
+  }
   ^aFields.foreach[k;v]{
     ^v.match[$_PFSQLTABLE_AGR_REGEX][]{
       $lField[
@@ -754,7 +766,7 @@ pfClass
   $result.skipFields[^hash::create[$aOptions.skipFields]]
 
 @quoteIdentifier[aIdent]
-  $result[${_quote}${aIdent}${_quote}]
+  $result[${_quote}^taint[${aIdent}]${_quote}]
 
 @sqlFieldName[aField;aTableAlias][locals]
   $result[^if(def $aTableAlias){${_quote}${aTableAlias}${_quote}.}${_quote}^taint[$aField.dbField]${_quote}]
@@ -804,16 +816,18 @@ pfClass
 ## aOptions.skipAbsent(false) - пропустить поля, данных для которых нет
 ## aOptions.skipFields[$.field[] ...] — хеш с полями, которые надо исключить из выражения
 ## aOptions.skipNames(false) - не выводить имена полей, только значения (для insert values)
+## aOptions.fieldValueFunction[self.fieldValue] — функция для преобразования полей
   ^pfAssert:isTrue(def $aFields){Не задан список полей.}
   ^cleanMethodArgument[aData;aOptions]
   $aOptions[^_processFieldsOptions[$aOptions]]
   $lAlias[^if(def $aOptions.alias){${aOptions.alias}}]
+  $lFieldValue[^if($aOptions.fieldValueFunction is junction){$aOptions.fieldValueFunction}{$self.fieldValue}]
 
   $result[^hash::create[]]
   ^aFields.foreach[k;v]{
     ^if(^aOptions.skipFields.contains[$k] || (^v.contains[expression] && !^v.contains[dbField])){^continue[]}
     ^if($aOptions.skipAbsent && !^aData.contains[$k] && !(def $v.processor && ^v.processor.pos[auto_] >= 0)){^continue[]}
-    $result.[^result._count[]][^if(!$aOptions.skipNames){^sqlFieldName[$v;$lAlias] = }^fieldValue[$v;^if(^aData.contains[$k]){$aData.[$k]}]]
+    $result.[^result._count[]][^if(!$aOptions.skipNames){^sqlFieldName[$v;$lAlias] = }^lFieldValue[$v;^if(^aData.contains[$k]){$aData.[$k]}]]
   }
   $result[^result.foreach[k;v]{$v}[, ]]
 
@@ -834,11 +848,14 @@ pfClass
       ^case[time]{^if(def $aValue){'^if($aValue is date){^aValue.sql-string[time]}{^taint[$aValue]}'}{null}}
       ^case[json]{^if(def $aValue){'^taint[^json:string[$aValue]]'}{null}}
       ^case[null]{^if(def $aValue){'^taint[$aValue]'}{null}}
+      ^case[int_null]{^if(def $aValue){$lVal($aValue)^lVal.format[%d]}{null}}
       ^case[uint_null]{^if(def $aValue){$lVal($aValue)^lVal.format[%u]}{null}}
       ^case[uid;auto_uid]{'^taint[^if(def $aValue){$aValue}{^math:uuid[]}']}
       ^case[inet_ip]{^unsafe{^inet:aton[$aValue]}{null}}
       ^case[first_upper]{'^taint[^if(def $aValue){^aValue.match[$_PFSQLBUILDER_PROCESSOR_FIRST_UPPER][]{^match.1.upper[]$match.2}}(def $aField.default){$aField.default}]'}
       ^case[hash_md5]{'^taint[^if(def $aValue){^math:md5[$aValue]}]'}
+      ^case[lower_trim]{$lVal[^aValue.lower[]]'^taint[^lVal.trim[both]]'}
+      ^case[upper_trim]{$lVal[^aValue.lower[]]'^taint[^lVal.trim[both]]'}
       ^case[DEFAULT;auto_default]{'^taint[^if(def $aValue){$aValue}(def $aField.default){$aField.default}]'}
     }]
   }{
