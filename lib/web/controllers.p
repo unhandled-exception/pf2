@@ -454,12 +454,7 @@ pfRequest
   $method[^ifdef[^aOptions.method.lower[]]{^request:method.lower[]}]
 # Если нам пришел post-запрос с полем _method, то берем method из запроса.
   ^if($method eq "post" && def $form._method){
-    $method[^switch[^form._method.lower[]]{
-      ^case[DEFAULT]{post}
-      ^case[put]{put}
-      ^case[delete]{delete}
-      ^case[patch]{patch}
-    }]
+    $method[^form._method.lower[]]
   }
 
   $ENV[^ifdef[$aOptions.ENV]{$env:fields}]
@@ -477,6 +472,10 @@ pfRequest
   $HOST[^ifdef[$aOptions.HOST]{^header[X-Forwarded-Host;^header[Host;$ENV.SERVER_NAME]]}]
   $HOST[$HOST^if($PORT ne "80" && ($isSECURE && $PORT ne "443")){:$PORT}]
 
+# Проверяет является ли Referer локальным.
+  $REFERER[^header[Referer]]
+  $isLOCALREFERER(^REFERER.pos[${SCHEME}://$HOST] == 0)
+
   $REMOTE_IP[^ifdef[$aOptions.REMOTE_IP]{$ENV.REMOTE_ADDR}]
   $DOCUMENT_ROOT[^ifdef[$aOptions.DOCUMENT_ROOT]{$request:document-root}]
 
@@ -487,6 +486,7 @@ pfRequest
 
   $BODY[^ifdef[$aOptions.BODY]{$request:body}]
   $_BODY_FILE[$aOptions.BODY_FILE]
+
 
 @GET[aContext]
   $result($form || $__CONTEXT__)
