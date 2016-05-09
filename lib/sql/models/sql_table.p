@@ -388,7 +388,7 @@ pfClass
   ^pfAssert:isTrue(def $aPrimaryKeyValue){Не задано значение первичного ключа.}
   ^pfAssert:isTrue(^self.hasField[$aFieldName]){Не найдено поле "$aFieldName" в таблице.}
   $aValue(^if(def $aValue){$aValue}{1})
-  $lFieldName[^self._builder.self.sqlFieldName[$self._fields.[$aFieldName]]]]
+  $lFieldName[^self._builder.sqlFieldName[$self._fields.[$aFieldName]]]]
   $result[^self.CSQL.void{
     ^self.asContext[update]{
       update ^if(def $SCHEMA){^self._builder.quoteIdentifier[$SCHEMA].}^self._builder.quoteIdentifier[$TABLE_NAME]
@@ -494,7 +494,7 @@ pfClass
   ^if($aField is string){
     $aField[$self._fields.[$aField]]
   }
-  $result[^self._builder.self.fieldValue[$aField;$aValue]]
+  $result[^self._builder.fieldValue[$aField;$aValue]]
 
 @valuesArray[aField;aValues;aOptions]
 ## aField — имя или хеш с полем
@@ -523,7 +523,7 @@ pfClass
      ^if(!^lField.contains[dbField]){
        ^throw[pfSQLTable.field.fail;Для поля «${aFieldName}» не задано выражение или имя в базе данных.]
      }
-     $result[^self._builder.self.sqlFieldName[$lField;^if($self.__context ne "update"){$TABLE_ALIAS}]]
+     $result[^self._builder.sqlFieldName[$lField;^if($self.__context ne "update"){$TABLE_ALIAS}]]
    }
 
 @asContext[aContext;aCode]
