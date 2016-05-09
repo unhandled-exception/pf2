@@ -376,7 +376,7 @@ pfClass
 #@postHTML[aResponse] -> [response]
 
 @onINDEX[aRequest]
-  ^throw[${_exceptionPrefix}.index.not.implemented;An onINDEX method is not implemented in the $self.CLASS_NAME class.]
+  ^throw[${self._exceptionPrefix}.index.not.implemented;An onINDEX method is not implemented in the $self.CLASS_NAME class.]
 
 #----- Private -----
 

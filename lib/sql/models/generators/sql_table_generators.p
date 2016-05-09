@@ -86,7 +86,7 @@ $result[
     ^]
 
   ^if(def $self._primary){
-    ^$self._defaultOrderBy^[^$.${_primary}[asc]]
+    ^$self._defaultOrderBy^[^$.${self._primary}[asc]]
   }
 
   ^if(^self._fields.contains[isActive] && def $self._primary){

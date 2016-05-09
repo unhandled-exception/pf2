@@ -81,7 +81,7 @@ pfClass
   $self._withStat(false)
   $self._boundary[==========^math:uid64[]]
 
-  ^if(!def ${_options.user-agent}){$self._options.user-agent[$self._defaultUserAgent]}
+  ^if(!def ${self._options.user-agent}){$self._options.user-agent[$self._defaultUserAgent]}
   $self._options.timeout(^self._options.timeout.int(2))
 
   $self._URL[^pfString:parseURL[$aURL]]
@@ -134,7 +134,7 @@ pfClass
         }
       }
     }{
-       ^if(!${_options.any-status}){
+       ^if(!${self._options.any-status}){
          $self._status(200)
        }
      }
@@ -147,13 +147,13 @@ pfClass
   $result[$self._comment]
 
 @GET_content-type[]
-  $result[^if(def ${_content-type}){$self._content-type}{$self._file.content-type}]
+  $result[^if(def ${self._content-type}){$self._content-type}{$self._file.content-type}]
 
 @GET_text[]
   $result[$self._file.text]
 
   ^if($self._withStat){
-    $result[^result.match[${_boundary}.*;;]]
+    $result[^result.match[${self._boundary}.*;;]]
   }
 
 @GET_size[]
@@ -179,7 +179,7 @@ pfClass
   $result[^hash::create[]]
 
   ^if($self._withStat){
-    $result[^data.text.match[${_boundary}(.+)]]
+    $result[^data.text.match[${self._boundary}(.+)]]
     $result[^table::create{param^#09value^#0A^taint[as-is;$result.1]}]
     $result[^result.hash[param;value;$.type[string]]]
   }
@@ -227,7 +227,7 @@ pfClass
       $lComment[$name]
     }
     ^case[DEFAULT]{
-      $lType[${_throwPrefix}.fail]
+      $lType[${self._throwPrefix}.fail]
       $lSource[curl: $aStatus]
       $lComment[$aStdErr]
     }
@@ -242,7 +242,7 @@ pfClass
 
   ^if($self._isHTTP){
     ^if(!$self._isBinary){^result.append{--include}}
-    ^if(!${_options.any-status}){^result.append{--fail}}
+    ^if(!${self._options.any-status}){^result.append{--fail}}
 
     ^result.append{--user-agent}
     ^result.append{^taint[$self._options.user-agent]}
@@ -346,7 +346,7 @@ pfClass
 
     ^if($lParams){
       ^result.append{--write-out}
-      ^result.append{"${_boundary}^lParams.foreach[lParam;]{$lParam\t%{$lParam}}[\n]"}
+      ^result.append{"${self._boundary}^lParams.foreach[lParam;]{$lParam\t%{$lParam}}[\n]"}
 
       $self._withStat(true)
     }

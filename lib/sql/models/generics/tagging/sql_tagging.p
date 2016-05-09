@@ -41,7 +41,7 @@ pfClass
 
 @GET_tags[]
   ^if(!def $self._tags){
-    $self._tags[^pfSQLCTTagsModel::create[${_tablesPrefix}tags;
+    $self._tags[^pfSQLCTTagsModel::create[${self._tablesPrefix}tags;
       $.sql[$CSQL]
       $.tagging[$self]
     ]]
@@ -50,7 +50,7 @@ pfClass
 
 @GET_content[]
   ^if(!def $self._content){
-    $self._content[^pfSQLCTContentModel::create[${_tablesPrefix}tags_content;
+    $self._content[^pfSQLCTContentModel::create[${self._tablesPrefix}tags_content;
       $.sql[$CSQL]
       $.tagging[$self]
     ]]
@@ -59,7 +59,7 @@ pfClass
 
 @GET_counters[]
   ^if(!def $self._counters){
-    $self._counters[^pfSQLCTCountersModel::create[${_tablesPrefix}tags_counters;
+    $self._counters[^pfSQLCTCountersModel::create[${self._tablesPrefix}tags_counters;
       $.sql[$CSQL]
       $.tagging[$self]
     ]]

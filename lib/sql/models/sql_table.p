@@ -42,7 +42,7 @@ pfClass
   $self._schema[^aOptions.schema.trim[]]
 
   $self._tableName[$aTableName]
-  $self._tableAlias[^if(def $aOptions.tableAlias){$aOptions.tableAlias}(def $self._schema){${_schema}_$self._tableName}]
+  $self._tableAlias[^if(def $aOptions.tableAlias){$aOptions.tableAlias}(def $self._schema){${self._schema}_$self._tableName}]
   $self._primaryKey[^if(def $aOptions.primaryKey){$aOptions.primaryKey}]
 
   $self._fields[^hash::create[]]
