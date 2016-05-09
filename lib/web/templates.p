@@ -315,7 +315,7 @@ pfTemplateEngine
   $lPattern[^reflection:create[$lClassName;create;$.template[$template] $.file[$aTemplate.path]]]
   $result[^lPattern.__process__[$.global[$template.vars] $.local[$aOptions.vars]]]
 
-@compileToPattern[aTemplate;aBaseName]
+@_compileToPattern[aTemplate;aBaseName]
   $result[^self._buildClassName[$aTemplate.path]]
 
 # Обрабатываем наследование

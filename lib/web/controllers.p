@@ -307,9 +307,12 @@ pfClass
 
 @templateDefaults[]
 ## Задает переменные шаблона по умолчанию.
+
   $result[
     $.REQUEST[$self.request]
     $.ACTION[$self.action]
+    $.PARENT[$self.PARENT]
+    $.ROOT[$self.ROOT]
     $.linkTo[$self.linkTo]
     $.redirectTo[$self.redirectTo]
     $.linkFor[$self.linkFor]
