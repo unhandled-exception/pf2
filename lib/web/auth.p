@@ -12,15 +12,15 @@ pfAuthBase
 ## Наследоваться от него необязательно. Достаточно, чтобы наследник реализовывал инетрефейс мидлваре
 ## и добавлял в объект запроса поле с объектом пользователя.
 
-@BASE
-pfMiddleware
-
 @OPTIONS
 locals
 
+@BASE
+pfMiddleware
+
 @create[aOptions]
 ## aOptions.userFieldName[currentUser] — имя поля с объектом user в объекте запроса
-  ^cleanMethodArgument[]
+  ^self.cleanMethodArgument[]
   ^BASE:create[$aOptions]
 
   $self._userFieldName[^ifdef[$aOptions.userFieldName]{currentUser}]
@@ -43,7 +43,7 @@ locals
 @processRequest[aAction;aRequest;aController;aProcessOptions] -> []
   $result[]
   $self._request[$aRequest]
-  ^authenticate[$aRequest]
+  ^self.authenticate[$aRequest]
   ^aRequest.assign[$self._userFieldName;$self._user]
 
 @authenticate[aRequest]
@@ -62,14 +62,14 @@ pfRemoteUserAuth
 ##
 ## В наследнике можно перекрыть метод getUser, чтобы загружить из базы данных данные пользователя по логину.
 
-@BASE
-pfAuthBase
-
 @OPTIONS
 locals
 
+@BASE
+pfAuthBase
+
 @create[aOptions]
-  ^cleanMethodArgument[]
+  ^self.cleanMethodArgument[]
   ^BASE:create[$aOptions]
 
 @authenticate[aRequest]
@@ -79,7 +79,7 @@ locals
   $self._user.isAnonymous(false)
   $self._user.isActive(true)
   ^if(def $self._user.id){
-    $self._user.data[^getUser[$self._user.id]]
+    $self._user.data[^self.getUser[$self._user.id]]
   }
 
 @getUser[aID;aOptions]
@@ -93,11 +93,11 @@ pfUserRolesAuth
 ## Авторизация на основе кук с поддержкй ролей пользователей.
 ## Реализует интерфейс мидлваре. Данные хранит в СУБД.
 
-@BASE
-pfClass
-
 @OPTIONS
 locals
+
+@BASE
+pfClass
 
 @create[aOptions]
 ## aOptions.sql
@@ -111,7 +111,7 @@ locals
 ## aOptions.authCookieDomain — домен для куки сессии
 ## aOptions.authCookiePath — путь для куки сессии
 ## aOptions.expires[days(365)|date|session] — срок жизни куки. По-умолчанию ставим ограничение куку на год.
-  ^cleanMethodArgument[]
+  ^self.cleanMethodArgument[]
   $self.CSQL[$aOptions.sql]
   $self._cryptoProvider[$aOptions.cryptoProvider]
 
@@ -148,7 +148,7 @@ locals
 @processRequest[aAction;aRequest;aController;aProcessOptions] -> []
   $result[]
   ^if(def $aRequest.cookie.[$self._authCookieName]){
-    ^authenticate[$aRequest]
+    ^self.authenticate[$aRequest]
     $self._hasAuthCookie(true)
   }
   ^aRequest.assign[$self._userFieldName][$self.currentUser]
@@ -272,11 +272,11 @@ pfUsersModel
 
 ## Базовая модель для хранения пользователей
 
-@BASE
-pfModelTable
-
 @OPTIONS
 locals
+
+@BASE
+pfModelTable
 
 @create[aOptions]
 ## aOptions.tableName[auth_users]
@@ -325,13 +325,13 @@ locals
 
 @fetch[aOptions;aSQLOptions]
 ## Перекрыть в наследниеке, если надо достать еще какие-то данные о пользователе
-  $result[^one[$aOptions;$aSQLOptions]]
+  $result[^self.one[$aOptions;$aSQLOptions]]
 
 @delete[aUserID]
-  $result[^modify[$aUserID;$.isActive(false)]]
+  $result[^self.modify[$aUserID;$.isActive(false)]]
 
 @restore[aUserID]
-  $result[^modify[$aUserID;$.isActive(true)]]
+  $result[^self.modify[$aUserID;$.isActive(true)]]
 
 @makePasswordHash[aPassword;aSalt] -> [string]
   $result[^math:crypt[$aPassword;^ifdef[$aSalt]{^$apr1^$}]]
@@ -443,11 +443,11 @@ pfUsersPermissions
 
 ## Вспомогательный класс для хранеия групп и прав пользователей.
 
-@BASE
-pfClass
-
 @OPTIONS
 locals
+
+@BASE
+pfClass
 
 @create[aOptions]
   ^BASE:create[$aOptions]
@@ -517,11 +517,11 @@ locals
 @CLASS
 pfRolesModel
 
-@BASE
-pfModelTable
-
 ## Модель для ролей.
 ## Права храним в поле permissions. Одна строка — одно право. Строка с правом начинается с плюса.
+
+@BASE
+pfModelTable
 
 @OPTIONS
 locals
@@ -549,7 +549,7 @@ locals
 
 @delete[aRoleID;aOptions]
 ## aOptions.force(false) — удалить запись из таблиц
-  ^cleanMethodArgument[]
+  ^self.cleanMethodArgument[]
   $lForce(^aOptions.force.bool(false))
   ^CSQL.transaction{
     ^if($lForce){
@@ -600,11 +600,11 @@ locals
 @CLASS
 pfRolesToUsersModel
 
-@BASE
-pfModelTable
-
 @OPTIONS
 locals
+
+@BASE
+pfModelTable
 
 @create[aOptions]
 ## aOptions.tableName

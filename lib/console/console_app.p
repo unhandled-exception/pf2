@@ -8,6 +8,9 @@ pf2/lib/common.p
 @CLASS
 pfConsoleApp
 
+@OPTIONS
+locals
+
 @BASE
 pfClass
 
@@ -17,13 +20,13 @@ pfClass
   ^BASE:create[]
   ^pfChainMixin:mixin[$self]
 
-  $_commands[^hash::create[]]
+  $self._commands[^hash::create[]]
 
-  $_argv[^if(def $aOptions.argv){$aOptions.argv}{$request:argv}]
-  $args[^_parseArgs[$_argv]]
-  $name[$args.name]
+  $self._argv[^if(def $aOptions.argv){$aOptions.argv}{$request:argv}]
+  $self.args[^self._parseArgs[$self._argv]]
+  $self.name[$args.name]
 
-  $help[$aOptions.help]
+  $self.help[$aOptions.help]
 
 @assignCommand[aCommandName;aClassDef;aOptions]
   $result[]
@@ -31,29 +34,29 @@ pfClass
 # Меняем двоеточие в имени команды, для поддержки неймспесов для команд.
   $lModuleName[^aCommandName.replace[:;__]]
 
-  ^assignModule[$lModuleName;$aClassDef;
+  ^self.assignModule[$lModuleName;$aClassDef;
     ^hash::create[$aOptions]
     $.app[$self]
     $.name[$aCommandName]
   ]
-  $_commands.[$aCommandName][
+  $self._commands.[$aCommandName][
     $.moduleName[$lModuleName]
   ]
 
 @getCommand[aCommandName]
-  ^if(!def $aCommandName || !^_commands.contains[$aCommandName]){^fail[]}
-  $result[^getModule[$_commands.[$aCommandName].moduleName]]
+  ^if(!def $aCommandName || !^self._commands.contains[$aCommandName]){^self.fail[]}
+  $result[^self.getModule[$self._commands.[$aCommandName].moduleName]]
 
-@run[aOptions][locals]
+@run[aOptions]
   ^try{
-    ^if(^args.switches.contains[help]){^fail[]}
-    $lCommand[^getCommand[$args.command.name]]
-    ^lCommand.process[$args.command.args;$args.command.switches]
+    ^if(^self.args.switches.contains[help]){^self.fail[]}
+    $lCommand[^self.getCommand[$self.args.command.name]]
+    ^lCommand.process[$self.args.command.args;$self.args.command.switches]
   }{
      ^switch[$exception.type]{
        ^case[console.app.usage]{
           $exception.handled(true)
-         ^usage[$exception.comment]
+         ^self.usage[$exception.comment]
        }
        ^case[console.command.usage]{
           $exception.handled(true)
@@ -66,32 +69,32 @@ pfClass
 @fail[aErrorMessage]
   ^throw[console.app.usage;;$aErrorMessage]
 
-@usage[aErrorMessage][locals]
+@usage[aErrorMessage]
   ^if(def $aErrorMessage){
-    ^print[$aErrorMessage]
-    ^print[-------------;$.end[^#0A^#0A]]
+    ^self.print[$aErrorMessage]
+    ^self.print[-------------;$.end[^#0A^#0A]]
   }
 
-  ^if(def $help){
-    ^print[$help;$.end[^#0A^#0A]]
+  ^if(def $self.help){
+    ^self.print[$self.help;$.end[^#0A^#0A]]
   }
-  ^print[Usage: $name [APP SWITCHES] COMMAND [SUBCOMMAND [SWITCHES]] args…;$.end[^#0A^#0A]]
+  ^self.print[Usage: $self.name [APP SWITCHES] COMMAND [SUBCOMMAND [SWITCHES]] args…;$.end[^#0A^#0A]]
 
-  ^print[App switches:]
-  ^print[--help		Prints this help message and quits.;$.end[^#0A^#0A]]
+  ^self.print[App switches:]
+  ^self.print[--help		Prints this help message and quits.;$.end[^#0A^#0A]]
 
-  ^if($_commands){
-    ^print[Commands:]
-    ^_commands.foreach[k;v]{
-      $lCommand[^getCommand[$k]]
-      ^print[$k		$lCommand.help See "$name $k --help" for more info.;$.start[  ]]
+  ^if($self._commands){
+    ^self.print[Commands:]
+    ^self._commands.foreach[k;]{
+      $lCommand[^self.getCommand[$k]]
+      ^self.print[$k		$lCommand.help See "$self.name $k --help" for more info.;$.start[  ]]
     }
   }
 
 @print[aLine;aOptions]
   $result[^pfConsoleAppStdout:print[$aLine;$aOptions]]
 
-@_parseArgs[aArgs][locals]
+@_parseArgs[aArgs]
   $aArgs[^hash::create[$aArgs]]
   $result[
     $.name[^file:basename[$aArgs.0]]
@@ -134,24 +137,25 @@ pfClass
 pfConsoleAppStdout
 
 @OPTIONS
+locals
 static
 
 @auto[]
-  $_buffer[^hash::create[]]
+  $self._buffer[^hash::create[]]
 
 @print[aLine;aOptions]
 ## aOptions.end[^#0A] — окончание строки. Если не надо переходить на следующую строку передаем пустой $.end[].
 ## aOptions.start[] — начало строки. Удобно через него задавать отступы.
   $aOptions[^hash::create[$aOptions]]
   $result[]
-  $_buffer.[^_buffer._count[]][
+  $self._buffer.[^self._buffer._count[]][
     $.line[$aLine]
     $.start[$aOptions.start]
     $.end[^if(^aOptions.contains[end]){$aOptions.end}{^#0A}]
   ]
 
-@stdout[][locals]
-  $result[^_buffer.foreach[_;l]{${l.start}${l.line}${l.end}}]
+@stdout[]
+  $result[^self._buffer.foreach[_;l]{${l.start}${l.line}${l.end}}]
 
 @clear[]
   $result[]
@@ -165,6 +169,9 @@ pfConsoleCommand
 ## Базовая команда. Менеджер (pfConsoleApp) создает объект команды и вызвает метод process.
 ## Описание команды для usage берется из поля help.
 
+@OPTIONS
+locals
+
 @BASE
 pfClass
 
@@ -173,9 +180,9 @@ pfClass
 ## aOptions.name — имя команды в приложении
   ^BASE:create[]
 
-  $app[$aOptions.app]
-  $name[$aOptions.name]
-  $help[]
+  $self.app[$aOptions.app]
+  $self.name[$aOptions.name]
+  $self.help[]
 
 @process[aArgs;aSwitches]
 ## Этот метод вызывает приложение, когда передает управление команде.
@@ -183,25 +190,25 @@ pfClass
 ## aArgs[$.0[command] $.1[param_1] $.2[...]] — хеш с аргументами команды. Имя команды приходит в поле 0.
 ## aSwitches[$.switch-name[value] ...] — хеш со свитчами команды (--switch-name[=value]). Имя свитча приходит без начальных "--".
   $result[]
-  ^if(^aSwitches.contains[help]){^fail[]}
+  ^if(^aSwitches.contains[help]){^self.fail[]}
 
 @usage[aErrorMessage;aCode]
 ## aErrorMessage — сообщение об ошибке. Выводим перед описанием скрипта.
 ## aCode — код, который выполняется сразу после печати строки "Usage:...". Нужно,  если хотим вывести список команд свитчей.
   $result[]
   ^if(def $aErrorMessage){
-    ^print[$aErrorMessage]
-    ^print[-------------;$.end[^#0A^#0A]]
+    ^self.print[$aErrorMessage]
+    ^self.print[-------------;$.end[^#0A^#0A]]
   }
 
-  ^if(def $help){
-    ^print[$help;$.end[^#0A^#0A]]
+  ^if(def $self.help){
+    ^self.print[$self.help;$.end[^#0A^#0A]]
   }
 
-  ^print[Usage: $app.name $name [COMMAND [SWITCHES]] args…;$.end[^#0A^#0A]]
+  ^self.print[Usage: $self.app.name $self.name [COMMAND [SWITCHES]] args…;$.end[^#0A^#0A]]
   $aCode
-  ^print[Switches:]
-  ^print[--help   Prints this help message and quits.;$.end[^#0A^#0A]]
+  ^self.print[Switches:]
+  ^self.print[--help   Prints this help message and quits.;$.end[^#0A^#0A]]
 
 @print[aLine;aOptions]
   $result[^pfConsoleAppStdout:print[$aLine;$aOptions]]
@@ -217,13 +224,16 @@ pfConsoleCommandWithSubcommands
 ## Команда с вложенными командами.
 ## Субкоманда — это метод объекта. Имя субкоманды и метод задаем через assignSubcommand.
 
+@OPTIONS
+locals
+
 @BASE
 pfConsoleCommand
 
 @create[aOptions]
   ^BASE:create[$aOptions]
 
-  $_subCommands[^hash::create[]]
+  $self._subCommands[^hash::create[]]
 
 @assignSubcommand[aCommandDef;aFunction;aOptions]
 ## aCommandDef — имя команды и параметры: [command param1 [param2]]
@@ -236,12 +246,12 @@ pfConsoleCommand
   $lParsedCommand[^aCommandDef.match[^^\s*(\S+)\s*(.*?)\s*^$][]]
   $lName[$lParsedCommand.1]
   $lParams[$lParsedCommand.2]
-  ^pfAssert:isTrue(!^_subCommands.contains[$lName]){Субкоманда "$lName" уже задана.}
+  ^pfAssert:isTrue(!^self._subCommands.contains[$lName]){Субкоманда "$lName" уже задана.}
 
   $lFunction[^if($aFunction is junction){$aFunction}{$self.[$aFunction]}]
   ^pfAssert:isTrue($lFunction is junction){Не найдена функция для команды "$lName".}
 
-  $_subCommands.[$lName][
+  $self._subCommands.[$lName][
     $.name[$lName]
     $.function[$lFunction]
 
@@ -252,20 +262,19 @@ pfConsoleCommand
 @usage[aErrorMessage;aCode]
   ^BASE:usage[$aErrorMessage]{
     $aCode
-    ^if($_subCommands){
-      ^print[Commands:]
-      ^_subCommands.foreach[_;v]{
-        ^print[$v.name^if(def $v.params){ $v.params}		^if(def $v.help){$v.help}{—};$.start[  ]]
+    ^if($self._subCommands){
+      ^self.print[Commands:]
+      ^self._subCommands.foreach[;v]{
+        ^self.print[$v.name^if(def $v.params){ $v.params}		^if(def $v.help){$v.help}{—};$.start[  ]]
       }
-      ^print[]
+      ^self.print[]
     }
   }
 
 @process[aArgs;aSwitches]
   ^BASE:process[$aArgs;$aSwitches]
-  ^if(^_subCommands.contains[$aArgs.0]){
-    $result[^_subCommands.[$aArgs.0].function[$aArgs;$aSwitches]]
+  ^if(^self._subCommands.contains[$aArgs.0]){
+    $result[^self._subCommands.[$aArgs.0].function[$aArgs;$aSwitches]]
   }{
-     ^fail[]
+     ^self.fail[]
    }
-

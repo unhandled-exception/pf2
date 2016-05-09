@@ -29,7 +29,6 @@ SQL orm generators test!
 Finish tests.^#0A
 
 
-
 @CLASS
 usersModel
 
@@ -39,7 +38,7 @@ pfSQLTable
 @create[aOptions]
   ^BASE:create[users;$aOptions]
 
-  ^addFields[
+  ^self.addFields[
     $.userID[$.dbField[id] $.processor[uint] $.primary(true)]
     $.name[]
     $.comment[$.widget[textarea]]
@@ -49,4 +48,4 @@ pfSQLTable
     $.createdAt[$.dbField[created_at] $.processor[auto_now] $.widget[none]]
   ]
 
-  $_defaultOrderBy[$.name[]]
+  $self._defaultOrderBy[$.name[]]

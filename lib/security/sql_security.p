@@ -30,7 +30,7 @@ locals
 ## aOptions.secretKey — ключ для подписи и шифрования.
 ## aOptions.cryptKey[aOptions.secretKey] — ключ шифрования. Если не задан, то используем secretKey.
 ## aOptions.serializer[hex] — алгоритм сериализации зашифрованного текста (hex|base64)
-  ^cleanMethodArgument[]
+  ^self.cleanMethodArgument[]
   ^BASE:create[]
 
   ^pfAssert:isTrue(def $aOptions.sql){На задан объект для доступа к sql-серверу.}
@@ -38,7 +38,7 @@ locals
 
   $self.CSQL[$aOptions.sql]
   $self._secretKey[$aOptions.secretKey]
-  $self._cryptKey[^ifdef[$aOptions.cryptKey]{$self._secretKey}]
+  $self._cryptKey[^self.ifdef[$aOptions.cryptKey]{$self._secretKey}]
 
   $self._sqlFunctions[
     $.mysql[
@@ -63,10 +63,10 @@ locals
     ]
   ]
 
-  $self._serializer[^ifdef[$aOptions.serializer]{hex}]
+  $self._serializer[^self.ifdef[$aOptions.serializer]{hex}]
   $self._hashAlgorythm[sha256]
 
-  ^pfAssert:isTrue(^self._sqlFunctions.contains[$self.CSQL.serverType]){Неизвестный тип sql-сервера — "${self.CSQL.serverType}". Класс $CLASS_NAME поддерживает шифрование через серверы ^self._sqlFunctions.foreach[k;v]{"$k"}[, ]}
+  ^pfAssert:isTrue(^self._sqlFunctions.contains[$self.CSQL.serverType]){Неизвестный тип sql-сервера — "${self.CSQL.serverType}". Класс $self.CLASS_NAME поддерживает шифрование через серверы ^self._sqlFunctions.foreach[k;]{"$k"}[, ]}
 
   $self._pattern[^regex::create[\{(.+?)\}][g]]
 
@@ -74,11 +74,11 @@ locals
 ## Шифрует и сериализует строку.
 ## aOptions.serializer[default algorythm]
 ## aOptions.log — запись в sql-лог.
-  ^cleanMethodArgument[]
-  $lFuncs[$self._sqlFunctions.[$CSQL.serverType]]
-  $lSeralizer[$lFuncs.encrypt.[^ifdef[$aOptions.serializer]{$self._serializer}]]
+  ^self.cleanMethodArgument[]
+  $lFuncs[$self._sqlFunctions.[$self.CSQL.serverType]]
+  $lSeralizer[$lFuncs.encrypt.[^self.ifdef[$aOptions.serializer]{$self._serializer}]]
   ^pfAssert:isTrue(def $lSeralizer){Неизвестный метод сериализации "$aOptions.serializer".}
-  $result[^CSQL.string{
+  $result[^self.CSQL.string{
     select
       ^self._applyPattern[$lSeralizer;
         $.data[$aString]
@@ -86,18 +86,18 @@ locals
       ]
   }[][
     $.force(true)
-    $.log{^ifdef[$aOptions.log]{-- Encrypt a string "$aString".}}
+    $.log{^self.ifdef[$aOptions.log]{-- Encrypt a string "$aString".}}
   ]]
 
 @decrypt[aString;aOptions]
 ## Расшифровывает строку, закодированную методом encrypt.
 ## aOptions.serializer[default algorythm]
 ## aOptions.log — запись в sql-лог.
-  ^cleanMethodArgument[]
-  $lFuncs[$self._sqlFunctions.[$CSQL.serverType]]
-  $lSeralizer[$lFuncs.decrypt.[^ifdef[$aOptions.serializer]{$self._serializer}]]
+  ^self.cleanMethodArgument[]
+  $lFuncs[$self._sqlFunctions.[$self.CSQL.serverType]]
+  $lSeralizer[$lFuncs.decrypt.[^self.ifdef[$aOptions.serializer]{$self._serializer}]]
   ^pfAssert:isTrue(def $lSeralizer){Неизвестный метод сериализации "$aOptions.serializer".}
-  $result[^CSQL.string{
+  $result[^self.CSQL.string{
     select
       ^self._applyPattern[$lSeralizer;
         $.data[$aString]
@@ -105,7 +105,7 @@ locals
       ]
   }[][
     $.force(true)
-    $.log{^ifdef[$aOptions.log]{-- Decrypt a string "$aString".}}
+    $.log{^self.ifdef[$aOptions.log]{-- Decrypt a string "$aString".}}
   ]]
 
 @signString[aString] -> [signature.$aString]
@@ -132,7 +132,7 @@ locals
 ## aOptions.skipSign(false) — не подписывать токен
 ## aOptions.serializer[default algorythm]
 ## aOptions.log — запись в sql-лог.
-  ^cleanMethodArgument[]
+  ^self.cleanMethodArgument[]
   $result[^json:string[$aData]]
   ^if(!^aOptions.skipSign.bool(false)){
     $result[^self.signString[$result]]
@@ -145,7 +145,7 @@ locals
 ## aOptions.skipSign(false) — не провирять подпись
 ## aOptions.serializer[default algorythm]
 ## aOptions.log — запись в sql-лог.
-  ^cleanMethodArgument[]
+  ^self.cleanMethodArgument[]
   ^try{
     $result[^self.decrypt[$aToken;$.serializer[$aOptions.serializer] $.log[$aOptions.log]]]
     ^if(!^aOptions.skipSign.bool(false)){
@@ -159,7 +159,7 @@ locals
 @digest[aString;aOptions]
 ## Возвращает hmac-хеш строки.
 ## aOptions.format[base64|hex] — формат дайджеста. По-умолчанию base64.
-  $result[^math:digest[$self._hashAlgorythm;$aString;$.format[^ifdef[$aOptions.format]{base64}]]]
+  $result[^math:digest[$self._hashAlgorythm;$aString;$.format[^self.ifdef[$aOptions.format]{base64}]]]
 
 #----- Private -----
 

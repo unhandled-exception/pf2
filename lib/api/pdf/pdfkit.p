@@ -5,6 +5,9 @@ pfPDFKit
 
 ## Класс-обертка для генерации pdf-файлов через wkhtmltopdf.
 
+@OPTIONS
+locals
+
 @USE
 pf2/lib/common.p
 
@@ -12,19 +15,19 @@ pf2/lib/common.p
 pfClass
 
 @auto[aFilespec]
-  $[__PFPDFKIT_FILESPEC__][^aFilespec.match[^^(^taint[regex][$request:document-root])][][]]
+  $[self.__PFPDFKIT_FILESPEC__][^aFilespec.match[^^(^taint[regex][$request:document-root])][][]]
 
 @create[aOptions]
 ## aOptions.binPath[CLASS_FILESPEC/bin/wkhtmltopdf] — путь к wkhtmltopdf
-  ^cleanMethodArgument[]
+  ^self.cleanMethodArgument[]
   ^BASE:create[]
 
-  $_binPath[^if(def $aOptions.binPath){$aOptions.binPath}{^file:dirname[$__PFPDFKIT_FILESPEC__]/bin/wkhtmltopdf}]
-  ^pfAssert:isTrue(-f $_binPath){Не найден исполнимый файл "$_binPath".}
+  $self._binPath[^if(def $aOptions.binPath){$aOptions.binPath}{^file:dirname[$self.__PFPDFKIT_FILESPEC__]/bin/wkhtmltopdf}]
+  ^pfAssert:isTrue(-f $self._binPath){Не найден исполнимый файл "$self._binPath".}
 
-  $_stylesheets[^hash::create[]]
+  $self._stylesheets[^hash::create[]]
 
-  $_options[
+  $self._options[
     $.quiet(true)
     $.disable_smart_shrinking(false)
     $.page_size[A4]
@@ -35,18 +38,18 @@ pfClass
     $.margin_left[2.5cm]
     $.encoding[$response:charset]
   ]
-  ^defProperty[options]
+  ^self.defProperty[options]
 
-  $_metaPrefix[pdfkit-]
-  ^defProperty[metaPrefix]
+  $self._metaPrefix[pdfkit-]
+  ^self.defProperty[metaPrefix]
 
-@toPDF[aSource;aOptions][locals]
+@toPDF[aSource;aOptions]
 ## aSource[string|file|hash] — строка, файл или хеш
 ##    hash: $.fileName[] или $.url
 ## aOptions.toFile[] — записать результат в файл.
 ## result[file] — возвращает файл или пустую строку, если задан aOptions.toFile
   $result[]
-  ^cleanMethodArgument[]
+  ^self.cleanMethodArgument[]
 
   ^switch[$aSource.CLASS_NAME]{
     ^case[string]{
@@ -58,7 +61,7 @@ pfClass
     ^case[hash]{
       ^if(def $aSource.fileName){
         $lSourceFile[$aSource.fileName]
-        ^pfAssert:isTrue(-f $lSourceFile){${CLASS_NAME}: Не найден файл "$lSourceFile".}
+        ^pfAssert:isTrue(-f $lSourceFile){${self.CLASS_NAME}: Не найден файл "$lSourceFile".}
         $lSourceFile[file://${request:document-root}/$lSourceFile]
       }{
          $lSourceFile[$aSource.url]
@@ -68,28 +71,28 @@ pfClass
   }
 
   $lDestFile[$aOptions.toFile]
-  ^pfAssert:isTrue(-d ^file:dirname[$lDestFile]){${CLASS_NAME}: Необходимо создать папку "^file:dirname[$lDestFile]".}
+  ^pfAssert:isTrue(-d ^file:dirname[$lDestFile]){${self.CLASS_NAME}: Необходимо создать папку "^file:dirname[$lDestFile]".}
 
-  $lArgs[^hash::create[$_options]]
+  $lArgs[^hash::create[$self._options]]
   ^if(def $lText){
-    ^lArgs.add[^_findOptionsInMeta[$lText]]
-    $lText[^_appendStylesheets[$lText]]
+    ^lArgs.add[^self._findOptionsInMeta[$lText]]
+    $lText[^self._appendStylesheets[$lText]]
   }
 
-  $result[^_exec[^if(def $lSourceFile){$lSourceFile}{-};^if(def $lDestFile){${request:document-root}/$lDestFile}{-};$lArgs;$lText]]
+  $result[^self._exec[^if(def $lSourceFile){$lSourceFile}{-};^if(def $lDestFile){${request:document-root}/$lDestFile}{-};$lArgs;$lText]]
   ^if(def $lDestFile){$result[]}
 
 @appendStylesheet[aStylesheet]
   ^pfAssert:isTrue(-f $aStylesheet){${CLASS_NAME}: Не найдена таблица стилей "$aStylesheet".}
-  $_stylesheets.[^eval($_stylesheets + 1)][$aStylesheet]
+  $self._stylesheets.[^eval($self._stylesheets + 1)][$aStylesheet]
 
-@_exec[aInpFile;aOutFile;aArgs;aStdin][locals]
-  $result[^file::exec[binary;$_binPath;$.stdin[$aStdin] $.charset[$aArgs.encoding];^_makeArgs[$aArgs];$aInpFile;$aOutFile]]
+@_exec[aInpFile;aOutFile;aArgs;aStdin]
+  $result[^file::exec[binary;$self._binPath;$.stdin[$aStdin] $.charset[$aArgs.encoding];^self._makeArgs[$aArgs];$aInpFile;$aOutFile]]
   ^if($result.status > 0){
     ^throw[pdfkit.fail;Ошибка в wkhtmltopdf ($result.status);$result.stderr]
   }
 
-@_findOptionsInMeta[aContent][locals]
+@_findOptionsInMeta[aContent]
   $result[^hash::create[]]
 # Выкусываем мета-теги
   $lMetas[^aContent.match[
@@ -101,7 +104,7 @@ pfClass
     )\/?>
   ][gix]]
 # Отбираем только те, которые начинаются с _metaPrefix.
-  $lNameRegex[^regex::create[^^['"]^taint[regex][$_metaPrefix]^(.+?)['"]^$][n]]
+  $lNameRegex[^regex::create[^^['"]^taint[regex][$self._metaPrefix]^(.+?)['"]^$][n]]
   ^lMetas.menu{
     ^if(!def $lMetas.1){^continue[]}
     ^lMetas.1.match[$lNameRegex][]{
@@ -113,10 +116,10 @@ pfClass
 
 @_appendStylesheets[aContent][loclals]
   $result[$aContent]
-  ^if($_stylesheets){
+  ^if($self._stylesheets){
     $result[^result.match[(<\/head>)][i]{
       <style>
-        ^_stylesheets.foreach[k;v]{
+        ^self._stylesheets.foreach[k;v]{
           $lStylesheet[^file::load[text;$v]]
           ^taint[as-is][$lStylesheet.text]
         }
@@ -125,7 +128,7 @@ pfClass
     }]
   }
 
-@_makeArgs[aArgs][locals]
+@_makeArgs[aArgs]
   $result[^table::create{arg}]
   $lArgRegex[^regex::create[[^^a-z0-9]][gi]]
   ^aArgs.foreach[k;v]{

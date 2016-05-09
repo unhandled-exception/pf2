@@ -21,35 +21,38 @@ pfTableFormGenerator
 ##   radio
 ##   select
 
+@OPTIONS
+locals
+
 @BASE
 pfClass
 
 @create[aOptions]
 ## aOptions.widgets[object]
-  ^cleanMethodArgument[]
+  ^self.cleanMethodArgument[]
   ^BASE:create[]
-  $_defaultArgName[aFormData]
+  $self._defaultArgName[aFormData]
 
-  $_widgets[^if(def $aOptions.widgets){$aOptions.widgets}{^pfTableFormGeneratorBootstrap2Widgets::create[]}]
+  $self._widgets[^if(def $aOptions.widgets){$aOptions.widgets}{^pfTableFormGeneratorBootstrap2Widgets::create[]}]
 
-@generate[aModel;aOptions][locals]
+@generate[aModel;aOptions]
 ## aOptions.argName
   ^pfAssert:isTrue($aModel is pfSQLTable)[Модель "$aModel.CLASS_NAME" должна быть наследником pfSQLTable.]
   $aOptions[^hash::create[$aOptions]]
-  $aOptions.argName[^if(def $aOptions.agrName){$aOptions.argName}{$_defaultArgName}]
+  $aOptions.argName[^if(def $aOptions.agrName){$aOptions.argName}{$self._defaultArgName}]
   $result[^hash::create[]]
 
   ^aModel.FIELDS.foreach[k;v]{
-    ^if(^_hasWidget[$v;$aModel]){
-      $result.[^result._count[]][^_makeWidgetLine[$v;$aOptions]]
+    ^if(^self._hasWidget[$v;$aModel]){
+      $result.[^result._count[]][^self._makeWidgetLine[$v;$aOptions]]
     }
   }
-  $result[@form^[$aOptions.argName^;aOptions^]^[locals^]
+  $result[@form^[$aOptions.argName^;aOptions^]
   ^^cleanMethodArgument^[^]
   ^^cleanMethodArgument^[$aOptions.argName^]
-  ^_widgets.formWidget{
+  ^self._widgets.formWidget{
     ^result.foreach[k;v]{$v^#0A^#0A}
-    ^_widgets.submitWidget[$aOptions]
+    ^self._widgets.submitWidget[$aOptions]
   }
   ]
   $result[^result.match[(^^\s*^$)][gmx][^#0A]]
@@ -60,11 +63,11 @@ pfClass
 
 @_makeWidgetLine[aField;aOptions]
   $result[^switch[$aField.widget]{
-        ^case[;input;password]{^_widgets.inputWidget[$aField;$aField.widget;$aOptions]}
-        ^case[hidden]{^_widgets.hiddenWidget[$aField;$aOptions]}
-        ^case[textarea]{^_widgets.textareaWidget[$aField;$aOptions]}
-        ^case[checkbox;radio]{^_widgets.checkboxWidget[$aField;$aField.widget;$aOptions]}
-        ^case[select]{^_widgets.selectWidget[$aField;$aOptions]}
+        ^case[;input;password]{^self._widgets.inputWidget[$aField;$aField.widget;$aOptions]}
+        ^case[hidden]{^self._widgets.hiddenWidget[$aField;$aOptions]}
+        ^case[textarea]{^self._widgets.textareaWidget[$aField;$aOptions]}
+        ^case[checkbox;radio]{^self._widgets.checkboxWidget[$aField;$aField.widget;$aOptions]}
+        ^case[select]{^self._widgets.selectWidget[$aField;$aOptions]}
       }]
 
 #--------------------------------------------------------------------------------------------------
@@ -75,6 +78,9 @@ pfClass
 pfTableFormGeneratorBootstrap2Widgets
 
 ## Bootstrap 2
+
+@OPTIONS
+locals
 
 @BASE
 pfClass
@@ -105,7 +111,7 @@ pfClass
       </div>
     </div>]
 
-@checkboxWidget[aField;aType;aOptions][locals]
+@checkboxWidget[aField;aType;aOptions]
   $lVarName[^$${aOptions.argName}.$aField.name]
   $aType[^if(def $aType){$aType}{checkbox}]
   $result[
@@ -131,7 +137,7 @@ pfClass
   $result[    <input type="hidden" name="$aField.name" value="^$${aOptions.argName}.$aField.name" />]
 
 @submitWidget[aOptions]
-  ^cleanMethodArgument[]
+  ^self.cleanMethodArgument[]
   $result[^^antiFlood.field^[^]
     <div class="control-group">
       <div class="controls">
@@ -147,6 +153,9 @@ pfClass
 pfTableFormGeneratorBootstrap3Widgets
 
 ## Bootstrap 3
+
+@OPTIONS
+locals
 
 @BASE
 pfClass
@@ -177,7 +186,7 @@ pfClass
       </div>
     </div>]
 
-@checkboxWidget[aField;aType;aOptions][locals]
+@checkboxWidget[aField;aType;aOptions]
   $lVarName[^$${aOptions.argName}.$aField.name]
   $aType[^if(def $aType){$aType}{checkbox}]
   $result[
@@ -203,7 +212,7 @@ pfClass
   $result[    <input type="hidden" name="$aField.name" value="^$${aOptions.argName}.$aField.name" />]
 
 @submitWidget[aOptions]
-  ^cleanMethodArgument[]
+  ^self.cleanMethodArgument[]
   $result[^^antiFlood.field^[^]
     <div class="form-group">
       <div class="col-sm-offset-3 col-sm-9">
@@ -219,6 +228,9 @@ pfClass
 pfTableFormGeneratorSemanticUIWidgets
 
 ## SemanticUI — http://semantic-ui.com/
+
+@OPTIONS
+locals
 
 @BASE
 pfClass
@@ -251,7 +263,7 @@ pfClass
       <textarea name="$aField.name" id="f-$aField.name" rows="7" class="" placeholder="" />^$${aOptions.argName}.$aField.name</textarea>
     </div>]
 
-@checkboxWidget[aField;aType;aOptions][locals]
+@checkboxWidget[aField;aType;aOptions]
   $lVarName[^$${aOptions.argName}.$aField.name]
   $aType[^if(def $aType){$aType}{checkbox}]
   $result[
@@ -274,7 +286,7 @@ pfClass
   $result[    <input type="hidden" name="$aField.name" value="^$${aOptions.argName}.$aField.name" />]
 
 @submitWidget[aOptions]
-  ^cleanMethodArgument[]
+  ^self.cleanMethodArgument[]
   $result[^^antiFlood.field^[^]
     <div class="ui hidden divider"></div>
     <button type="submit" class="ui primary button">Сохранить</button>

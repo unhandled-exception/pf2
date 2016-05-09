@@ -10,15 +10,18 @@ pfTableControllerGenerator
 ## Этот класс — пример написания генераторов кода и заточен под мой подход к работе
 ## с модулями pf'а, поэтому не надо ждать от него универсаьности.
 
+@OPTIONS
+locals
+
 @BASE
 pfClass
 
 @create[]
   ^BASE:create[]
 
-@generate[aModel;aModelName;aOptions][locals]
+@generate[aModel;aModelName;aOptions]
 ## aOptions.name[Entity] — имя контроллера.
-  ^cleanMethodArgument[]
+  ^self.cleanMethodArgument[]
   ^pfAssert:isTrue($aModel is pfSQLTable)[Модель должна быть наследником pfSQLTable.]
   ^pfAssert:isTrue(def $aModel._primaryKey)[Модель должна иметь первичный ключ.]
   ^pfAssert:isTrue(def $aModelName)[Не задано имя модели.]
@@ -40,9 +43,9 @@ pfClass
   ^@create^[aOptions^]
     ^^BASE:create^[^$aOptions^]
     ...
-    ^_routes[$lOptions]
+    ^self._routes[$lOptions]
 
-  ^_classBody[$lOptions]
+  ^self._classBody[$lOptions]
   ]
   $result[^result.match[^^[ \t]{2}][gmx][]]
   $result[^result.match[(^^\s*^$)][gmx][^#0A]]
@@ -53,74 +56,74 @@ pfClass
     ^$_routerRequirements[
       ^$.${aOptions.primaryKey}[\d+]
     ]
-    ^^router.assign[${aOptions.pathPrefix}:${aOptions.primaryKey}^;^aOptions.pathPrefix.trim[both;/]^;^$.requirements[$_routerRequirements]]
-    ^^router.assign[${aOptions.pathPrefix}new^;person/new]
-    ^^router.assign[${aOptions.pathPrefix}:${aOptions.primaryKey}/edit^;${aOptions.pathPrefix}edit^;^$.requirements[^$_routerRequirements]]
-    ^^router.assign[${aOptions.pathPrefix}:${aOptions.primaryKey}/delete^;${aOptions.pathPrefix}delete^;^$.requirements[^$_routerRequirements]]
-    ^if($aOptions.hasRestore){^^router.assign[${aOptions.pathPrefix}:${aOptions.primaryKey}/restore^;${aOptions.pathPrefix}restore^;^$.requirements[^$_routerRequirements]]}
+    ^^self.router.assign[${aOptions.pathPrefix}:${aOptions.primaryKey}^;^aOptions.pathPrefix.trim[both;/]^;^$.requirements[$_self.routerRequirements]]
+    ^^self.router.assign[${aOptions.pathPrefix}new^;person/new]
+    ^^self.router.assign[${aOptions.pathPrefix}:${aOptions.primaryKey}/edit^;${aOptions.pathPrefix}edit^;^$.requirements[^$_self.routerRequirements]]
+    ^^self.router.assign[${aOptions.pathPrefix}:${aOptions.primaryKey}/delete^;${aOptions.pathPrefix}delete^;^$.requirements[^$_self.routerRequirements]]
+    ^if($aOptions.hasRestore){^^self.router.assign[${aOptions.pathPrefix}:${aOptions.primaryKey}/restore^;${aOptions.pathPrefix}restore^;^$.requirements[^$_routerRequirements]]}
   ]
 
 @_classBody[aOptions]
   $result[
-  ^_indexAction[$aOptions]
-  ^_formProcessor[$aOptions]
-  ^_newAction[$aOptions]
-  ^_editAction[$aOptions]
-  ^_deleteAction[$aOptions]
-  ^if($aOptions.hasRestore){^_restoreAction[$aOptions]}
+  ^self._indexAction[$aOptions]
+  ^self._formProcessor[$aOptions]
+  ^self._newAction[$aOptions]
+  ^self._editAction[$aOptions]
+  ^self._deleteAction[$aOptions]
+  ^if($aOptions.hasRestore){^self._restoreAction[$aOptions]}
   ]
 
 @_indexAction[aOptions]
   $result[
   ^if(def $aOptions.prefix){
-  ^@onINDEX[aRequest][locals]
+  ^@onINDEX[aRequest]
     ^$self.title[...]
-    ^^render[index.pt]
+    ^^self.render[index.pt]
   }
-  ^@on${aOptions.index}[^$aRequest][locals]
+  ^@on${aOptions.index}[^$aRequest]
     ^$${aOptions.localVar}[^^${aOptions.modelName}.one[^$.${aOptions.primaryKey}[^$aRequest.${aOptions.primaryKey}]]]
-    ^if(def $aOptions.prefix){^^if(!^$${aOptions.localVar}){^^redirectTo[/]}}
+    ^if(def $aOptions.prefix){^^if(!^$${aOptions.localVar}){^^self.redirectTo[/]}}
     ^$self.title[...]
-    ^^assignVar[${aOptions.propName}^;^$${aOptions.localVar}]
-    ^^render[${aOptions.pathPrefix}^if(def $aOptions.prefix){$aOptions.propName}{index}.pt]
+    ^^self.assignVar[${aOptions.propName}^;^$${aOptions.localVar}]
+    ^^self.render[${aOptions.pathPrefix}^if(def $aOptions.prefix){$aOptions.propName}{index}.pt]
   ]
 
 @_formProcessor[aOptions]
   $result[
-  ^@${aOptions.formAction}[aRequest][locals]
+  ^@${aOptions.formAction}[aRequest]
     ^$result[^^${aOptions.modelName}.cleanForm[^$aRequest]]
   ]
 
 @_newAction[aOptions]
   $result[
-  ^@on${aOptions.actionPrefix}New[aRequest][locals]
+  ^@on${aOptions.actionPrefix}New[aRequest]
     ^$self.title[...]
     ^^if(^$aRequest.method eq post){
       ^^antiFlood.process[^$aRequest]){
         ^$lNewData[^^${aOptions.formAction}[$aRequest]]
         ^$lNewID[^^${aOptions.modelName}.new[^$lNewData]]
-        ^^logOperation[
+        ^^self.logOperation[
   #        ^$.log[...]
           ^$.comment[...]
           ^$.dataID[^$lNewID]
         ]
       }
-      ^^redirectTo[^aOptions.pathPrefix.trim[both;/]^;^$.${aOptions.primaryKey}[^$lNewID]]
+      ^^self.redirectTo[^aOptions.pathPrefix.trim[both;/]^;^$.${aOptions.primaryKey}[^$lNewID]]
     }
-    ^^render[${aOptions.pathPrefix}edit.pt]
+    ^^self.render[${aOptions.pathPrefix}edit.pt]
   ]
 
 @_editAction[aOptions]
   $result[
-  ^@on${aOptions.actionPrefix}Edit[aRequest][locals]
+  ^@on${aOptions.actionPrefix}Edit[aRequest]
     ^$${aOptions.localVar}[^^${aOptions.modelName}.one[^$.${aOptions.primaryKey}[^$aRequest.${aOptions.primaryKey}]]]
-    ^^if(!^$${aOptions.localVar}){^^redirectTo[/]}
+    ^^if(!^$${aOptions.localVar}){^^self.redirectTo[/]}
     ^$self.title[...]
     ^^if(^$aRequest.method eq post){
       ^^antiFlood.process[^$aRequest]{
         ^$lNewData[^^${aOptions.formAction}[$aRequest]]
         ^^${aOptions.modelName}.modify[^$${aOptions.localVar}.${aOptions.primaryKey}^;^$lNewData]
-        ^^logOperation[
+        ^^self.logOperation[
   #        ^$.log[...]
           ^$.comment[...]
           ^$.oldData[^$${aOptions.localVar}]
@@ -128,42 +131,42 @@ pfClass
           ^$.dataID[^$${aOptions.localVar}.${aOptions.primaryKey}]
         ]
       }
-      ^^redirectTo[^aOptions.pathPrefix.trim[both;/]^;^$.${aOptions.primaryKey}[^$${aOptions.localVar}.${aOptions.primaryKey}]]
+      ^^self.redirectTo[^aOptions.pathPrefix.trim[both;/]^;^$.${aOptions.primaryKey}[^$${aOptions.localVar}.${aOptions.primaryKey}]]
     }
-    ^^assignVar[${aOptions.propName}^;^$${aOptions.localVar}]
-    ^^render[${aOptions.pathPrefix}edit.pt]
+    ^^self.assignVar[${aOptions.propName}^;^$${aOptions.localVar}]
+    ^^self.render[${aOptions.pathPrefix}edit.pt]
   ]
 
 @_deleteAction[aOptions]
   $result[
-  ^@on${aOptions.actionPrefix}Delete[aRequest][locals]
+  ^@on${aOptions.actionPrefix}Delete[aRequest]
     ^$${aOptions.localVar}[^^${aOptions.modelName}.one[^$.${aOptions.primaryKey}[^$aRequest.${aOptions.primaryKey}]]]
     ^^if(^$${aOptions.localVar} && ^$${aOptions.localVar}.isActive){
       ^^${aOptions.modelName}.delete[^$${aOptions.localVar}.${aOptions.primaryKey}]
-      ^^logOperation[
+      ^^self.logOperation[
   #      ^$.log[...]
         ^$.comment[...]
         ^$.oldData[^$${aOptions.localVar}]
         ^$.dataID[^$${aOptions.localVar}.${aOptions.primaryKey}]
       ]
-      ^^redirectTo[^aOptions.pathPrefix.trim[both;/]^;^$.${aOptions.primaryKey}[^$${aOptions.localVar}.${aOptions.primaryKey}]]
+      ^^self.redirectTo[^aOptions.pathPrefix.trim[both;/]^;^$.${aOptions.primaryKey}[^$${aOptions.localVar}.${aOptions.primaryKey}]]
     }
-    ^^redirectTo[/]
+    ^^self.redirectTo[/]
   ]
 
 @_restoreAction[aOptions]
   $result[
-  ^@on${aOptions.actionPrefix}Restore[aRequest][locals]
+  ^@on${aOptions.actionPrefix}Restore[aRequest]
     ^$${aOptions.localVar}[^^${aOptions.modelName}.one[^$.${aOptions.primaryKey}[^$aRequest.${aOptions.primaryKey}]]]
     ^^if(^$${aOptions.localVar} && !^$${aOptions.localVar}.isActive){
       ^^${aOptions.modelName}.restore[^$${aOptions.localVar}.${aOptions.primaryKey}]
-      ^^logOperation[
+      ^^self.logOperation[
   #      ^$.log[...]
         ^$.comment[...]
         ^$.oldData[^$${aOptions.localVar}]
         ^$.dataID[^$${aOptions.localVar}.${aOptions.primaryKey}]
       ]
-      ^^redirectTo[^aOptions.pathPrefix.trim[both;/]^;^$.${aOptions.primaryKey}[^$${aOptions.localVar}.${aOptions.primaryKey}]]
+      ^^self.redirectTo[^aOptions.pathPrefix.trim[both;/]^;^$.${aOptions.primaryKey}[^$${aOptions.localVar}.${aOptions.primaryKey}]]
     }
-    ^^redirectTo[/]
+    ^^self.redirectTo[/]
   ]
