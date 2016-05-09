@@ -14,7 +14,7 @@ locals
 @BASE
 pfClass
 
-@create[aTableName;aOptions][k;v]
+@create[aTableName;aOptions]
 ## aOptions.sql
 ## aOptions.tableAlias
 ## aOptions.schema — название базы данных (можно не указывать).
@@ -32,7 +32,7 @@ pfClass
 
   $self._csql[^if(def $aOptions.sql){$aOptions.sql}{$self._PFSQLTABLE_CSQL}]
   ^pfAssert:isTrue(def $self._csql){Не задан объект для работы с SQL-сервером.}
-  $CSQL[$self._csql]
+  $self.CSQL[$self._csql]
 
   $self._builder[^if(def $aOptions.builder){$aOptions.builder}{$self._PFSQLTABLE_BUILDER}]
   ^if(!def $self._builder){
@@ -894,7 +894,7 @@ pfClass
     $result[$lEmptyValue]
   }
 
-@_parseCSVString[aString][loacals]
+@_parseCSVString[aString]
 # $result[$.0[] $.1[] ...]
   $result[^hash::create[]]
   ^aString.match[$self._PFSQLBUILDER_CSV_REGEX_][]{

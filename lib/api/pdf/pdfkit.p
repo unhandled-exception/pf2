@@ -114,7 +114,7 @@ pfClass
     }
   }
 
-@_appendStylesheets[aContent][loclals]
+@_appendStylesheets[aContent]
   $result[$aContent]
   ^if($self._stylesheets){
     $result[^result.match[(<\/head>)][i]{

@@ -34,7 +34,7 @@ pfClass
   $self._requestCharset[utf-8]
   $self._responseCharset[utf-8]
 
-@send[aPhone;aMessage;aOptions][lResp]
+@send[aPhone;aMessage;aOptions]
 ## aPhone - номер телефона (для России номер должен быть в формате 7xxxxxxxxxx)
 ## aMessage
 ## result[$.status[bool] $.smsID[table] $.comment[] <$.badPhone(bool)>] - результат операции

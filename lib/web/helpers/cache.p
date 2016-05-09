@@ -70,7 +70,7 @@ pfClass
 ## Возвращает true, если ключ есть в кэше
   $result(-f "$self._cacheDir/$aKey")
 
-@isExpired[aKey;aTime][lStat;lNow;lDate]
+@isExpired[aKey;aTime]
 ## Проверяет устарел ли кеш
 	  $lStat[^file::stat[$self._cacheDir/$aKey]]
 	  $lNow[^date::now[]]

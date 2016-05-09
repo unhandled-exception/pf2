@@ -29,7 +29,7 @@ pfClass
   $self._zipPath[^if(def $aOptions.zipPath){$aOptions.zipPath}{^file:dirname[$self.__PFZIPARCHIVER_FILESPEC__]/bin/zip}]
   ^self._cleanLastError[]
 
-@list[aZipFile;aOptions][lExec]
+@list[aZipFile;aOptions]
 ## aOptions.charset[$request:charset]
   ^self.cleanMethodArgument[]
   ^self._cleanLastError[]
@@ -60,7 +60,7 @@ pfClass
     ^self._error(false)[$lExec.status;$lExec.text;$lExec.stderr]
   }
 
-@pack[aZipFile;aFiles;aOptions][lFiles;lFullPath;lColumn;lOpt]
+@pack[aZipFile;aFiles;aOptions]
 ## aFiles[string|table]
 ## aOptions.column[name] - название колонки для тиблицы в aFiles
 ## aOptions.fullPath(false) - пути к файлам в aFile заданы в формате «от корня»

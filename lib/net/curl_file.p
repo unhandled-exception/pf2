@@ -39,7 +39,7 @@ pfClass
   $self._defaultUserAgent[parser3 (pfCurlFile)/$env:PARSER_VERSION]
   $self._throwPrefix[$self.CLASS_NAME]
 
-@load[aFormat;aURL;aArgs1;aArgs2][lMatches]
+@load[aFormat;aURL;aArgs1;aArgs2]
 ## ^pfCurlFile::load[format;url;options]
 ## ^pfCurlFile::load[format;url;new_name;options]
 
@@ -199,7 +199,7 @@ pfClass
 @crc32[]
   $result[^self._file.crc32[]]
 
-@_throw[aStatus;aStdErr][lType;lSource;lComment]
+@_throw[aStatus;aStdErr]
   ^switch[$aStatus]{
     ^case[3]{
       $lType[url.malformat]

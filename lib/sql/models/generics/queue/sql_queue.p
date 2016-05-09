@@ -42,7 +42,7 @@ pfSQLTable
   $result[^self.fetch[^hash::create[$aOptions] $.limit(1) $.asHash(true)]]
   $result[^result._at[first]]
 
-@fetch[aOptions][locals]
+@fetch[aOptions]
 ## Достает из базы таблицу с задачами и сдвигает время очередной обработки.
 ## aOptions — параметры как для pfSQLTable.all
 ## aOptions.limit(1)

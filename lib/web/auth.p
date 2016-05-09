@@ -574,7 +574,7 @@ locals
     ^case[DEFAULT]{$result[^BASE:fieldValue[$aField;$aValue]]}
   }
 
-@permissionsToString[aPermissions;aOptions][lColumn;k;v]
+@permissionsToString[aPermissions;aOptions]
 ## Сериализует права в строку
 ## aPermissions[string|table|hash]
 ## aOptions.column[permission]
