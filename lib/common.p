@@ -98,16 +98,16 @@ locals
 ## aContainer[$caller.self] — если передали миксиним в объект, иначе берем self из caller'а.
 ## aOptions — параметры, которые передаются инициализатору миксина
   $result[]
-  $obj[^reflection:create[$CLASS_NAME;__init__;^if(def $aContainer){$aContainer}{$caller.self};$aOptions]]
+  $obj[^reflection:create[$self.CLASS_NAME;__init__;^if(def $aContainer){$aContainer}{$caller.self};$aOptions]]
 
 @__init__[aThis;aOptions]
 ## Инициализатор миксина. Используется вместо конструктора.
 ## aOptions.export[$.method1[] $.method2[]]
   $aOptions[^hash::create[$aOptions]]
   $self.this[$aThis]
-  $self.mixinName[__${CLASS_NAME}__]
+  $self.mixinName[__${self.CLASS_NAME}__]
   $self.this.[$mixinName][$self]
-  $lMethods[^if($aOptions.export){$aOptions.export}{^reflection:methods[$CLASS_NAME]}]
+  $lMethods[^if($aOptions.export){$aOptions.export}{^reflection:methods[$self.CLASS_NAME]}]
   $lForeach[^reflection:method[$lMethods;foreach]]
   ^lForeach[m;_]{
     ^if(!def $aOptions.export && (^m.left(1) eq "_" || $m eq "mixin" || $m eq "auto")){^continue[]}

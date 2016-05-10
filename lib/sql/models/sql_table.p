@@ -720,7 +720,7 @@ pfClass
   $self._now[^date::now[]]
   $self._today[^date::today[]]
 
-@auto[][lSeparator;lEncloser]
+@auto[]
   $self._PFSQLBUILDER_CSV_REGEX_[^regex::create[((?:\s*"(?:[^^"]*|"{2})*"\s*(?:,|^$))|\s*"[^^"]*"\s*(?:,|^$)|[^^,]+(?:,|^$)|(?:,))][g]]
   $self._PFSQLBUILDER_CSV_QTRIM_REGEX_[^regex::create["(.*)"][]]
   $self._PFSQLBUILDER_PROCESSOR_FIRST_UPPER[^regex::create[^^\s*(\pL)(.*?)^$][]]

@@ -234,7 +234,7 @@ pfClass
   }
   ^throw[$lType;$lSource;$lComment]
 
-@_makeOptions[][lColumns;lMethod;lParams;lParam]
+@_makeOptions[]
   $result[^table::create{arg}]
 
   ^result.append{--connect-timeout}

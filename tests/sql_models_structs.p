@@ -94,7 +94,7 @@ pfModelModule
   $_var1[$aOptions]
 
 @print[]
-  $result[This is a $CLASS_NAME class instance. Core var: $core.coreVar]
+  $result[This is a $self.CLASS_NAME class instance. Core var: $core.coreVar]
 
 
 @CLASS

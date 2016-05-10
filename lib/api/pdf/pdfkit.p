@@ -83,7 +83,7 @@ pfClass
   ^if(def $lDestFile){$result[]}
 
 @appendStylesheet[aStylesheet]
-  ^pfAssert:isTrue(-f $aStylesheet){${CLASS_NAME}: Не найдена таблица стилей "$aStylesheet".}
+  ^pfAssert:isTrue(-f $aStylesheet){${self.CLASS_NAME}: Не найдена таблица стилей "$aStylesheet".}
   $self._stylesheets.[^eval($self._stylesheets + 1)][$aStylesheet]
 
 @_exec[aInpFile;aOutFile;aArgs;aStdin]

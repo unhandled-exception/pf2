@@ -433,6 +433,6 @@ pfClass
   $lTemplate[^self.__TEMPLATE.loadTemplate[$aTemplateName;^if(def $self.__FILE){$.base[^file:dirname[$self.__FILE]]}]]
   $lEngine[^self.__TEMPLATE.findEngine[$aTemplateName]]
   ^if(def $lEngine){
-    ^lEngine.applyImports[$lTemplate;$CLASS]
+    ^lEngine.applyImports[$lTemplate;$self.CLASS]
   }
-  ^process[$CLASS]{^taint[as-is][$lTemplate.body]}[$.main[__main__] $.file[$lTemplate.path]]
+  ^process[$self.CLASS]{^taint[as-is][$lTemplate.body]}[$.main[__main__] $.file[$lTemplate.path]]
