@@ -188,12 +188,12 @@ pfClass
 
 @GET_TABLE_ALIAS[]
   ^if(!def $self._tableAlias){
-    $self._tableAlias[$TABLE_NAME]
+    $self._tableAlias[$self.TABLE_NAME]
   }
   $result[$self._tableAlias]
 
 @GET_TABLE_EXPRESSION[]
-  $result[^if(def $SCHEMA){^self._builder.quoteIdentifier[$SCHEMA].}^self._builder.quoteIdentifier[$TABLE_NAME] as ^self._builder.quoteIdentifier[$TABLE_ALIAS]]
+  $result[^if(def $self.SCHEMA){^self._builder.quoteIdentifier[$self.SCHEMA].}^self._builder.quoteIdentifier[$self.TABLE_NAME] as ^self._builder.quoteIdentifier[$self.TABLE_ALIAS]]
 
 @GET_FIELDS[]
   $result[$self._fields]
@@ -211,7 +211,7 @@ pfClass
   }
 
 @TABLE_AS[aAlias]
-  $result[^if(def $SCHEMA){^self._builder.quoteIdentifier[$SCHEMA].}^self._builder.quoteIdentifier[$TABLE_NAME]^if(def $aAlias){ as ^self._builder.quoteIdentifier[$aAlias]}]
+  $result[^if(def $self.SCHEMA){^self._builder.quoteIdentifier[$self.SCHEMA].}^self._builder.quoteIdentifier[$self.TABLE_NAME]^if(def $aAlias){ as ^self._builder.quoteIdentifier[$aAlias]}]
 
 #----- Выборки -----
 
@@ -328,10 +328,10 @@ pfClass
 ## Возврашает автосгенерированное значение первичного ключа (last_insert_id) для sequence-полей.
   ^self.cleanMethodArgument[aData;aSQLOptions]
   ^self.asContext[update]{
-    $result[^self.CSQL.void{^self._builder.insertStatement[$TABLE_NAME;$self._fields;$aData;
+    $result[^self.CSQL.void{^self._builder.insertStatement[$self.TABLE_NAME;$self._fields;$aData;
       ^hash::create[$aSQLOptions]
       $.skipFields[$self._skipOnInsert]
-      $.schema[$SCHEMA]
+      $.schema[$self.SCHEMA]
       $.fieldValueFunction[$self.fieldValue]
     ]}]
   }
@@ -346,11 +346,11 @@ pfClass
   ^self.cleanMethodArgument[aData]
   $result[^self.CSQL.void{
     ^self.asContext[update]{
-      ^self._builder.updateStatement[$TABLE_NAME;$self._fields;$aData][$PRIMARYKEY = ^self.fieldValue[$self._fields.[$self._primaryKey];$aPrimaryKeyValue]][
+      ^self._builder.updateStatement[$self.TABLE_NAME;$self._fields;$aData][$self.PRIMARYKEY = ^self.fieldValue[$self._fields.[$self._primaryKey];$aPrimaryKeyValue]][
         $.skipAbsent(true)
         $.skipFields[$self._skipOnUpdate]
-        $.emptySetExpression[$PRIMARYKEY = $PRIMARYKEY]
-        $.schema[$SCHEMA]
+        $.emptySetExpression[$self.PRIMARYKEY = $self.PRIMARYKEY]
+        $.schema[$self.SCHEMA]
         $.fieldValueFunction[$self.fieldValue]
       ]
     }
@@ -376,7 +376,7 @@ pfClass
   ^pfAssert:isTrue(def $aPrimaryKeyValue){Не задано значение первичного ключа}
   $result[^self.CSQL.void{
     ^self.asContext[update]{
-      delete from ^if(def $SCHEMA){^self._builder.quoteIdentifier[$SCHEMA].}^self._builder.quoteIdentifier[$TABLE_NAME] where $PRIMARYKEY = ^self.fieldValue[$self._fields.[$self._primaryKey];$aPrimaryKeyValue]
+      delete from ^if(def $self.SCHEMA){^self._builder.quoteIdentifier[$self.SCHEMA].}^self._builder.quoteIdentifier[$self.TABLE_NAME] where $self.PRIMARYKEY = ^self.fieldValue[$self._fields.[$self._primaryKey];$aPrimaryKeyValue]
     }
   }]
 
@@ -391,9 +391,9 @@ pfClass
   $lFieldName[^self._builder.sqlFieldName[$self._fields.[$aFieldName]]]]
   $result[^self.CSQL.void{
     ^self.asContext[update]{
-      update ^if(def $SCHEMA){^self._builder.quoteIdentifier[$SCHEMA].}^self._builder.quoteIdentifier[$TABLE_NAME]
+      update ^if(def $self.SCHEMA){^self._builder.quoteIdentifier[$self.SCHEMA].}^self._builder.quoteIdentifier[$self.TABLE_NAME]
          set $lFieldName = $lFieldName ^if($aValue < 0){-}{+} ^self.fieldValue[$self._fields.[$aFieldName]](^math:abs($aValue))
-       where $PRIMARYKEY = ^self.fieldValue[$self._fields.[$self._primaryKey];$aPrimaryKeyValue]
+       where $self.PRIMARYKEY = ^self.fieldValue[$self._fields.[$self._primaryKey];$aPrimaryKeyValue]
     }
   }]
 
@@ -405,10 +405,10 @@ pfClass
   ^self.cleanMethodArgument[aOptions;aData]
   $result[^self.CSQL.void{
     ^self.asContext[update]{
-      ^self._builder.updateStatement[$TABLE_NAME;$self._fields;$aData][
+      ^self._builder.updateStatement[$self.TABLE_NAME;$self._fields;$aData][
         ^self._allWhere[$aOptions]
       ][
-        $.schema[$SCHEMA]
+        $.schema[$self.SCHEMA]
         $.skipAbsent(true)
         $.skipFields[$self._skipOnUpdate]
         $.emptySetExpression[]
@@ -423,7 +423,7 @@ pfClass
   ^self.cleanMethodArgument[]
   $result[^self.CSQL.void{
     ^self.asContext[update]{
-      delete from ^if(def $SCHEMA){^self._builder.quoteIdentifier[$SCHEMA].}^self._builder.quoteIdentifier[$TABLE_NAME]
+      delete from ^if(def $self.SCHEMA){^self._builder.quoteIdentifier[$self.SCHEMA].}^self._builder.quoteIdentifier[$self.TABLE_NAME]
        where ^self._allWhere[$aOptions]
     }
   }]
@@ -436,7 +436,7 @@ pfClass
 @_allFields[aOptions;aSQLOptions]
   ^self.cleanMethodArgument[aOptions;aSQLOptions]
   $result[^self._builder.selectFields[$self._fields;
-    $.tableAlias[$TABLE_ALIAS]
+    $.tableAlias[$self.TABLE_ALIAS]
     ^if(^aSQLOptions.contains[skipFields]){
       $.skipFields[$aSQLOptions.skipFields]
     }
@@ -478,7 +478,7 @@ pfClass
   }(def $self._defaultOrderBy){
     $lOrder[$self._defaultOrderBy]
   }{
-     $lOrder[^if(def $self._primaryKey){$PRIMARYKEY asc}]
+     $lOrder[^if(def $self._primaryKey){$self.PRIMARYKEY asc}]
    }
   ^self.asContext[group]{
     ^switch(true){
@@ -523,7 +523,7 @@ pfClass
      ^if(!^lField.contains[dbField]){
        ^throw[pfSQLTable.field.fail;Для поля «${aFieldName}» не задано выражение или имя в базе данных.]
      }
-     $result[^self._builder.sqlFieldName[$lField;^if($self.__context ne "update"){$TABLE_ALIAS}]]
+     $result[^self._builder.sqlFieldName[$lField;^if($self.__context ne "update"){$self.TABLE_ALIAS}]]
    }
 
 @asContext[aContext;aCode]
@@ -570,7 +570,7 @@ pfClass
       }
     }
   }
-  $result[^if($self._res){^if($aOP eq "NOT"){not} (^_res.foreach[k;v]{$v}[ $self._PFSQLTABLE_LOGICAL.[$aOP] ])}]
+  $result[^if($self._res){^if($aOP eq "NOT"){not} (^_res.foreach[;v]{$v}[ $self._PFSQLTABLE_LOGICAL.[$aOP] ])}]
 
 @_condArrayField[aConds;aFieldName;aOperator;aValue]
   $lField[^if(^self._plurals.contains[$aFieldName]){$self._plurals.[$aFieldName]}{$self._fields.[$aFieldName]}]
@@ -586,7 +586,7 @@ pfClass
 
   $result[
        select $aFields
-         from ^if(def $SCHEMA){^self._builder.quoteIdentifier[$SCHEMA].}^self._builder.quoteIdentifier[$TABLE_NAME] as ^self._builder.quoteIdentifier[$TABLE_ALIAS]
+         from ^if(def $self.SCHEMA){^self._builder.quoteIdentifier[$self.SCHEMA].}^self._builder.quoteIdentifier[$self.TABLE_NAME] as ^self._builder.quoteIdentifier[$self.TABLE_ALIAS]
               ^self.asContext[where]{^if(^aOptions.contains[join]){$aOptions.join}{^self._allJoin[$aOptions]}}
         where ^self.asContext[where]{^self._allWhere[$aOptions]}
       ^if(def $lGroup){
@@ -642,7 +642,7 @@ pfClass
        ^if($aResultType eq "hash"){
          ^pfAssert:isTrue(def $self._primaryKey){Не определен первичный ключ для таблицы ${TABLE_NAME}. Выборку можно делать только в таблицу.}
 #         Для хеша добавляем еще одно поле с первичным ключем
-          $PRIMARYKEY as ^self._builder.quoteIdentifier[_ORM_HASH_KEY_],
+          $self.PRIMARYKEY as ^self._builder.quoteIdentifier[_ORM_HASH_KEY_],
        }
        $lJoinFields[^self._allJoinFields[$aOptions]]
        ^self._allFields[$aOptions;$aSQLOptions]^if(def $lJoinFields){, $lJoinFields}
@@ -676,7 +676,7 @@ pfClass
 #   Если нам не передали поля, то подставляем все поля модели.
     $aFields[^hash::create[$.0[_fields(*)]]]
   }
-  ^aFields.foreach[k;v]{
+  ^aFields.foreach[;v]{
     ^v.match[$self._PFSQLTABLE_AGR_REGEX][]{
       $lField[
         $.expr[$match.1]
@@ -696,7 +696,7 @@ pfClass
       $result.[^result._count[]][$lField]
     }
   }
-  $result[^result.foreach[k;v]{$v.expr^if(def $v.alias){ as ^self._builder.quoteIdentifier[$v.alias]}}[, ]]
+  $result[^result.foreach[;v]{$v.expr^if(def $v.alias){ as ^self._builder.quoteIdentifier[$v.alias]}}[, ]]
 
 #----------------------------------------------------------------------------------------------------------------------
 
@@ -795,7 +795,7 @@ pfClass
        $result.[^result._count[]][^self.sqlFieldName[$v;$lTableAlias] as ${self._quote}${k}${self._quote}]]
      }
   }
-  $result[^result.foreach[k;v]{$v}[, ]]
+  $result[^result.foreach[;v]{$v}[, ]]
 
 @fieldsList[aFields;aOptions]
 ## Возвращает список полей
@@ -814,7 +814,7 @@ pfClass
     ^if(^aOptions.skipFields.contains[$k]){^continue[]}
     $result.[${self._quote}^result._count[]][^self.sqlFieldName[$v;$lTableAlias]]
   }
-  $result[^result.foreach[k;v]{$v}[, ]]
+  $result[^result.foreach[;v]{$v}[, ]]
 
 @setExpression[aFields;aData;aOptions]
 ## Возвращает выражение для присвоения значения (field = vale, ...)
@@ -835,7 +835,7 @@ pfClass
     ^if($aOptions.skipAbsent && !^aData.contains[$k] && !(def $v.processor && ^v.processor.pos[auto_] >= 0)){^continue[]}
     $result.[^result._count[]][^if(!$aOptions.skipNames){^self.sqlFieldName[$v;$lAlias] = }^lself.FieldValue[$v;^if(^aData.contains[$k]){$aData.[$k]}]]
   }
-  $result[^result.foreach[k;v]{$v}[, ]]
+  $result[^result.foreach[;v]{$v}[, ]]
 
 @fieldValue[aField;aValue]
 ## Возвращает значение поля в sql-формате.
@@ -880,11 +880,11 @@ pfClass
   $lEmptyValue[^if(^aOptions.contains[emptyValue]){$aOptions.emptyValue}{null}]
   $lColumn[^if(def $aOptions.column){$aOptions.column}{$aField.name}]
   ^switch(true){
-    ^case($aValue is hash){$result[^aValue.foreach[k;v]{^self.lValueFunction[$aField;$k]}[, ]]}
+    ^case($aValue is hash){$result[^aValue.foreach[k;]{^self.lValueFunction[$aField;$k]}[, ]]}
     ^case($aValue is table){$result[^aValue.menu{^self.lValueFunction[$aField;$aValue.[$lColumn]]}[, ]]}
     ^case($aValue is string){
       $lItems[^self._parseCSVString[$aValue]]
-      $result[^lItems.foreach[k;v]{^self.lValueFunction[$aField;$v]}[, ]]
+      $result[^lItems.foreach[;v]{^self.lValueFunction[$aField;$v]}[, ]]
     }
     ^case[DEFAULT]{
       ^throw[pfSQLBuilder.bad.array.values;Значениями массива может быть хеш, таблица или csv-строка. (Поле: $aField.name, тип значения: $aValue.CLASS_NAME)]
