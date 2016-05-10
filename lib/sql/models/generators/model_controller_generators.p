@@ -53,14 +53,14 @@ pfClass
 
 @_routes[aOptions]
   $result[
-    ^$_routerRequirements[
+    ^$self._routerRequirements[
       ^$.${aOptions.primaryKey}[\d+]
     ]
     ^^self.router.assign[${aOptions.pathPrefix}:${aOptions.primaryKey}^;^aOptions.pathPrefix.trim[both;/]^;^$.requirements[$_self.routerRequirements]]
     ^^self.router.assign[${aOptions.pathPrefix}new^;person/new]
     ^^self.router.assign[${aOptions.pathPrefix}:${aOptions.primaryKey}/edit^;${aOptions.pathPrefix}edit^;^$.requirements[^$_self.routerRequirements]]
     ^^self.router.assign[${aOptions.pathPrefix}:${aOptions.primaryKey}/delete^;${aOptions.pathPrefix}delete^;^$.requirements[^$_self.routerRequirements]]
-    ^if($aOptions.hasRestore){^^self.router.assign[${aOptions.pathPrefix}:${aOptions.primaryKey}/restore^;${aOptions.pathPrefix}restore^;^$.requirements[^$_routerRequirements]]}
+    ^if($aOptions.hasRestore){^^self.router.assign[${aOptions.pathPrefix}:${aOptions.primaryKey}/restore^;${aOptions.pathPrefix}restore^;^$.requirements[^$self._routerRequirements]]}
   ]
 
 @_classBody[aOptions]

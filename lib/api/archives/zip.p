@@ -100,12 +100,12 @@ pfClass
 #----- Private -----
 
 @_cleanLastError[]
-  $lastErrorCode[]
-  $lastErrorMessage[]
+  $self.lastErrorCode[]
+  $self.lastErrorMessage[]
 
 @_error[aThrowException;aCode;aScriptResult;aStdErr]
-  $lastErrorCode[$aCode]
-  $lastErrorMessage[^if(def $aStdErr){$aStdErr}{$aScriptResult}]
+  $self.lastErrorCode[$aCode]
+  $self.lastErrorMessage[^if(def $aStdErr){$aStdErr}{$aScriptResult}]
   ^if($aThrowException){
-    ^throw[pfZipArchiver.fail;Ошибка при выполнении скрипта ($lastErrorCode);$lastErrorMessage]
+    ^throw[pfZipArchiver.fail;Ошибка при выполнении скрипта ($self.lastErrorCode);$self.lastErrorMessage]
   }

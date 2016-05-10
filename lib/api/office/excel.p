@@ -18,7 +18,7 @@ pfClass
 ## aOptions.charset[$response:charset]
   ^self.cleanMethodArgument[]
   ^BASE:create[$aOptions]
-  $_charset[^if(def $aOptions.charset){$aOptions.charset}{$response:charset}]
+  $self._charset[^if(def $aOptions.charset){$aOptions.charset}{$response:charset}]
 
 @GET_contentType[]
   $result[application/vnd.ms-excel]
@@ -31,7 +31,7 @@ pfClass
 ## aOptions.charset[$_charset]
   ^self.cleanMethodArgument[]
   ^pfAssert:isTrue($aData is table)[Параметр aData должен быть таблицей.]
-  $lCharset[^if(def $aOptions.charset){$aOptions.charset}{$_charset}]
+  $lCharset[^if(def $aOptions.charset){$aOptions.charset}{$self._charset}]
   $lFields[^if(^aOptions.contains[fields]){$aOptions.fields}{^self._makeFields[$aData]}]
 
   $result[^self._template[$lCharset]{
