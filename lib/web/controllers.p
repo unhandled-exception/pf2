@@ -97,7 +97,7 @@ pfClass
 ## Запускает процесс. Если вызван метод run, то модуль становится «менеджером».
   ^self.cleanMethodArgument[]
   $result[]
-  $aRequest[^self.ifdef[$aRequest]{^pfRequest::create[]}]
+  $aRequest[^self.ifdef[$aRequest]{^self.ifdef[$self.request]{^pfRequest::create[]}}]
   $self.asRoot(true)
   $lResponse[^self.dispatch[$aRequest.ACTION;$aRequest]]
   ^lResponse.apply[]
