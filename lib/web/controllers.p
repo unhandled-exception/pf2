@@ -24,6 +24,7 @@ pfClass
 ## aOptions.template[]
 ## aOptions.templateFolder[]
 ## aOptions.templatePrefix[]
+## aOptions.request — объект запроса, если мы хотим передать его не в метод run, а в конструктор.
 
   ^self.cleanMethodArgument[]
 
@@ -55,7 +56,7 @@ pfClass
 
   $self.activeModule[]
   $self.action[]
-  $self.request[]
+  $self.request[$aOptions.request]
 
   $self.router[$aOptions.router]
   ^if(!def $aOptions.router){
@@ -482,6 +483,10 @@ locals
   $self.HOST[^self.ifdef[$aOptions.HOST]{^self.header[X-Forwarded-Host;^self.header[Host;$self.ENV.SERVER_NAME]]}]
   $self.HOST[$self.HOST^if($self.PORT ne "80" && ($self.isSECURE && $self.PORT ne "443")){:$self.PORT}]
 
+# Проверяет является ли Referer локальным.
+  $self.REFERER[^self.header[Referer]]
+  $self.isLOCALREFERER(^self.REFERER.pos[${self.SCHEME}://$self.HOST] == 0)
+
   $self.REMOTE_IP[^self.ifdef[$aOptions.REMOTE_IP]{$ENV.REMOTE_ADDR}]
   $self.DOCUMENT_ROOT[^self.ifdef[$aOptions.DOCUMENT_ROOT]{$request:document-root}]
 
@@ -528,9 +533,6 @@ locals
 
 @GET_isHEAD[]
   $result($self.method eq "head")
-
-@GET_isLOCALREFERER[]
-  $result(^self.headers.Referer.pos[${self.SCHEME}://$self.HOST] == 0)
 
 @assign[*aArgs]
 ## Добавляет в запрос поля.
