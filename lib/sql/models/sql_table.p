@@ -570,7 +570,7 @@ pfClass
       }
     }
   }
-  $result[^if($self._res){^if($aOP eq "NOT"){not} (^_res.foreach[;v]{$v}[ $self._PFSQLTABLE_LOGICAL.[$aOP] ])}]
+  $result[^if($self._res){^if($aOP eq "NOT"){not} (^_res.foreach[_;v]{$v}[ $self._PFSQLTABLE_LOGICAL.[$aOP] ])}]
 
 @_condArrayField[aConds;aFieldName;aOperator;aValue]
   $lField[^if(^self._plurals.contains[$aFieldName]){$self._plurals.[$aFieldName]}{$self._fields.[$aFieldName]}]
@@ -676,7 +676,7 @@ pfClass
 #   Если нам не передали поля, то подставляем все поля модели.
     $aFields[^hash::create[$.0[_fields(*)]]]
   }
-  ^aFields.foreach[;v]{
+  ^aFields.foreach[_;v]{
     ^v.match[$self._PFSQLTABLE_AGR_REGEX][]{
       $lField[
         $.expr[$match.1]
@@ -696,7 +696,7 @@ pfClass
       $result.[^result._count[]][$lField]
     }
   }
-  $result[^result.foreach[;v]{$v.expr^if(def $v.alias){ as ^self._builder.quoteIdentifier[$v.alias]}}[, ]]
+  $result[^result.foreach[_;v]{$v.expr^if(def $v.alias){ as ^self._builder.quoteIdentifier[$v.alias]}}[, ]]
 
 #----------------------------------------------------------------------------------------------------------------------
 
@@ -795,7 +795,7 @@ pfClass
        $result.[^result._count[]][^self.sqlFieldName[$v;$lTableAlias] as ${self._quote}${k}${self._quote}]]
      }
   }
-  $result[^result.foreach[;v]{$v}[, ]]
+  $result[^result.foreach[_;v]{$v}[, ]]
 
 @fieldsList[aFields;aOptions]
 ## Возвращает список полей
@@ -814,7 +814,7 @@ pfClass
     ^if(^aOptions.skipFields.contains[$k]){^continue[]}
     $result.[${self._quote}^result._count[]][^self.sqlFieldName[$v;$lTableAlias]]
   }
-  $result[^result.foreach[;v]{$v}[, ]]
+  $result[^result.foreach[_;v]{$v}[, ]]
 
 @setExpression[aFields;aData;aOptions]
 ## Возвращает выражение для присвоения значения (field = vale, ...)
@@ -827,15 +827,15 @@ pfClass
   ^self.cleanMethodArgument[aData;aOptions]
   $aOptions[^self._processFieldsOptions[$aOptions]]
   $lAlias[^if(def $aOptions.alias){${aOptions.alias}}]
-  $lself.FieldValue[^if($aOptions.fieldValueFunction is junction){$aOptions.fieldValueFunction}{$self.fieldValue}]
+  $lFieldValue[^if($aOptions.fieldValueFunction is junction){$aOptions.fieldValueFunction}{$self.fieldValue}]
 
   $result[^hash::create[]]
   ^aFields.foreach[k;v]{
     ^if(^aOptions.skipFields.contains[$k] || (^v.contains[expression] && !^v.contains[dbField])){^continue[]}
     ^if($aOptions.skipAbsent && !^aData.contains[$k] && !(def $v.processor && ^v.processor.pos[auto_] >= 0)){^continue[]}
-    $result.[^result._count[]][^if(!$aOptions.skipNames){^self.sqlFieldName[$v;$lAlias] = }^lself.FieldValue[$v;^if(^aData.contains[$k]){$aData.[$k]}]]
+    $result.[^result._count[]][^if(!$aOptions.skipNames){^self.sqlFieldName[$v;$lAlias] = }^lFieldValue[$v;^if(^aData.contains[$k]){$aData.[$k]}]]
   }
-  $result[^result.foreach[;v]{$v}[, ]]
+  $result[^result.foreach[_;v]{$v}[, ]]
 
 @fieldValue[aField;aValue]
 ## Возвращает значение поля в sql-формате.
@@ -876,15 +876,15 @@ pfClass
 ## aOptions.valueFunction[fieldValue] — функция форматирования значения поля
   ^self.cleanMethodArgument[]
   $result[]
-  $lValueFunction[^if(^aOptions.contains[valueFunction]){$aOptions.valueFunction}{$fieldValue}]
+  $lValueFunction[^if(^aOptions.contains[valueFunction]){$aOptions.valueFunction}{$self.fieldValue}]
   $lEmptyValue[^if(^aOptions.contains[emptyValue]){$aOptions.emptyValue}{null}]
   $lColumn[^if(def $aOptions.column){$aOptions.column}{$aField.name}]
   ^switch(true){
-    ^case($aValue is hash){$result[^aValue.foreach[k;]{^self.lValueFunction[$aField;$k]}[, ]]}
-    ^case($aValue is table){$result[^aValue.menu{^self.lValueFunction[$aField;$aValue.[$lColumn]]}[, ]]}
+    ^case($aValue is hash){$result[^aValue.foreach[k;_]{^lValueFunction[$aField;$k]}[, ]]}
+    ^case($aValue is table){$result[^aValue.menu{^lValueFunction[$aField;$aValue.[$lColumn]]}[, ]]}
     ^case($aValue is string){
       $lItems[^self._parseCSVString[$aValue]]
-      $result[^lItems.foreach[;v]{^self.lValueFunction[$aField;$v]}[, ]]
+      $result[^lItems.foreach[_;v]{^lValueFunction[$aField;$v]}[, ]]
     }
     ^case[DEFAULT]{
       ^throw[pfSQLBuilder.bad.array.values;Значениями массива может быть хеш, таблица или csv-строка. (Поле: $aField.name, тип значения: $aValue.CLASS_NAME)]

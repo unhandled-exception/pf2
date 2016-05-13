@@ -283,7 +283,7 @@ pfClass
 @render[aTemplate;aOptions]
 ## aTemplate[$.body $.path]
 ## aOptions.vars[]
-  ^_abstractMethod[]
+  ^throw[pf.runtime;A render method is not implemented.]
 
 @applyImports[aTemplate;lClass]
   $result[]

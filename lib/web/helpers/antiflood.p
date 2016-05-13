@@ -76,7 +76,7 @@ pfClass
 
 @generateToken[]
 ## Генерирует новый токен
-  ^_abstractMethod[]
+  ^throw[pf.runtime;A generateToken method is not implemented.]
 
 @validateToken[aToken]
 ## Проверяет валидность токена
