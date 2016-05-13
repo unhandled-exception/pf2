@@ -543,7 +543,7 @@ pfClass
   $result[]
 
   $lConds[^hash::create[]]
-  $self._res[^hash::create[]]
+  $lRes[^hash::create[]]
 
   ^aConds.foreach[k;v]{
     ^k.match[$self._PFSQLTABLE_COMPARSION_REGEX][]{
@@ -551,26 +551,26 @@ pfClass
       ^if($match.2 eq "range" || $match.2 eq "!range"){
 #       $.[field range][$.from $.to]
 #       $.[field !range][$.from $.to]
-        $self._res.[^_res._count[]][^if(^match.2.left(1) eq "!"){not }^(^self.sqlFieldName[$match.1] between ^self.fieldValue[$lField;$v.from] and ^self.fieldValue[$lField;$v.to])]
+        $lRes.[^lRes._count[]][^if(^match.2.left(1) eq "!"){not }^(^self.sqlFieldName[$match.1] between ^self.fieldValue[$lField;$v.from] and ^self.fieldValue[$lField;$v.to])]
       }(^self._fields.contains[$match.1] && $match.2 eq "is"){
-        $self._res.[^_res._count[]][^self.sqlFieldName[$match.1] is ^if(!def $v || $v eq "null"){null}{not null}]
+        $lRes.[^lRes._count[]][^self.sqlFieldName[$match.1] is ^if(!def $v || $v eq "null"){null}{not null}]
       }(^self._plurals.contains[$match.1]
         || (^self._fields.contains[$match.1] && ($match.2 eq "in" || $match.2 eq "!in"))
        ){
 #       $.[field [!]in][hash|table|values string]
 #       $.[plural [not]][hash|table|values string]
-        $self._res.[^_res._count[]][^self._condArrayField[$aConds;$match.1;^match.2.lower[];$v]]
+        $lRes.[^lRes._count[]][^self._condArrayField[$aConds;$match.1;^match.2.lower[];$v]]
       }($match.1 eq "OR" || $match.1 eq "AND" || $match.1 eq "NOT"){
 #       Рекурсивный вызов логического блока
-        $self._res.[^_res._count[]][^self._buildConditions[$v;$match.1]]
+        $lRes.[^lRes._count[]][^self._buildConditions[$v;$match.1]]
       }(^self._fields.contains[$match.1]){
 #       Операторы
 #       $.[field operator][value]
-        $self._res.[^_res._count[]][^self.sqlFieldName[$match.1] ^taint[^ifdef[$match.2]{=}] ^self.fieldValue[$lField;$v]]
+        $lRes.[^lRes._count[]][^self.sqlFieldName[$match.1] ^taint[^ifdef[$match.2]{=}] ^self.fieldValue[$lField;$v]]
       }
     }
   }
-  $result[^if($self._res){^if($aOP eq "NOT"){not} (^_res.foreach[_;v]{$v}[ $self._PFSQLTABLE_LOGICAL.[$aOP] ])}]
+  $result[^if($lRes){^if($aOP eq "NOT"){not} (^lRes.foreach[_;v]{$v}[ $self._PFSQLTABLE_LOGICAL.[$aOP] ])}]
 
 @_condArrayField[aConds;aFieldName;aOperator;aValue]
   $lField[^if(^self._plurals.contains[$aFieldName]){$self._plurals.[$aFieldName]}{$self._fields.[$aFieldName]}]
