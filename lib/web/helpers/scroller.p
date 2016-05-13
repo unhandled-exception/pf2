@@ -8,9 +8,9 @@ pfScroller
 
 ## Скролер (построение "страничной" навигации)
 
-## В текущей реализации - класс-адаптер для класса scroller Михаила Петрушина.
+## В текущей реализации — класс-адаптер для класса scroller Михаила Петрушина.
 ## http://www.parser.ru/examples/mscroller/
-## Копия класса scraller переименована в __AL_Scroller__и лежит в этом пакете.
+## Копия класса scroller переименована в __AL_Scroller__и лежит в этом пакете.
 ## Прямой вызов оригинального скроллера в контексте классов PF запрещен.
 
 ## Важные отличия: если не определен номер текущей страницы, то он не берется из
@@ -18,97 +18,100 @@ pfScroller
 ## form непосредственно из скроллера. Кроме того в методе _print удалены некоторые
 ## "лишние" параметры (tag_name, tag_attr).
 
+@OPTIONS
+locals
+
 @BASE
 pfClass
 
 @create[aItemsCount;aItemsPerPage;aCurrentPage;aOptions]
-## aOptions.formName[page] - название элемента формы через который передается номер страницы.
-## aOptions.direction[forward|backward] - направление нумерации страниц
+## aOptions.formName[page] — название элемента формы через который передается номер страницы.
+## aOptions.direction[forward|backward] — направление нумерации страниц
   ^pfAssert:isTrue(def $aItemsCount)[Не задано количество элементов скролера.]
   ^pfAssert:isTrue($aItemsCount >= 0)[Количество элементов скролера не может быть меньше нуля.]
   ^pfAssert:isTrue(def $aItemsPerPage)[Не задано количество элементов на странице скролера.]
   ^pfAssert:isTrue($aItemsPerPage >= 1)[Количество элементов на странице скролера не может быть меньше 1.]
 
-  ^cleanMethodArgument[]
-  $_directions[$.forward(1) $.backward(-1) $._default(1)]
-  $_scroller[^__AL_Scroller__::init[$aItemsCount;$aItemsPerPage;$aOptions.formName;$_directions.[$aOptions.direction];$aCurrentPage]]
+  ^self.cleanMethodArgument[]
+  $self._directions[$.forward(1) $.backward(-1) $._default(1)]
+  $self._scroller[^__AL_Scroller__::init[$aItemsCount;$aItemsPerPage;$aOptions.formName;$self._directions.[$aOptions.direction];$aCurrentPage]]
 
 #----- Properties -----
 
-# $itemsCount 		- количество записей
-# $limit		- количество записей на страницу
-# $offset 		- смещение для получение первой записи текущей страницы (надодля sql запросов)
-# $pagesCount 		- количество страниц
-# $currentPage 		- N текущей страницы
-# $currentPageNumber	- порядковый номер текущей страницы
-# $currentPageName 	- название текущей страницы
-# $direction 		- направление нумерации страниц ( < 0 то последняя страница имеет номер 1 )
-# $firstPage 		- N первой страницы
-# $lastPage 		- N последней страницы
-# $formName		- название элемента формы через который передается номер страницы (по умолчанию "page")
+# $itemsCount        количество записей
+# $limit             количество записей на страницу
+# $offset            смещение для получение первой записи текущей страницы (надодля sql запросов)
+# $pagesCount        количество страниц
+# $currentPage       N текущей страницы
+# $currentPageNumber порядковый номер текущей страницы
+# $currentPageName   название текущей страницы
+# $direction         направление нумерации страниц ( < 0 то последняя страница имеет номер 1 )
+# $firstPage         N первой страницы
+# $lastPage          N последней страницы
+# $formName          название элемента формы через который передается номер страницы (по умолчанию "page")
 
 @GET[aType]
   $result($pagesCount > 1)
 
 @GET_itemsCount[]
-  $result[$_scroller.items_count]
+  $result[$self._scroller.items_count]
 
 @GET_limit[]
-  $result[$_scroller.limit]
+  $result[$self._scroller.limit]
 
 @GET_offset[]
-  $result[$_scroller.offset]
+  $result[$self._scroller.offset]
 
 @GET_pagesCount[]
-  $result[$_scroller.page_count]
+  $result[$self._scroller.page_count]
 
 @GET_currentPage[]
-  $result[$_scroller.current_page]
+  $result[$self._scroller.current_page]
 
 @GET_currentPageNumber[]
-  $result[$_scroller.current_page_number]
+  $result[$self._scroller.current_page_number]
 
 @GET_currentPageName[]
-  $result[$_scroller.current_page_name]
+  $result[$self._scroller.current_page_name]
 
 @GET_direction[]
-  ^if($_scroller.direction >= 0){
+  ^if($self._scroller.direction >= 0){
     $result[forward]
   }{
      $result[backward]
    }
 
 @GET_firstPage[]
-  $result[$_scroller.first_page]
+  $result[$self._scroller.first_page]
 
 @GET_lastPage[]
-  $result[$_scroller.last_page]
+  $result[$self._scroller.last_page]
 
 @GET_formName[]
-  $result[$_scroller.form_name]
+  $result[$self._scroller.form_name]
 
 @asHTML[aOptions]
-  $result[^_print[html;$aOptions]]
+  $result[^self._print[html;$aOptions]]
 
 @asXML[aOptions]
-  $result[^_print[xml;$aOptions]]
+  $result[^self._print[xml;$aOptions]]
 
 @_print[aMode;aOptions]
 ## выводит html постраничной навигации
 ## принимает параметры (хеш)
-## $aMode			- тип вывода. сейчас умеет: html|xml
-## aOptions.navCount		- количество отображаемых ссылок на страницы (по умолчанию 5)
-## aOptions.separator		- разделитель пропусков в страницах (по умолчанию "…")
-## aOptions.title		- заголовок постраничной навигации (по умолчанию "Страницы: ")
-## aOptions.leftDivider		- разделитель между "Назад" и первой страницей (по умолчанию "")
-## aOptions.rightDivider	- разделитель между последней страницей и "Дальше" (по умолчанию: "|")
-## aOptions.backName		- "< Назад"
-## aOptions.forwardName		- "Дальше >"
-## aOptions.targetURL		- URL куда мы будем переходить (по умолчанию "./")
+## $aMode                тип вывода. сейчас умеет: html|xml
+## aOptions.navCount     количество отображаемых ссылок на страницы (по умолчанию 5)
+## aOptions.separator    разделитель пропусков в страницах (по умолчанию "…")
+## aOptions.title        заголовок постраничной навигации (по умолчанию "Страницы: ")
+## aOptions.leftDivider  разделитель между "Назад" и первой страницей (по умолчанию "")
+## aOptions.rightDivider разделитель между последней страницей и "Дальше" (по умолчанию: "|")
+## aOptions.backName     "< Назад"
+## aOptions.forwardName  "Дальше >"
+## aOptions.targetURL    URL куда мы будем переходить (по умолчанию "./")
 
-  ^cleanMethodArgument[]
+  ^self.cleanMethodArgument[]
 
-  $result[^_scroller.print[
+  $result[^self._scroller.print[
      $.mode[$aMode]
      $.nav_count[$aOptions.navCount]
      $.separator[$aOptions.separator]
@@ -125,24 +128,27 @@ pfClass
 @CLASS
 __AL_Scroller__
 
+@OPTIONS
+locals
+
 # $Id: scroller.p,v 1.14 2005/08/16 07:54:59 misha Exp $
 
-@init[items_count;items_per_page;form_name;direction;page][is_full_page]
+@init[items_count;items_per_page;form_name;direction;page]
 # конструктор. первые 2 параметра обязательны.
 # при инициализации расчитываются все параметры постраничной навигации
 
 # доступные поля:
-# $items_count      - количество записей
-# $limit        - количество записей на страницу
-# $page_count       - количество страниц
-# $current_page     - N текущей страницы
-# $current_page_number  - порядковый номер текущей страницы
-# $current_page_name  - название текущей страницы
-# $offset         - смещение для получение первой записи текущей страницы (надодля sql запросов)
-# $direction      - направление нумерации страниц ( < 0 то последняя страница имеет номер 1 )
-# $first_page       - N первой страницы
-# $last_page      - N последней страницы
-# $form_name      - название элемента формы через который передается номер страницы (по умолчанию "page")
+# $items_count         количество записей
+# $limit               количество записей на страницу
+# $page_count          количество страниц
+# $current_page        N текущей страницы
+# $current_page_number порядковый номер текущей страницы
+# $current_page_name   название текущей страницы
+# $offset              смещение для получение первой записи текущей страницы (надодля sql запросов)
+# $direction           направление нумерации страниц ( < 0 то последняя страница имеет номер 1 )
+# $first_page          N первой страницы
+# $last_page           N последней страницы
+# $form_name           название элемента формы через который передается номер страницы (по умолчанию "page")
 
 # пример создания объекта: $my_scroller[^scroller::init[$total_items_count;50;page]]
 
@@ -197,20 +203,20 @@ $page_count(^math:ceiling($self.items_count / $limit))
   }
 }
 
-@print[in_params][lparams;nav_count;page_number;first_nav;last_nav;separator;url_separator;ipage;i;title]
+@print[in_params]
 # выводит html постраничной навигации
 # принимает параметры (хеш)
-# $mode       - тип вывода. сейчас умеет: html|xml
-# $nav_count    - количество отображаемых ссылок на страницы (по умолчанию 5)
-# $separator    - разделитель пропусков в страницах (по умолчанию "…")
-# $tag_name     - тег в котором все выводим
-# $tag_attr     - аттрибуты тега
-# $title      - заголовок постраничной навигации (по умолчанию "Страницы: ")
-# $left_divider   - разделитель между "Назад" и первой страницей (по умолчанию "")
-# $right_divider  - разделитель между последней страницей и "Дальше" (по умолчанию: "|")
-# $back_name    - "< Назад"
-# $forward_name   - "Дальше >"
-# $target_url   - URL куда мы будем переходить (по умолчанию "./")
+# $mode          тип вывода. сейчас умеет: html|xml
+# $nav_count     количество отображаемых ссылок на страницы (по умолчанию 5)
+# $separator     разделитель пропусков в страницах (по умолчанию "…")
+# $tag_name      тег в котором все выводим
+# $tag_attr      аттрибуты тега
+# $title         заголовок постраничной навигации (по умолчанию "Страницы: ")
+# $left_divider  разделитель между "Назад" и первой страницей (по умолчанию "")
+# $right_divider разделитель между последней страницей и "Дальше" (по умолчанию: "|")
+# $back_name     "< Назад"
+# $forward_name  "Дальше >"
+# $target_url    URL куда мы будем переходить (по умолчанию "./")
 
 # пример вызова (после создания объекта $scroller):
 # ^my_scroller.print[
@@ -250,15 +256,15 @@ $page_count(^math:ceiling($self.items_count / $limit))
     ^if(def $lparams.right_divider){<right-divider>$lparams.right_divider</right-divider>}
   }
   ^if($current_page != $first_page){
-    ^print_nav_item[back;^if(def $lparams.back_name){$lparams.back_name}{&larr^; Назад};$lparams.target_url;$url_separator;^eval($current_page - $direction)]
+    ^self.print_nav_item[back;^if(def $lparams.back_name){$lparams.back_name}{&larr^; Назад};$lparams.target_url;$url_separator;^eval($current_page - $direction)]
     ^if($mode eq "html"){
       ^if(def $lparams.left_divider){$lparams.left_divider}
     }
   }
   ^if($first_nav > 1){
-    ^print_nav_item[first;1;$lparams.target_url;$url_separator;$first_page]
+    ^self.print_nav_item[first;1;$lparams.target_url;$url_separator;$first_page]
     ^if($first_nav > 2){
-      ^print_nav_item[separator;$separator]
+      ^self.print_nav_item[separator;$separator]
     }
   }
   ^for[i]($first_nav;$last_nav){
@@ -267,19 +273,19 @@ $page_count(^math:ceiling($self.items_count / $limit))
     }{
       $ipage($i)
     }
-    ^print_nav_item[^if($ipage == $current_page){current};$i;$lparams.target_url;$url_separator;$ipage]
+    ^self.print_nav_item[^if($ipage == $current_page){current};$i;$lparams.target_url;$url_separator;$ipage]
   }
   ^if($last_nav < $page_count){
     ^if($last_nav < $page_count - 1){
-      ^print_nav_item[separator;$separator]
+      ^self.print_nav_item[separator;$separator]
     }
-    ^print_nav_item[last;$page_count;$lparams.target_url;$url_separator;$last_page]
+    ^self.print_nav_item[last;$page_count;$lparams.target_url;$url_separator;$last_page]
   }
   ^if($current_page != $last_page){
     ^if($mode eq "html"){
       ^if(def $lparams.right_divider){$lparams.right_divider}{|}
     }
-    ^print_nav_item[forward;^if(def $lparams.forward_name){$lparams.forward_name}{Дальше&nbsp^;&rarr^;};$lparams.target_url;$url_separator;^eval($current_page + $direction)]
+    ^self.print_nav_item[forward;^if(def $lparams.forward_name){$lparams.forward_name}{Дальше&nbsp^;&rarr^;};$lparams.target_url;$url_separator;^eval($current_page + $direction)]
   }
   ^if(def $lparams.tag_name){</$lparams.tag_name>}
 }

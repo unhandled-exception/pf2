@@ -383,7 +383,7 @@ ORM-классы
 
     @_allWhere[aOptions]
     ## aOptions.period[last-month|...]
-      ^cleanMethodArgument[]
+      ^self.cleanMethodArgument[]
       $result[
         ^BASE:_allWhere[$aOptions]
 
@@ -550,7 +550,7 @@ ORM-классы
 
     @_allWhere[aOptions]
     ## aOptions
-      ^cleanMethodArgument[]
+      ^self.cleanMethodArgument[]
       $result[
         ^BASE:_allWhere[$aOptions]
         ^switch[$aOptions.active]{
