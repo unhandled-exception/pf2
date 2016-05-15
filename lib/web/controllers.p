@@ -302,8 +302,7 @@ pfClass
 ## aContext — переменные, которые добавляются к тем, что уже заданы через assignVar.
   $lVars[^hash::create[$self._templateVars]]
   $lVars[^lVars.union[^self.templateDefaults[]]]
-  ^if(def $aOptions.vars){^lVars.add[$aOptions.vars]}
-
+  ^lVars.add[$aContext]
   $result[^self.template.render[$self._templatePrefix/$aTemplateName;$.vars[$lVars]]]
 
 @templateDefaults[]
