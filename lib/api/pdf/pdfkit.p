@@ -15,10 +15,10 @@ pf2/lib/common.p
 pfClass
 
 @auto[aFilespec]
-  $[self.__PFPDFKIT_FILESPEC__][^aFilespec.match[^^(^taint[regex][$request:document-root])][][]]
+  $self.__PFPDFKIT_FILESPEC__[^aFilespec.match[^^(^taint[regex][$request:document-root])][][]]
 
 @create[aOptions]
-## aOptions.binPath[CLASS_FILESPEC/bin/wkhtmltopdf] — путь к wkhtmltopdf
+## aOptions.binPath[__PFPDFKIT_FILESPEC__/bin/wkhtmltopdf] — путь к wkhtmltopdf
   ^self.cleanMethodArgument[]
   ^BASE:create[]
 
