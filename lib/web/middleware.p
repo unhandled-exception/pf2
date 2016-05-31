@@ -5,21 +5,21 @@ pf2/lib/web/controllers.p
 @CLASS
 pfCommonMiddleware
 
-## Стандартные дейтсвия: антикеширующие заголовки, редирект на страницу со слешем в конце и пр.
+## Стандартные действия: антикеширующие заголовки, редирект на страницу со слешем в конце и пр.
 
 ## Пример мидлваре, которое умеет прерывать запросы не вызывая обработчик и постобработку.
 ## Редиректы на канонический url лучше делать средставми веб-сервера, а не через Парсер. :)
 
-@BASE
-pfMiddleware
-
 @OPTIONS
 locals
+
+@BASE
+pfMiddleware
 
 @create[aOptions]
 ## aOptions.appendSlash(false) — сделать редирект на url со слешем в конце.
 ## aOptions.disableHTTPCache(false) — выдать «антикеширующие заголовки».
-  ^cleanMethodArgument[]
+  ^self.cleanMethodArgument[]
   $self._appendSlash(^aOptions.appendSlash.bool(false))
   $self._disableHTTPCache(^aOptions.disableHTTPCache.bool(false))
 
@@ -49,11 +49,11 @@ pfSessionMiddleware
 
 ## Добавляет в объект запроса объект сессии. Хранит данные в шифрованной куке.
 
-@BASE
-pfMiddleware
-
 @OPTIONS
 locals
+
+@BASE
+pfMiddleware
 
 @create[aOptions]
 ## aOptions.cryptoProvider — объект с методами encrypt и decrypt для шифрования сессий.
@@ -62,7 +62,7 @@ locals
 ## aOptions.sessionCookieDomain — домен для куки сессии
 ## aOptions.sessionCookiePath — путь для куки сессии
 ## aOptions.expires[days(90)|date|session] — срок жизни куки. По-умолчанию ставим ограничение Парсера (90 дней).
-  ^cleanMethodArgument[]
+  ^self.cleanMethodArgument[]
   ^BASE:create[$aOptions]
   ^pfAssert:isTrue(def $aOptions.cryptoProvider){Не задан объект для шифрования сессий (options.cryptoProvider).}
 
@@ -147,18 +147,18 @@ pfDebugInfoMiddleware
 ## Добавляет в конец страницы отладочную информацию и лог sql-запросов.
 ## Пример мидлваре, которе трогает только html-ответы.
 
-@BASE
-pfMiddleware
-
 @OPTIONS
 locals
+
+@BASE
+pfMiddleware
 
 @create[aOptions]
 ## aOptions.enable(false) — включить вывод отладочной информации в конце страницы.
 ## aOptions.sql — класс с sql-соединением
 ## aOptions.hideQueryLog(false) — не показывать лог соединений.
 ## aOptions.enableHighlightJS(false) — подключить библиотеку highlight.js и подсветить синтаксис SQL.
-  ^cleanMethodArgument[]
+  ^self.cleanMethodArgument[]
   $self._enabled(^aOptions.enable.bool(false))
   $self._sql[$aOptions.sql]
   $self._enableHighlightJS(^aOptions.enableHighlightJS.bool(false))
@@ -196,7 +196,7 @@ locals
 
 @_queriesStat[aStat]
   <p class="sql-stat">SQL queries ($self._sql.serverType): ${aStat.queriesCount} (^aStat.queriesTime.format[%.6f] sec).
-       Memory cache: size — ${aStat.memoryCache.size}, hits – ${aStat.memoryCache.usage}.
+       Memory cache: size — ${aStat.memoryCache.size}, hits — ${aStat.memoryCache.usage}.
   </p>
 
   ^if(!$self._hideQueryLog){
@@ -204,7 +204,7 @@ locals
        ^aStat.queries.foreach[_;it]{
          <li style="margin-bottom: 0.5em^; ^if(def $it.exception){color: #94333C}">
            (^it.time.format[%.6f] sec, $it.results rec, $it.memory KB, $it.type)
-           ^if(def $it.exception){<span>[^taint[$it.exception.type - $it.exception.comment]]</span>}
+           ^if(def $it.exception){<span>[^taint[$it.exception.type — $it.exception.comment]]</span>}
            <pre class="sql-log-query"><code class="sql">^it.query.trim[both]
            ^if(def $it.limit){limit $it.limit} ^if(def $it.offset){offset $it.offset}
            </code></pre>

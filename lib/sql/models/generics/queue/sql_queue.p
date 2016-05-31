@@ -6,6 +6,9 @@ pfSQLQueue
 ## Класс для работы с очередью в MySQL-сервере.
 ## На основе статьи Якова Сироткина — http://telamon.ru/articles/async.html
 
+@OPTIONS
+locals
+
 @USE
 pf2/lib/sql/models/sql_table.p
 
@@ -19,9 +22,9 @@ pfSQLTable
   ^BASE:create[$aTableName;$aOptions]
   ^pfAssert:isTrue($CSQL.serverType eq "mysql")[Очередь поддерживает работу только с MySQL.]
 
-  $_defaultResultType[table]
+  $self._defaultResultType[table]
 
-  ^addFields[
+  ^self.addFields[
     $.taskID[$.dbField[task_id] $.plural[tasks] $.primary(true) $.widget[none]]
     $.taskType[$.dbField[task_type] $.default(^aOptions.defaultTaskType.int(0)) $.processor[uint] $.label[]]
     $.entityID[$.dbField[entity_id] $.plural[entities] $.processor[uint] $.label[]]
@@ -30,23 +33,23 @@ pfSQLTable
     $.createdAt[$.dbField[created_at] $.processor[auto_now] $.skipOnUpdate(true) $.widget[none]]
   ]
 
-  $_defaultOrderBy[$.taskID[asc]]
+  $self._defaultOrderBy[$.taskID[asc]]
 
-  $_interval(^aOptions.interval.double(0.0))
+  $self._interval(^aOptions.interval.double(0.0))
 
 @fetchOne[aOptions]
 ## Достает из базы ровно одну задачу
-  $result[^fetch[^hash::create[$aOptions] $.limit(1) $.asHash(true)]]
+  $result[^self.fetch[^hash::create[$aOptions] $.limit(1) $.asHash(true)]]
   $result[^result._at[first]]
 
-@fetch[aOptions][locals]
+@fetch[aOptions]
 ## Достает из базы таблицу с задачами и сдвигает время очередной обработки.
 ## aOptions — параметры как для pfSQLTable.all
 ## aOptions.limit(1)
-  ^cleanMethodArgument[]
-  ^CSQL.transaction{
+  ^self.cleanMethodArgument[]
+  ^self.CSQL.transaction{
     $lConds[^hash::create[$aOptions]]
-    $result[^all[
+    $result[^self.all[
       $lConds
       $.[processTime <][^date::now[]]
     ][
@@ -54,10 +57,10 @@ pfSQLTable
       $.force(true)
     ]]
     ^result.foreach[k;v]{
-      ^modify[$v.taskID;
+      ^self.modify[$v.taskID;
         $.attempt($v.attempt + 1)
-        ^if($_interval > 0){
-          $.processTime[^date::create(^date::now[] + ($_interval/1440))]
+        ^if($self._interval > 0){
+          $.processTime[^date::create(^date::now[] + ($self._interval/1440))]
         }{
           $.processTime[^date::create(^date::now[] + ^math:pow(2;$v.attempt)/1440)]
         }

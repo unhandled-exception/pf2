@@ -64,13 +64,16 @@ Finish tests.^#0A
 @CLASS
 usersModel
 
+@OPTIONS
+locals
+
 @BASE
 pfSQLTable
 
 @create[aOptions]
   ^BASE:create[users;$aOptions]
 
-  ^addFields[
+  ^self.addFields[
     $.id[$.processor[uint] $.primary(true)]
     $.name[]
     $.uuid[]

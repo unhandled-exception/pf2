@@ -7,16 +7,19 @@
 @CLASS
 pfClass
 
+@OPTIONS
+locals
+
 ## Базовый предок классов библиотеки
 
 @auto[]
-  $_now[^date::now[]]
-  $_today[^date::today[]]
+  $self._now[^date::now[]]
+  $self._today[^date::today[]]
 
 @create[aOptions]
 
 
-@cleanMethodArgument[aName1;aName2;aName3;aName4;aName5;aName6;aName7;aName8;aName9;aName10][i;lName]
+@cleanMethodArgument[aName1;aName2;aName3;aName4;aName5;aName6;aName7;aName8;aName9;aName10]
 ## Метод проверяет пришел ли вызывающему методу параметр с именем aName[1-10].
 ## Если пришел пустой параметр или строка, то записываем в него пустой хеш.
   $result[]
@@ -27,10 +30,10 @@ pfClass
     ^if(!def $caller.[$lName] || ($caller.[$lName] is string && !def ^caller.[$lName].trim[])){$caller.[$lName][^hash::create[]]}
   }
 
-@defProperty[aPropertyName;aVarName;aType][lVarName]
+@defProperty[aPropertyName;aVarName;aType]
 ## Добавляет в объект свойство с именем aPropertyName
 ## ссылающееся на переменную $aVarName[_$aPropertyName].
-## aType[read] - тип свойства (read|full: только для чтения|чтение/запись)
+## aType[read] — тип свойства (read|full: только для чтения|чтение/запись)
   ^pfAssert:isTrue(def $aPropertyName)[Не определено имя свойства]
   $lVarName[^if(def $aVarName){$aVarName}{_$aPropertyName}]
 
@@ -53,12 +56,12 @@ pfClass
 
 @defReadProperty[aPropertyName;aVarName]
 # Добавляет свойство только для чтения.
-  ^defProperty[$aPropertyName;$aVarName]
+  ^self.defProperty[$aPropertyName;$aVarName]
   $result[]
 
 @defReadWriteProperty[aPropertyName;aVarName]
 # Добавляет свойство для чтения/записи.
-  ^defProperty[$aPropertyName;$aVarName;full]
+  ^self.defProperty[$aPropertyName;$aVarName;full]
   $result[]
 
 @alias[aAliasName;aMethod]
@@ -88,20 +91,23 @@ pfMixin
 ## Базовый класс миксина.
 ## Объект донор доступен через переменную this миксина.
 
-@static:mixin[aContainer;aOptions][obj]
+@OPTIONS
+locals
+
+@static:mixin[aContainer;aOptions]
 ## aContainer[$caller.self] — если передали миксиним в объект, иначе берем self из caller'а.
 ## aOptions — параметры, которые передаются инициализатору миксина
   $result[]
-  $obj[^reflection:create[$CLASS_NAME;__init__;^if(def $aContainer){$aContainer}{$caller.self};$aOptions]]
+  $obj[^reflection:create[$self.CLASS_NAME;__init__;^if(def $aContainer){$aContainer}{$caller.self};$aOptions]]
 
-@__init__[aThis;aOptions][locals]
+@__init__[aThis;aOptions]
 ## Инициализатор миксина. Используется вместо конструктора.
 ## aOptions.export[$.method1[] $.method2[]]
   $aOptions[^hash::create[$aOptions]]
   $self.this[$aThis]
-  $self.mixinName[__${CLASS_NAME}__]
+  $self.mixinName[__${self.CLASS_NAME}__]
   $self.this.[$mixinName][$self]
-  $lMethods[^if($aOptions.export){$aOptions.export}{^reflection:methods[$CLASS_NAME]}]
+  $lMethods[^if($aOptions.export){$aOptions.export}{^reflection:methods[$self.CLASS_NAME]}]
   $lForeach[^reflection:method[$lMethods;foreach]]
   ^lForeach[m;_]{
     ^if(!def $aOptions.export && (^m.left(1) eq "_" || $m eq "mixin" || $m eq "auto")){^continue[]}
@@ -115,6 +121,9 @@ pfHashMixin
 
 ## Добавляет объекту интерфейс хеша
 
+@OPTIONS
+locals
+
 @BASE
 pfMixin
 
@@ -123,7 +132,7 @@ pfMixin
   ^BASE:__init__[$aThis;$aOptions]
   $self._includeJunctionFields(^aOptions.includeJunctionFields.bool(false))
 
-@contains[aName][locals]
+@contains[aName]
 ## Проверяет есть ли у объекта поле с именем aName.
   $lFields[^reflection:fields[$this]]
   $result(^lFields.contains[$aName])
@@ -131,7 +140,7 @@ pfMixin
     $result(false)
   }
 
-@foreach[aKeyName;aValueName;aCode;aSeparator][locals]
+@foreach[aKeyName;aValueName;aCode;aSeparator]
 ## Обходит все поля объекта.
   $lFields[^reflection:fields[$this]]
   $lForeach[^reflection:method[$lFields;foreach]]
@@ -147,19 +156,22 @@ pfChainMixin
 ## @GET_name[]: $result[^getModule[name]]
 ## Подключение пакета и создание объекта произойдет только при первом обращении к свойству name.
 
+@OPTIONS
+locals
+
 @BASE
 pfMixin
 
 @auto[]
-  $__pfChainMixin__classDefRegex__[^regex::create[^^([^^@:]*)(?:@([^^:]+))?(?::+(.+))?^$]]
+  $self.__pfChainMixin__classDefRegex__[^regex::create[^^([^^@:]*)(?:@([^^:]+))?(?::+(.+))?^$]]
 
 @__init__[aThis;aOptions]
 ## aOptions.exportFields[$.name1[] $.name2[var_name]] — список полей объекта, которые надо передать параметрами модулую.
 ## aOptions.exportModulesProperty(false)
   ^BASE:__init__[$aThis;$aOptions]
 
-  $modules[^hash::create[]]
-  $_exportFields[^hash::create[$aOptions.exportFields]]
+  $self.modules[^hash::create[]]
+  $self._exportFields[^hash::create[$aOptions.exportFields]]
 
   ^if(^aOptions.exportModulesProperty.bool(false)){
     ^process[$aThis]{@GET_MODULES[]
@@ -168,7 +180,7 @@ pfMixin
   }
 
 @containsModule[aName]
-  $result[^modules.contains[$aName]]
+  $result[^self.modules.contains[$aName]]
 
 @assignModule[aName;aClassDef;aArgs]
 ## aName — имя свойства со ссылкой на модуль.
@@ -176,9 +188,9 @@ pfMixin
   ^pfAssert:isTrue(def $aName){Не задано имя свойства модуля.}
   ^pfAssert:isTrue(def $aClassDef){Не задано имя класса модуля.}
   $result[]
-  ^if(^modules.contains[$aName]){^throw[model.chain.module.exists;Модуль "$aName" уже привязан в объекте класса "$this.CLASS_NAME"]}
-  $modules.[$aName][
-    ^_parseClassDef[$aClassDef]
+  ^if(^self.modules.contains[$aName]){^throw[model.chain.module.exists;Модуль "$aName" уже привязан в объекте класса "$this.CLASS_NAME"]}
+  $self.modules.[$aName][
+    ^self._parseClassDef[$aClassDef]
     $.object[]
     $.args[$aArgs]
     $.name[$aName]
@@ -189,25 +201,25 @@ pfMixin
   }
 
 @getModule[aName]
-  ^if(^modules.contains[$aName]){
-    ^if(!def $modules.[$aName].object){
-    ^_compileModule[$aName]
+  ^if(^self.modules.contains[$aName]){
+    ^if(!def $self.modules.[$aName].object){
+    ^self._compileModule[$aName]
     }
-    $result[$modules.[$aName].object]
+    $result[$self.modules.[$aName].object]
   }{
      ^throw[model.chain.module.not.found;Не найден модуль "$aName" в объекте класса "$this.CLASS_NAME".]
    }
 
-@_compileModule[aName][locals]
-  $lModule[$modules.[$aName]]
+@_compileModule[aName]
+  $lModule[$self.modules.[$aName]]
   ^if(def $lModule.package){
     ^use[$lModule.package]
   }
-  $lModule.object[^reflection:create[$lModule.className;$lModule.constructor;^_makeModuleArgs[$lModule.args]]]
+  $lModule.object[^reflection:create[$lModule.className;$lModule.constructor;^self._makeModuleArgs[$lModule.args]]]
 
-@_makeModuleArgs[aArgs][locals]
+@_makeModuleArgs[aArgs]
   $result[^hash::create[$aArgs]]
-  ^_exportFields.foreach[lField;lVarName]{
+  ^self._exportFields.foreach[lField;lVarName]{
     ^if(!^result.contains[$lField]){
       $result.[$lField][^if(def $lVarName){$this.[$lVarName]}{$this.[$lField]}]
     }
@@ -217,7 +229,7 @@ pfMixin
 ## Метод может быть вызван из других классов для разбора пути к пакетам.
   $aClassDef[^aClassDef.trim[]]
   $result[$.classDef[$aClassDef]]
-  ^aClassDef.match[$__pfChainMixin__classDefRegex__][]{
+  ^aClassDef.match[$self.__pfChainMixin__classDefRegex__][]{
     $result.constructor[^if(def $match.3){$match.3}{create}]
     ^if(def $match.2){
       $result.className[$match.2]
@@ -235,27 +247,28 @@ pfAssert
 ## Ассерты. Статический класс.
 
 @OPTIONS
+locals
 static
 
 @auto[]
-  $_isEnabled(true)
-  $_exceptionName[assert.fail]
-  $_passExceptionName[assert.pass]
+  $self._isEnabled(true)
+  $self._exceptionName[assert.fail]
+  $self._passExceptionName[assert.pass]
 
 @GET_enabled[]
-  $result($_isEnabled)
+  $result($self._isEnabled)
 
 @SET_enabled[aValue]
-  $_isEnabled($aValue)
+  $self._isEnabled($aValue)
 
 @isTrue[aCondition;aComment][result]
   ^if($enabled && !$aCondition){
-    ^throw[$_exceptionName;isTrue;^if(def $aComment){$aComment}{Assertion failed exception.}]
+    ^throw[$self._exceptionName;isTrue;^if(def $aComment){$aComment}{Assertion failed exception.}]
   }
 
 @isFalse[aCondition;aComment][result]
   ^if($enabled && $aCondition){
-    ^throw[$_exceptionName;isFalse;^if(def $aComment){$aComment}{Assertion failed exception.}]
+    ^throw[$self._exceptionName;isFalse;^if(def $aComment){$aComment}{Assertion failed exception.}]
   }
 
 @fail[aComment][result]
@@ -265,12 +278,12 @@ static
       ^case[date]{^aComment.sql-string[]}
       ^case[DEFAULT]{^json:string[$aComment;$.indent(true)]}
     }]
-    ^throw[$_exceptionName;Fail;^if(def $aComment){$aComment}{Assertion failed exception.}]
+    ^throw[$self._exceptionName;Fail;^if(def $aComment){$aComment}{Assertion failed exception.}]
   }
 
 @pass[aComment][result]
   ^if($enabled){
-    ^throw[$_passExceptionName;Pass;^if(def $aComment){$aComment}{Assertion pass exception.}]
+    ^throw[$self._passExceptionName;Pass;^if(def $aComment){$aComment}{Assertion pass exception.}]
   }
 
 #--------------------------------------------------------------------------------------------------
@@ -278,7 +291,10 @@ static
 @CLASS
 pfString
 
-## Функции обработки строк/
+## Функции обработки строк.
+
+@OPTIONS
+locals
 
 @trim[aString;aSide;aSymbols]
 ## Обертка над стандартным парсеровским trim'ом, которая проверяет существование строки.
@@ -296,13 +312,13 @@ pfString
     ^case[DEFAULT]{$str}
   }]
 
-@rsplit[text;regex;options][table_split]
+@rsplit[text;regex;options]
 ## Разбивает строку по регулярным выражениям
-## options:    l - разбить слева направо (по-умолчанию);
-##             r - разбить справа налево;
-##             h - сформировать безымянную таблицу где части исходной строки
+## options:    l — разбить слева направо (по-умолчанию);
+##             r — разбить справа налево;
+##             h — сформировать безымянную таблицу где части исходной строки
 ##                 помещаются горизонтально;
-##             v - сформировать таблицу со столбцом piece, где части исходной строки
+##             v — сформировать таблицу со столбцом piece, где части исходной строки
 ##                 помещаются вертикально (по-умолчанию).
   ^if(def $regex){
     $table_split[^table::create{piece}]
@@ -322,7 +338,7 @@ pfString
   }
 
 @left[str;substr]
-## substr - символ или набор символов до которого нужно отрезать строку слева
+## substr — символ или набор символов до которого нужно отрезать строку слева
   $substr[^taint[regex][$substr]]
   ^if(def $str && def $substr && ^str.match[$substr]){
     $result[^str.match[^^(.*?)${substr}.*?^$][]{$match.1}]
@@ -331,7 +347,7 @@ pfString
   }
 
 @right[str;substr]
-## substr - символ или набор символов до которого нужно отрезать строку слева
+## substr — символ или набор символов до которого нужно отрезать строку слева
   $substr[^taint[regex][$substr]]
   ^if(def $str && def $substr && ^str.match[$substr]){
     $result[^str.match[^^.*?${substr}(.*?)^$][]{$match.1}]
@@ -341,13 +357,13 @@ pfString
 
 @middle[str;left;right]
   ^if(def $str && def $left && def $right){
-    $result[^left[$str;$left]]
-    $result[^right[$str;$right]]
+    $result[^self.left[$str;$left]]
+    $result[^self.right[$str;$right]]
   }{
     $result[$str]
   }
 
-@numberFormat[sNumber;sThousandDivider;sDecimalDivider;iFracLength][iTriadCount;iSign;tPart;sIntegerPart;sMantissa;sNumberOut;iMantLength;tIncomplTriad;iZeroCount;sZero]
+@numberFormat[sNumber;sThousandDivider;sDecimalDivider;iFracLength]
 ## Форматирует число и вставляет правильные десятичные разделители
   $iSign(^math:sign($sNumber))
   $tPart[^sNumber.split[.][lh]]
@@ -380,32 +396,32 @@ pfString
 @numberDecline[num;nominative;genitive_singular;genitive_plural]
 ## Склоняет существительные, стоящие после числительных, и позволяет избегать
 ## в результатах работы ваших скриптов сообщений вида: «найдено 2 записей».
-## ^num_decline[натуральное число или ноль;именительный падеж;родительный падеж, ед. число;родительный падеж, мн. число]
+## ^pfString:numberDecline[натуральное число или ноль;именительный падеж;родительный падеж, ед. число;родительный падеж, мн. число]
   ^if($num > 10 && (($num % 100) \ 10) == 1){
-          $result[$genitive_plural]
+    $result[$genitive_plural]
   }{
-          ^switch($num % 10){
-                  ^case(1){$result[$nominative]}
-                  ^case(2;3;4){$result[$genitive_singular]}
-                  ^case(5;6;7;8;9;0){$result[$genitive_plural]}
-          }
+    ^switch($num % 10){
+      ^case(1){$result[$nominative]}
+      ^case(2;3;4){$result[$genitive_singular]}
+      ^case(5;6;7;8;9;0){$result[$genitive_plural]}
+    }
   }
 
-@parseURL[aURL][lMatches;lPos]
+@parseURL[aURL]
 ## Разбирает url
 ## result[$.protocol $.user $.password $.host $.port $.path $.options $.nameless $.url $.hash]
-## result.options - таблица со столбцом piece
+## result.options — таблица со столбцом piece
   $result[^hash::create[]]
   ^if(def $aURL){
     $lMatches[^aURL.match[
        ^^
-       (?:([a-zA-Z\-0-9]+?)\:(?://)?)?   # 1 - protocol
-       (?:(\S+?)(?:\:(\S+))?@)?          # 2 - user, 3 - password
-       (?:([a-z0-9\-\.]*?[a-z0-9]))      # 4 - host
-       (?:\:(\d+))?                      # 5 - port
-       (/[^^\s\?]*)?                     # 6 - path
-       (?:\?(\S*?))?                     # 7 - options
-       (?:\#(\S*))?                      # 8 - hash (#)
+       (?:([a-zA-Z\-0-9]+?)\:(?://)?)?   # 1 — protocol
+       (?:(\S+?)(?:\:(\S+))?@)?          # 2 — user, 3 — password
+       (?:([a-z0-9\-\.]*?[a-z0-9]))      # 4 — host
+       (?:\:(\d+))?                      # 5 — port
+       (/[^^\s\?]*)?                     # 6 — path
+       (?:\?(\S*?))?                     # 7 — options
+       (?:\#(\S*))?                      # 8 — hash (#)
        ^$
           ][xi]]
    ^if($lMatches){
@@ -428,10 +444,10 @@ pfString
 
 @format[aString;aValues]
 ## Форматирует строку, заменяя макропоследовательности %(имя)Длина.ТочночтьТип значениями из хеша aValues.
-## В дополнение к парсеровским типам форматирования понимает тип "s" - строковое представление значения.
+## В дополнение к парсеровским типам форматирования понимает тип "s" — строковое представление значения.
 ## Если тип не указан, то он соответствует строковому.
    $result[^aString.match[(?<!\\)(%\((\S+?)\)((?:\d+(?:\.\d+)?)?([sudfxXo]{1})?))][g]{^if(^aValues.contains[$match.2]){^if(!def $match.4 || $match.4 eq "s"){$aValues.[$match.2]}{^eval($aValues.[$match.2])[%$match.3]}}{}}]
-   $result[^result.match[\\(.)][g]{^_processEscapedSymbol[$match.1]}]
+   $result[^result.match[\\(.)][g]{^self._processEscapedSymbol[$match.1]}]
 
 @_processEscapedSymbol[aSymbol]
 ## Возвращает символ, соответствующий букве в заэскейпленой конструкции.
@@ -446,12 +462,12 @@ pfString
 ## Удаляет из текста все HTML-теги.
   $result[^aText.match[<\/?[a-z0-9]+(?:\s+(?:[a-z0-9\_\-]+\s*(?:=(?:(?:\'[^^\']*\')|(?:\"[^^\"]*\")|(?:[0-9@\-_a-z:\/?&=\.]+)))?)?)*\/?>][gi][]]
 
-@dec2bin[iNum;iLength][i]
+@dec2bin[iNum;iLength]
 ## Преобразует число в двоичную строку. 5 -> '101'
   $i(1 << (^iLength.int(24)-1))
   $result[^while($i>=1){^if($iNum & $i){1}{0}$i($i >> 1)}]
 
-@levenshteinDistance[aStr1;aStr2][locals]
+@levenshteinDistance[aStr1;aStr2]
 ## Вычисляет расстояние Левенштейна между двумя строками.
 ## Алгоритм потребляет очень много памяти, поэтому его лучше использовать
 ## на коротких строках (до 15-20 символов).
@@ -501,35 +517,38 @@ pfValidate
 
 ## Класс для проверки данных на различные условия.
 
+@OPTIONS
+locals
+
 @auto[]
-  $emptyStringRegex[\s+]
-  $alphaNumericRegexp[[\p{L}\p{Nd}_]+]
-  $slugRegex[[\p{L}\p{Nd}_-]+]
-  $onlyLettersRegex[\p{L}+]
-  $onlyDigitsRegex[\p{Nd}+]
-  $hexDecimalRegex[(?:[0-9A-Fa-f]{2})+]
-  $ipAddressRegex[(25[0-5]|2[0-4]\d|[0-1]?\d?\d)(\.(25[0-5]|2[0-4]\d|[0-1]?\d?\d)){3}]
-  $validEmailRegex[(?:[-!\#^$%&'*+/=?^^_`{}|~0-9A-Za-z]+(?:\.[-!\#^$%&'*+/=?^^_`{}|~0-9A-Za-z]+)*|"(?:[\001-\010\013\014\016-\037!\#-\[\]-\177]|\\[\001-011\013\014\016-\177])*")@(?:[A-Za-z0-9-]+\.)+[A-Za-z]{2,6}]
-  $validURLRegex[(?:[a-zA-Z\-0-9]+?\:(?://)?)(?:\S+?(?:\:\S+)?@)?(?:[a-zA-Z0-9\-\.]+\.[a-zA-Z]{2,5}|$ipAddressRegex)(?:\:\d+)?(?:(?:/|\?)\S*)?]
+  $self.emptyStringRegex[\s+]
+  $self.alphaNumericRegexp[[\p{L}\p{Nd}_]+]
+  $self.slugRegex[[\p{L}\p{Nd}_-]+]
+  $self.onlyLettersRegex[\p{L}+]
+  $self.onlyDigitsRegex[\p{Nd}+]
+  $self.hexDecimalRegex[(?:[0-9A-Fa-f]{2})+]
+  $self.ipAddressRegex[(25[0-5]|2[0-4]\d|[0-1]?\d?\d)(\.(25[0-5]|2[0-4]\d|[0-1]?\d?\d)){3}]
+  $self.validEmailRegex[(?:[-!\#^$%&'*+/=?^^_`{}|~0-9A-Za-z]+(?:\.[-!\#^$%&'*+/=?^^_`{}|~0-9A-Za-z]+)*|"(?:[\001-\010\013\014\016-\037!\#-\[\]-\177]|\\[\001-011\013\014\016-\177])*")@(?:[A-Za-z0-9-]+\.)+[A-Za-z]{2,6}]
+  $self.validURLRegex[(?:[a-zA-Z\-0-9]+?\:(?://)?)(?:\S+?(?:\:\S+)?@)?(?:[a-zA-Z0-9\-\.]+\.[a-zA-Z]{2,5}|$self.ipAddressRegex)(?:\:\d+)?(?:(?:/|\?)\S*)?]
 
 @create[]
   $result[]
 
 @isEmpty[aString]
 ## Строка пустая или содержит только пробельные символы.
-  $result(!def $aString || ^aString.match[^^$emptyStringRegex^$][n])
+  $result(!def $aString || ^aString.match[^^$self.emptyStringRegex^$][n])
 
 @isNotEmpty[aString]
 ## Строка не пустая.
-  $result(!^isEmpty[$aString])
+  $result(!^self.isEmpty[$aString])
 
 @isAlphaNumeric[aString]
 ## Строка содержит только буквы, цифры и знак подчеркивания.
-  $result(def $aString && ^aString.match[^^$alphaNumericRegexp^$][n])
+  $result(def $aString && ^aString.match[^^$self.alphaNumericRegexp^$][n])
 
 @isSlug[aString]
 ## Строка содержит только буквы, цифры, знак подчеркивания и дефис.
-  $result(def $aString && ^aString.match[^^$slugRegex^$][n])
+  $result(def $aString && ^aString.match[^^$self.slugRegex^$][n])
 
 @isLowerCase[aString]
 ## Строка содержит буквы только нижнего регистра.
@@ -542,45 +561,45 @@ pfValidate
 @isOnlyLetters[aString]
 ## Строка содержит только буквы.
 ## Проверяются только буквы.
-  $result(def $aString && ^aString.match[^^$onlyLettersRegex^$][n])
+  $result(def $aString && ^aString.match[^^$self.onlyLettersRegex^$][n])
 
 @isOnlyDigits[aString]
 ## Строка содержжит только цифры.
-  $result(def $aString && ^aString.match[^^$onlyDigitsRegex^$][n])
+  $result(def $aString && ^aString.match[^^$self.onlyDigitsRegex^$][n])
 
 @isHEXDecimal[aString]
 ## Строка содержит шестнадцатиричное число (парами!).
 ## Пары символов [0-9A-F] (без учета регистра).
-  $result(def $aString && ^aString.match[^^$hexDecimalRegex^$][n])
+  $result(def $aString && ^aString.match[^^$self.hexDecimalRegex^$][n])
 
 @isValidDecimal[aString;aMaxDigits;aDecimalPlaces]
 ## Число содежит вещественное число.
-## aMaxDigits(12) - максимальное количество цифр в числе
-## aDecimalPlaces(2) - Максимальное количество символов после точки
+## aMaxDigits(12) — максимальное количество цифр в числе
+## aDecimalPlaces(2) — Максимальное количество символов после точки
   $result(def $aString && ^aString.match[^^[+\-]?\d{1,^eval(^aMaxDigits.int(12)-^aDecimalPlaces.int(2))}(?:\.\d{^aDecimalPlaces.int(2)})?^$][n])
 
 @isValidIPV4Address[aString]
 ## Строка содержит корректный ip-адрес
-  $result(def $aString && ^aString.match[^^$ipAddressRegex^$][n])
+  $result(def $aString && ^aString.match[^^$self.ipAddressRegex^$][n])
 
 @isValidEmail[aString]
 ## Строка содержит корректный e-mail.
   $result(def $aString
-     && ^aString.match[^^$validEmailRegex^$])
+     && ^aString.match[^^$self.validEmailRegex^$]
   )
 
 @isValidURL[aString;aOptions]
 ## Строка содержит синтаксически-правильный URL.
-## aOptions.onlyHTTP(false) - строка может содержать только URL с протоколом http
-  $result(def $aString && ^aString.match[^^$validURLRegex^$][n])
+## aOptions.onlyHTTP(false) — строка может содержать только URL с протоколом http
+  $result(def $aString && ^aString.match[^^$self.validURLRegex^$][n])
   ^if($result && ^aOptions.onlyHTTP.bool(false)){
     $result(^aString.match[^^http://])
   }
 
-@isExistingURL[aString][locals]
+@isExistingURL[aString]
 ## Строка содержит работающий http-url.
   $result(false)
-  ^if(^isValidURL[$aString]){
+  ^if(^self.isValidURL[$aString]){
     ^try{
       $lFile[^curl:load[
         $.url[^untaint[as-is]{$aString}]
@@ -595,7 +614,7 @@ pfValidate
      }
   }
 
-@isWellFormedXML[aString][locals]
+@isWellFormedXML[aString]
 ## Строка содержит валидный XML.
   $result(false)
   ^if(def $aString){
@@ -609,11 +628,11 @@ pfValidate
 
 @isWellFormedXMLFragment[aString]
 ## Строка содержит валидный кусок XML'я.
-  $result(def $aString && ^isWellFormedXML[<?xml version="1.0" encoding="$request:charset" ?>
+  $result(def $aString && ^self.isWellFormedXML[<?xml version="1.0" encoding="$request:charset" ?>
     <root>$aString</root>
   ])
 
-@isValidANSIDatetime[aString][locals]
+@isValidANSIDatetime[aString]
 ## Строка содержит дату в ANSI-формате, допустимую в Парсере.
   $result(false)
   ^if(def $aString){
@@ -632,10 +651,14 @@ pfCFile
 
 ## Реализует обертку вокруг класса curl с интерфейсом, близким к встроенному классу file.
 
-@auto[]
-  $_curlSessionsCnt(0)
+@OPTIONS
+locals
 
-  $_baseVars[
+
+@auto[]
+  $self._curlSessionsCnt(0)
+
+  $self._baseVars[
     $.name[]
     $.content-type[]
     $.charset[]
@@ -686,7 +709,7 @@ pfCFile
 @load[aMode;aURL;aOptions]
   ^if(!def $aOptions || $aOptions is string){$aOptions[^hash::create[]]}
     ^try{
-      $result[^curl:load[^_makeCurlOptions[$aMode;$aURL;$aOptions]]]
+      $result[^curl:load[^self._makeCurlOptions[$aMode;$aURL;$aOptions]]]
     }{
        ^switch[$exception.type]{
          ^case[curl.host]{$exception.handled(true) ^throw[http.host;$exception.source;$exception.comment]}
@@ -698,18 +721,18 @@ pfCFile
 
 @static:session[aCode]
 ## Организует сессию для запроса
-  ^_curlSessionsCnt.inc[]
+  ^self._curlSessionsCnt.inc[]
   $result[^curl:session{$aCode}]
-  ^_curlSessionsCnt.dec[]
+  ^self._curlSessionsCnt.dec[]
 
 @static:options[aOptions]
 ## Задает опции для libcurl, но в формате, поддерживаемом функцией load (вызов curl:options)
 ## Можно вызывать только внутри сессии
-  ^if(!$_curlSessionsCnt){^throw[cfile.options;Вызов метода options вне session.]}
-  ^curl:options[^_makeCurlOptions[;;$aOptions]]
+  ^if(!$self._curlSessionsCnt){^throw[cfile.options;Вызов метода options вне session.]}
+  ^curl:options[^self._makeCurlOptions[;;$aOptions]]
   $result[]
 
-@_makeCurlOptions[aMode;aURL;aOptions][k;v;lForm]
+@_makeCurlOptions[aMode;aURL;aOptions]
 ## Формирует параметры для curl:load (curl:options)
   $result[^hash::create[]]
   ^if(!def $aOptions || $aOptions is string){$aOptions[^hash::create[]]}
@@ -727,7 +750,7 @@ pfCFile
   $result.failonerror(!^aOptions.any-status.int(false))
 
 # Задаем "простые" опции.
-  ^_baseVars.foreach[k;v]{
+  ^self._baseVars.foreach[k;v]{
     ^if(^aOptions.contains[$k]){
       ^if($v is hash){
         ^switch[$v.type]{
@@ -773,10 +796,10 @@ pfCFile
         ^case[;application/x-www-form-urlencoded]{
           ^switch[^aOptions.method.upper[]]{
             ^case[;GET;HEAD;DELETE]{
-              $result.url[$result.url^if(^result.url.pos[?] >= 0){&}{?}^_formUrlencode[$lForm]]
+              $result.url[$result.url^if(^result.url.pos[?] >= 0){&}{?}^self._formUrlencode[$lForm]]
             }
             ^case[POST]{
-              $result.postfields[^_formUrlencode[$lForm]]
+              $result.postfields[^self._formUrlencode[$lForm]]
             }
           }
         }
@@ -804,9 +827,9 @@ pfCFile
 
 #  ^pfAssert:fail[^result.foreach[k;v]{$k}[, ]]
 
-@_formUrlencode[aForm;aSeparator][k;v]
+@_formUrlencode[aForm;aSeparator]
   $result[^aForm.foreach[k;v]{^switch[$v.CLASS_NAME]{
-      ^case[table]{^_tableUrlencode[^taint[uri][$k];$v;$aSeparator]}
+      ^case[table]{^self._tableUrlencode[^taint[uri][$k];$v;$aSeparator]}
       ^case[file]{^taint[uri][$k]=^taint[uri][$v.text]}
       ^case[string;int;double;void]{^taint[uri][$k]=^taint[uri][$v]}
       ^case[bool]{^taint[uri][$k]=^v.int[]}
@@ -814,7 +837,7 @@ pfCFile
       ^case[DEFAULT]{^throw[cfile.options;Невозможно закодировать параметр $k типа ${v.CLASS_NAME}.]}
     }}[^if(def $aSeparator){$aSeparator}{&}]]
 
-@_tableUrlencode[aName;aTable;aSeparator][lFieldName;lFields]
+@_tableUrlencode[aName;aTable;aSeparator]
   $lFields[^aTable.columns[]]
   $lFieldName[^if($lFields){$lFields.column}{0}]
   $result[^aTable.menu{$aName=^taint[uri][$aTable.[$lFieldName]]}[^if(def $aSeparator){$aSeparator}{&}]]
@@ -827,52 +850,53 @@ pfRuntime
 ## Статический класс для управления памятью, отладки и профилирования кода.
 
 @OPTIONS
+locals
 static
 
 @auto[]
-  $_memoryLimit(4096)
-  $_lastMemorySize($status:memory.used)
-  $_compactsCount(0)
-  $_maxMemoryUsage(0)
+  $self._memoryLimit(4096)
+  $self._lastMemorySize($status:memory.used)
+  $self._compactsCount(0)
+  $self._maxMemoryUsage(0)
 
-  $_profiled[$.last[] $.all[^hash::create[]]]
+  $self._profiled[$.last[] $.all[^hash::create[]]]
 # Нужно ли накапливать статистику профилировщика
-  $_enableProfilerLog(true)
+  $self._enableProfilerLog(true)
 
 @GET_memoryLimit[]
-  $result($_memoryLimit)
+  $result($self._memoryLimit)
 
 @SET_memoryLimit[aMemoryLimit]
-  $_memoryLimit($aMemoryLimit)
+  $self._memoryLimit($aMemoryLimit)
 
 @GET_compactsCount[]
-  $result($_compactsCount)
+  $result($self._compactsCount)
 
 @GET_maxMemoryUsage[]
-  $result(^if($_maxMemoryUsage > $status:memory.used){$_maxMemoryUsage}{$status:memory.used})
+  $result(^if($self._maxMemoryUsage > $status:memory.used){$self._maxMemoryUsage}{$status:memory.used})
 
 @GET_profiled[]
-  $result[$_profiled]
+  $result[$self._profiled]
 
 @GET_enableProfilerLog[]
-  $result($_enableProfilerLog)
+  $result($self._enableProfilerLog)
 
 @SET_enableProfilerLog[aCond]
-  $_enableProfilerLog($aCond)
+  $self._enableProfilerLog($aCond)
 
 @compact[aOptions]
 ## Выполняет сборку мусора, если c момента последней сборки мусора было выделено
 ## больше $memoryLimit килобайт.
 ## aOptions.isForce(false)
   $result[]
-  ^if($_maxMemoryUsage < $status:memory.used){
-    $_maxMemoryUsage($status:memory.used)
+  ^if($self._maxMemoryUsage < $status:memory.used){
+    $self._maxMemoryUsage($status:memory.used)
   }
   ^if(!($aOptions is hash)){$aOptions[^hash::create[]]}
-  ^if(^aOptions.isForce.bool(false) || ($status:memory.used - $_lastMemorySize) > $memoryLimit){
+  ^if(^aOptions.isForce.bool(false) || ($status:memory.used - $self._lastMemorySize) > $memoryLimit){
      ^memory:compact[]
-     $_lastMemorySize($status:memory.used)
-     ^_compactsCount.inc[]
+     $self._lastMemorySize($status:memory.used)
+     ^self._compactsCount.inc[]
   }
 
 @resources[]
@@ -888,15 +912,15 @@ static
     $.free($status:memory.free)
   ]
 
-@profile[aCode;aComment][lResult]
+@profile[aCode;aComment]
 ## Выполняет код и сохраняет ресурсы, затраченные на его исполнение.
-  $lResult[$.before[^resources[]] $.comment[$aComment]]
+  $lResult[$.before[^self.resources[]] $.comment[$aComment]]
   ^try{
     $result[$aCode]
   }{
 #   pass exceptions
   }{
-     $lResult.after[^resources[]]
+     $lResult.after[^self.resources[]]
      $lResult.time($lResult.after.time - $lResult.before.time)
      $lResult.utime($lResult.after.utime - $lResult.before.utime)
      $lResult.stime($lResult.after.stime - $lResult.before.stime)
@@ -906,9 +930,9 @@ static
      $lResult.used($lResult.after.used - $lResult.before.used)
      $lResult.free($lResult.after.free - $lResult.before.free)
 
-     $_profiled.last[$lResult]
+     $self._profiled.last[$lResult]
      ^if($enableProfilerLog){
-       $_profiled.all.[^_profiled.all._count[]][$lResult]
+       $self._profiled.all.[^self._profiled.all._count[]][$lResult]
      }
    }
 
@@ -917,7 +941,10 @@ static
 @CLASS
 pfOS
 
-##  Класс с функциями для работы с ОС (файловые системы и т.п.).
+##  Класс с функциями для работы с ОС (файловые системы и т. п.).
+
+@OPTIONS
+locals
 
 @create[]
 ## Конструктор. Если кому-то понадобится использовать класс динамически.
@@ -930,7 +957,7 @@ pfOS
      $result[text/plain]
    }
 
-@tempFile[aPath;aVarName;aCode;aFinallyCode][lTempFileName]
+@tempFile[aPath;aVarName;aCode;aFinallyCode]
 ## Формирует на время выполнения кода aCode уникальное имя для временного
 ## файла в папке aPath. После работы кода удаляет временный файл, если он создан.
 ## Если задан параметр aFinallyCode, то он запускается, даже если произошла ошибка.
@@ -946,7 +973,7 @@ pfOS
      }
   }
 
-@hashFile[aFileName;aVarName;aCode][lHashfile]
+@hashFile[aFileName;aVarName;aCode]
 ## Открывает хешфайл с имененм aFileName и выполняет код для работы с этим файлом.
 ## Файл доступен коду в переменной с именем aVarName.
 ## После работы выполняет release хешфайла.
@@ -959,7 +986,7 @@ pfOS
     ^lHashfile.release[]
   }
 
-@absolutePath[aPath;aBasePath][lBaseParts;lParts;lStep;i]
+@absolutePath[aPath;aBasePath]
 ## Возвращает полный путь к файлу относительно aBasePath[$request:document-root].
   $aPath[^file:fullpath[$aPath]]
   $aPath[^aPath.trim[both;/\]]
@@ -980,7 +1007,7 @@ pfOS
      $result[/$aBasePath/$aPath]
    }
 
-@walk[aPath;aVarName;aCode;aSeparator][lFiles]
+@walk[aPath;aVarName;aCode;aSeparator]
 ## Обходит дерево файлов начиная с aPath и выполняет для каждого найденного файла aCode.
 ## Имя файла c путем попадает в переменную с именем из aVarName.
 ## Файлы сортируются по именам.
@@ -989,7 +1016,7 @@ pfOS
   $aPath[^aPath.trim[right;/\]]
   $lFiles[^file:list[$aPath]]
   ^lFiles.sort{$lFiles.name}[asc]
-  $result[^if($lFiles && ^aVarName.left(7) eq "caller."){$aSeparator}^lFiles.menu{^process{^$caller.caller.$aVarName^[$aPath/$lFiles.name^]}$aCode^if(-d "$aPath/$lFiles.name"){^walk[$aPath/$lFiles.name;caller.$aVarName]{$aCode}[$aSeparator]}}[$aSeparator]]
+  $result[^if($lFiles && ^aVarName.left(7) eq "caller."){$aSeparator}^lFiles.menu{^process{^$caller.caller.$aVarName^[$aPath/$lFiles.name^]}$aCode^if(-d "$aPath/$lFiles.name"){^self.walk[$aPath/$lFiles.name;caller.$aVarName]{$aCode}[$aSeparator]}}[$aSeparator]]
   ^if(^aVarName.left(7) ne "caller."){$caller.$aVarName[]}
 
 #--------------------------------------------------------------------------------------------------

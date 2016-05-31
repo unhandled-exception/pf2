@@ -25,6 +25,9 @@ pf2/lib/common.p
 @CLASS
 hash_mixin_class
 
+@OPTIONS
+locals
+
 @BASE
 pfClass
 
@@ -32,4 +35,3 @@ pfClass
   ^BASE:create[]
   ^pfHashMixin:mixin[$self;$.includeJunctionFields(true)]
   $field[value]
-
