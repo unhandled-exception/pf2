@@ -58,12 +58,9 @@ pfClass
   $self.action[]
   $self.request[$aOptions.request]
 
-  $self.router[$aOptions.router]
-  ^if(!def $aOptions.router){
-    $self.router[^pfRouter::create[]]
-  }
+  $self.router[^self.ifdef[$aOptions.router]{^pfRouter::create[]}]
 
-  $self.MIDDLEWARE[^hash::create[]]
+  $self.MIDDLEWARES[^hash::create[]]
 
 # Контролер становится рутовым, если вызвали метод run.
   $self.asRoot(false)
@@ -142,7 +139,7 @@ pfClass
   }{
      $lMiddleware[$aObject]
    }
-  $self.MIDDLEWARE.[^eval($self.MIDDLEWARE + 1)][$lMiddleware]
+  $self.MIDDLEWARES.[^eval($self.MIDDLEWARES + 1)][$lMiddleware]
 
 @dispatch[aAction;aRequest;aOptions] -> [response]
 ## aOptions.prefix
@@ -150,7 +147,7 @@ pfClass
   $self.action[$aAction]
   $self.request[$aRequest]
 
-  ^self.MIDDLEWARE.foreach[_;lMiddleware]{
+  ^self.MIDDLEWARES.foreach[_;lMiddleware]{
     $result[^lMiddleware.processRequest[$aAction;$aRequest;$self;$aOptions]]
     ^if(def $result){$lStop(true)^break[]}
   }
@@ -169,8 +166,8 @@ pfClass
     }{
        $result[^self.processException[$self.action;$self.request;$exception;$aOptions]]
      }
-    ^for[i](1;$self.MIDDLEWARE){
-      $lMiddleware[^self.MIDDLEWARE._at(-$i)]
+    ^for[i](1;$self.MIDDLEWARES){
+      $lMiddleware[^self.MIDDLEWARES._at(-$i)]
       $result[^lMiddleware.processResponse[$self.action;$self.request;$result;$self;$aOptions]]
     }
   }
