@@ -300,7 +300,7 @@ pfClass
   $lVars[^hash::create[$self._templateVars]]
   $lVars[^lVars.union[^self.templateDefaults[]]]
   ^lVars.add[$aContext]
-  $result[^self.template.render[$self._templatePrefix/$aTemplateName;$.vars[$lVars]]]
+  $result[^self.template.render[^if(^aTemplateName.left(1) ne "/"){$self._templatePrefix/}$aTemplateName;$.vars[$lVars]]]
 
 @templateDefaults[]
 ## Задает переменные шаблона по умолчанию.
