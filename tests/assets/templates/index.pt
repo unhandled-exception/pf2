@@ -1,0 +1,8 @@
+@main[]
+  Main template.
+
+@json[]
+  JSON template.
+
+@format[aText]
+  $result[format: $aText]

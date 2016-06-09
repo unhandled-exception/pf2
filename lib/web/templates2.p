@@ -22,7 +22,7 @@ pfClass
   ^BASE:create[$aOptions]
 
 # Переменные шаблона
-  ^self.vars[^hash::create[]]
+  $self.vars[^hash::create[]]
 
 # Хранилище шаблонов
   $self.storage[
@@ -53,23 +53,29 @@ pfClass
 
 @parseTemplateName[aTemplateName]
   $result[^hash::create[]]
-  ^self.PFTEMPLATE_TN_REGEX.match[]{
+  ^aTemplateName.match[$PFTEMPLATE_TN_REGEX][]{
     $result.path[$match.1]
     $result.mainFunction[^self.ifdef[$match.2]{__main__}]
   }
 
 @getTemplate[aTemplateName;aOptions]
+## aOptions.force(false)
+  ^self.cleanMethodArgument[]
+  $lForce(^aOptions.force.bool(false))
   $lTemplate[^self.parseTemplateName[$aTemplateName]]
-  ^if(^self.templates.contains[$lTemplate.name]){
+  ^if(!$lForce && ^self.templates.contains[$lTemplate.name]){
     $result[$self.templates.[$lTemplate.name]]
   }{
-     $lTemplate.text[^storage.load[$aTemplate.name]]
-     $result[^self._compileTemplate[$lTemplate].text]
+     $lTemplate.file[^self.storage.load[$lTemplate.path;$.force($lForce)]]
+     $result[^self._compileTemplate[$lTemplate.file.text]]
+     ^if(!$lForce){
+       $self.templates.[$lTemplate.name][$result]
+     }
    }
 
 @render[aTemplateName;aOptions]
 ## Рендерит шаблон
-## aTemplateName[/path/to/template.pt[@__main__]] — имя шаблона и функция, которой передаем управление.
+## aTemplateName[/path/to/template.pt[@__main__]] — имя шаблона и функция, которой передаем управление.
   $result[]
 
 @GET_DEFAULT[aTemplateName]
@@ -78,7 +84,7 @@ pfClass
   $result[^self.getTemplate[$aTemplateName]]
 
 @_compileTemplate[aTemplateText;aOptions]
-  $result[]
+  $result[$.text[$aTemplateText]]
 
 #---------------------------------------------------------------------------------------------------
 
@@ -94,14 +100,55 @@ locals
 pfClass
 
 @create[aOptions]
+## aOptions.searchPath[table<path>|string{/../views/}]
   ^self.cleanMethodArgument[]
   ^BASE:create[$aOptions]
+
+  $self.searchPath[^table::create{path}]
+  ^if(def $aOptions.searchPath){
+    ^switch[$aOptions.searchPath.CLASS_NAME]{
+      ^case[table]{^self.searchPath.append[$aOptions.searchPath]}
+      ^case[string]{^self.searchPath.append{$aOptions.searchPath}}
+    }
+  }{
+     ^self.searchPath.append{/../views/}
+   }
 
   $self.templates[^hash::create[]]
 
 @load[aFileName;aOptions]
 ## Загружает шаблон
+## aOptions.force(false) — отменяет кеширование
+## result[$.text $.path]
+  ^self.cleanMethodArgument[]
+  $lForce(^aOptions.force.bool(false))
+  $result[^hash::create[]]
+  $lFullName[^self.find[$aFileName]]
+  ^if(!def $lFullName){
+    ^throw[template.not.found;Не найден шаблон "$aFileName".]
+  }
+  ^if($lForce || !^self.templates.contains[$lFullName]){
+    $lFile[^file::load[text;$lFullName]]
+    $result.text[$lFile.text]
+    $result.path[$lFullName]
+    ^if(!$lForce){
+      $self.templates.[$lFullName][$result]
+    }
+  }{
+     $result[$self.templates.[$lFullName]]
+   }
+
+@find[aFileName;aOptions]
+  ^pfAssert:isTrue(def $aFileName){Не задано имя шаблона.}
   $result[]
+  $lFileName[$aFileName]
+  ^self.searchPath.foreach[_;v]{
+    $lFullName[$v.path/$lFileName]
+    ^if(-f $lFullName){
+      $result[$lFullName]
+      ^break[]
+    }
+  }
 
 @GET_DEFAULT[aFileName]
   $result[^self.load[$aTemplateName]]
