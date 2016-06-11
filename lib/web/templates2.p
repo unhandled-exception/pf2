@@ -22,7 +22,7 @@ pfClass
   ^BASE:create[$aOptions]
 
 # Переменные шаблона
-  $self.vars[^hash::create[]]
+  $self.context[^hash::create[]]
 
 # Хранилище шаблонов
   $self.storage[
@@ -39,7 +39,7 @@ pfClass
 
 @assign[aName;aValue]
   $result[]
-  $self.vars.[$aName][$aValue]
+  $self.context.[$aName][$aValue]
 
 @multiAssign[aVars]
   $result[]
@@ -169,3 +169,57 @@ pfClass
 @reset[aOptions]
   $self.templates[^hash::create[]]
   $result[]
+
+#---------------------------------------------------------------------------------------------------
+
+@CLASS
+pfTemplateParserWrapper
+
+## В класс «заворачиваем» тело шаблона
+
+@BASE
+pfClass
+
+@OPTIONS
+locals
+
+@__create__[aOptions]
+## aOptions.template
+## aOptions.file
+  ^self.cleanMethodArgument[]
+  ^BASE:create[$aOptions]
+
+  $self.__TEMPLATE__[$aOptions.template]
+  $self.__FILE__[$aOptions.file]
+  $self.__LOCAL_CONTEXT__[]
+
+@GET_DEFAULT[aVarName]
+  $result[^if(def $self.__LOCAL_CONTEXT__ && ^self.__LOCAL_CONTEXT__.contains[$aVarName]){$self.__LOCAL_CONTEXT__.[$aVarName]}{$self.__TEMPLATE__.context.[$aVarName]}]
+
+@GET_TEMPLATE[]
+  $result[$self.__TEMPLATE__]
+
+@GET___GLOBAL__[]
+  $result[$self.__TEMPLATE__.context]
+
+@GET___LOCAL__[]
+  $result[$self.__LOCAL_CONTEXT__]
+
+@__main__[]
+  ^throw[template.empty;Не задано тело шаблона.]
+
+@__render__[aOptions]
+## aOptions.context
+## aOptions.call[__main__]
+  $result[]
+
+@include[aTemplateName;aOptions]
+  $result[^self.__TEMPLATE__.render[$aTemplateName;$aOptions]]
+
+@import[aTemplateName]
+  $result[]
+
+@compact[]
+## Вызывает принудительную сборку мусора.
+  $result[]
+  ^pfRuntime::compact[]
