@@ -13,9 +13,18 @@ pf2/lib/web/templates2.p
   $lTemp[^template.getTemplate[index.pt;
     $.base[./assets/templates]
   ]]
-  $lTemp[^template.getTemplate[index.pt;$.force(true)]]
+#   $lTemp[^template.getTemplate[index.pt;$.force(false)]]
+  $lTemp[^template.getTemplate[index.pt;
+    $.base[./assets/templates]
+  ]]
 
-  -- $lTemp.text
+  -- $lTemp.__FILE__ -- $lTemp.CLASS_NAME
+  import: ^lTemp.print_title[Test title]
+  footer: ^lTemp.footer[Footer text]
+
+  ^template.templates.foreach[k;v]{
+    "$k" -> $v.object.CLASS_NAME, $v.hits
+  }
 
   Finish tests.^#0A
 
