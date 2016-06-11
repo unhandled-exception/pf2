@@ -7,9 +7,12 @@ pf2/lib/web/templates2.p
   Templates tests...
 
   $template[^pfTemplate::create[
-    $.searchPath[./assets/templates/]
+#     $.searchPath[./assets/templates/]
   ]]
-  $lTemp[^template.getTemplate[index.pt]]
+  ^template.storage.appendSearchPath[./assets/templates/]
+  $lTemp[^template.getTemplate[index.pt;
+    $.base[./assets/templates]
+  ]]
   $lTemp[^template.getTemplate[index.pt;$.force(true)]]
 
   -- $lTemp.text

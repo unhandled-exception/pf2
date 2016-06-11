@@ -59,6 +59,7 @@ pfClass
   }
 
 @getTemplate[aTemplateName;aOptions]
+## aOptions.base — базовый путь от которого ищем шаблон
 ## aOptions.force(false)
   ^self.cleanMethodArgument[]
   $lForce(^aOptions.force.bool(false))
@@ -66,7 +67,10 @@ pfClass
   ^if(!$lForce && ^self.templates.contains[$lTemplate.name]){
     $result[$self.templates.[$lTemplate.name]]
   }{
-     $lTemplate.file[^self.storage.load[$lTemplate.path;$.force($lForce)]]
+     $lTemplate.file[^self.storage.load[$lTemplate.path;
+       $.base[$aOptions.base]
+       $.force($lForce)
+     ]]
      $result[^self._compileTemplate[$lTemplate.file.text]]
      ^if(!$lForce){
        $self.templates.[$lTemplate.name][$result]
@@ -116,14 +120,20 @@ pfClass
 
   $self.templates[^hash::create[]]
 
+@appendSearchPath[aPath]
+## Добавдяет путь для поиска шаблонов
+  $result[]
+  ^self.searchPath.append{$aPath}
+
 @load[aFileName;aOptions]
 ## Загружает шаблон
+## aOptions.base — базовый путь от которого ищем шаблон
 ## aOptions.force(false) — отменяет кеширование
 ## result[$.text $.path]
   ^self.cleanMethodArgument[]
   $lForce(^aOptions.force.bool(false))
   $result[^hash::create[]]
-  $lFullName[^self.find[$aFileName]]
+  $lFullName[^self.find[$aFileName;$.base[$aOptions.base]]]
   ^if(!def $lFullName){
     ^throw[template.not.found;Не найден шаблон "$aFileName".]
   }
@@ -139,14 +149,17 @@ pfClass
    }
 
 @find[aFileName;aOptions]
-  ^pfAssert:isTrue(def $aFileName){Не задано имя шаблона.}
-  $result[]
-  $lFileName[$aFileName]
-  ^self.searchPath.foreach[_;v]{
-    $lFullName[$v.path/$lFileName]
-    ^if(-f $lFullName){
-      $result[$lFullName]
-      ^break[]
+## aOptions.base — базовый путь от которого ищем шаблон
+  ^self.cleanMethodArgument[]
+  ^pfAssert:isTrue(def $aFileName){Не задано имя шаблона "$aFileName".}
+  $result[^if(def $aOptions.base && -f "$aOptions.base/$aFileName"){$aOptions.base/$aFileName}]
+  ^if(!def $result){
+    ^self.searchPath.foreach[_;v]{
+      $lFullName[$v.path/$aFileName]
+      ^if(-f $lFullName){
+        $result[$lFullName]
+        ^break[]
+      }
     }
   }
 
