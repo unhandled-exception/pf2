@@ -124,7 +124,7 @@ pfClass
   $result.object[^self.buildObject[$result.className;^if(def $lParent){$lParent.CLASS_NAME};$aTemplateText;$aTemplatePath]]
 
 @makeClassName[aTemplatePath]
-  $result[pfTemplateParserWrapper_^if(def $aTemplatePath){^math:md5[$aTemplatePath]}{^math:uid64[]}]
+  $result[pfTemplateParserWrapper_^if(def $aTemplatePath){^math:md5[$aTemplatePath]}_^math:uid64[]]
 
 @buildObject[aClassName;aBaseName;aTemplateText;aTemplatePath]
 ## Формирует пустой класс aClassName с предком aBaseName по тексту шаблока aTemplate
