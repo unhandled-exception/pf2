@@ -61,22 +61,22 @@ pfClass
   }
 
 @getTemplate[aTemplateName;aOptions] -> [object]
+## aTemplateName — имя шаблона.
 ## aOptions.base — базовый путь от которого ищем шаблон
 ## aOptions.force(false)
 ## aOptions.forceLoad(false)
   ^self.cleanMethodArgument[]
   $lForce(^aOptions.force.bool(false))
-  $lTemplate[^self.parseTemplateName[$aTemplateName]]
   $lTemplateName[^aOptions.base.trim[right;/]/$aTemplateName]
   ^if(!$lForce && ^self.templates.contains[$lTemplateName]){
     $result[$self.templates.[$lTemplateName].object]
     ^self.templates.[$lTemplateName].hits.inc[]
   }{
-     $lTemplate.file[^self.storage.load[$lTemplate.path;
+     $lTempFile[^self.storage.load[$aTemplateName;
        $.base[$aOptions.base]
        $.force(^aOptions.forceLoad.bool(false))
      ]]
-     $lTemp[^self.compileTemplate[$lTemplate.file.text;$lTemplate.file.path]]
+     $lTemp[^self.compileTemplate[$lTempFile.text;$lTempFile.path]]
      ^if(!$lForce){
        $self.templates.[$lTemplateName][
          $.object[$lTemp.object]
@@ -89,7 +89,17 @@ pfClass
 @render[aTemplateName;aOptions]
 ## Рендерит шаблон
 ## aTemplateName[/path/to/template.pt[@__main__]] — имя шаблона и функция, которой передаем управление.
-  $result[]
+## aOptions.context
+## aOptions.force(false)
+  ^self.cleanMethodArgument[]
+  $lTemp[^self.parseTemplateName[$aTemplateName]]
+  $lObj[^self.getTemplate[$lTemp.path;
+    $.force(^aOptions.force.bool(false))
+  ]]
+  $result[^lObj.__render__[
+    $.context[$aOptions.context]
+    $.call[$lTemp.mainFunction]
+  ]]
 
 @GET_DEFAULT[aTemplateName] -> [object]
 ## Возвращает объект с шаблоном
@@ -293,7 +303,7 @@ locals
 ## aOptions.context
 ## aOptions.call[__main__]
   ^self.cleanMethodArgument[]
-  $self.__LOCAL_CONTEXT__[$aOptions.context]
+  $self.__LOCAL_CONTEXT__[^hash::create[$aOptions.context]]
 
   $lMethod[^self.ifdef[$aOptions.call]{__main__}]
   ^if(!($self.[$lMethod] is junction)){

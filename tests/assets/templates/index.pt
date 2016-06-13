@@ -6,9 +6,11 @@
   ^BASE:__main__[]
   Main template!
   ^print_head[Heading!]
+  var: ^if(!def $self.var){$self.var[var new]} ^self.ifdef[$self.var]{var old}
 
 @json[]
   JSON template.
+  var: ^if(!def $self.var){$self.var[var new]} ^self.ifdef[$self.var]{var old}
 
 @format[aText]
   $result[format: $aText]

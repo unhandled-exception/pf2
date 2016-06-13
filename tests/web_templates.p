@@ -7,16 +7,9 @@ pf2/lib/web/templates2.p
   Templates tests...
 
   $template[^pfTemplate::create[
-#     $.searchPath[./assets/templates/]
+    $.searchPath[./assets/templates/]
   ]]
-  ^template.storage.appendSearchPath[./assets/templates/]
-  $lTemp[^template.getTemplate[index.pt;
-    $.base[./assets/templates]
-  ]]
-#   $lTemp[^template.getTemplate[index.pt;$.force(false)]]
-  $lTemp[^template.getTemplate[index.pt;
-    $.base[./assets/templates]
-  ]]
+  $lTemp[^template.getTemplate[index.pt]]
 
   -- $lTemp.__FILE__ -- $lTemp.CLASS_NAME
   import: ^lTemp.print_title[Test title]
@@ -25,6 +18,10 @@ pf2/lib/web/templates2.p
   main: ^lTemp.__main__[]
   compact: ^lTemp.compact[] ok.
 
+  render: ^template.render[index.pt]
+  render call: ^template.render[index.pt@json]
+
+  templates cache:
   ^template.templates.foreach[k;v]{
     "$k" -> $v.object.CLASS_NAME, $v.hits, $v.object.__FILE__
   }
