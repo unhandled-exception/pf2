@@ -130,3 +130,8 @@
 * pfTemplateParserEngine
 * pfTemplateParserPattern
 
+### ./lib/web/templates2.p
+* pfTemplate
+* pfTemplateStorage
+* pfTemplateParserWrapper
+
