@@ -23,6 +23,7 @@ pf2/lib/web/templates2.p
   footer: ^lTemp.footer[Footer text]
 
   main: ^lTemp.__main__[]
+  compact: ^lTemp.compact[] ok.
 
   ^template.templates.foreach[k;v]{
     "$k" -> $v.object.CLASS_NAME, $v.hits, $v.object.__FILE__

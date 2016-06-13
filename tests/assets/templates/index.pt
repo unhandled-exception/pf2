@@ -2,8 +2,10 @@
 #@import common.pt
 
 @main[]
+  ^import[dynamic_import.pt]
   ^BASE:__main__[]
   Main template!
+  ^print_head[Heading!]
 
 @json[]
   JSON template.

@@ -76,7 +76,7 @@ pfClass
        $.base[$aOptions.base]
        $.force(^aOptions.forceLoad.bool(false))
      ]]
-     $lTemp[^self._compileTemplate[$lTemplate.file.text;$lTemplate.file.path]]
+     $lTemp[^self.compileTemplate[$lTemplate.file.text;$lTemplate.file.path]]
      ^if(!$lForce){
        $self.templates.[$lTemplateName][
          $.object[$lTemp.object]
@@ -96,9 +96,9 @@ pfClass
 ## ^template.[/path/to/template.pt].function[arg1;arg2;...]
   $result[^self.getTemplate[$aTemplateName]]
 
-@_compileTemplate[aTemplateText;aTemplatePath] -> [$.object $.className]
+@compileTemplate[aTemplateText;aTemplatePath] -> [$.object $.className]
 ## Компилирует объект и возвращает ссылку
-  $result[$.className[^self._makeClassName[$aTemplatePath]]]
+  $result[$.className[^self.makeClassName[$aTemplatePath]]]
 
 # Обрабатываем наследование
   $lParent[]
@@ -111,12 +111,12 @@ pfClass
   }
 
 # Компилируем шаблон и создаем объект
-  $result.object[^self._buildObject[$result.className;^if(def $lParent){$lParent.CLASS_NAME};$aTemplateText;$aTemplatePath]]
+  $result.object[^self.buildObject[$result.className;^if(def $lParent){$lParent.CLASS_NAME};$aTemplateText;$aTemplatePath]]
 
-@_makeClassName[aTemplatePath]
+@makeClassName[aTemplatePath]
   $result[pfTemplateParserWrapper_^if(def $aTemplatePath){^math:md5[$aTemplatePath]}{^math:uid64[]}]
 
-@_buildObject[aClassName;aBaseName;aTemplateText;aTemplatePath]
+@buildObject[aClassName;aBaseName;aTemplateText;aTemplatePath]
 ## Формирует пустой класс aClassName с предком aBaseName по тексту шаблока aTemplate
   $result[]
 
@@ -266,7 +266,16 @@ locals
   $self.__LOCAL_CONTEXT__[]
 
 @GET_DEFAULT[aVarName]
+# Получает переменную из глобального контекста или из контекста шаблона.
   $result[^if(def $self.__LOCAL_CONTEXT__ && ^self.__LOCAL_CONTEXT__.contains[$aVarName]){$self.__LOCAL_CONTEXT__.[$aVarName]}{$self.__TEMPLATE__.context.[$aVarName]}]
+
+@SET_DEFAULT[aVarName;aValue]
+# Предотвращаем запись локальных переменных шаблона в объект.
+# Если есть контекст, то записываем переменную в контекст.
+# Если контекста нет, то игнорируем переменную.
+  ^if($self.__LOCAL_CONTEXT__ is hash){
+    $self.__LOCAL_CONTEXT__.[$aVarName][$aValue]
+  }
 
 @GET_TEMPLATE[]
   $result[$self.__TEMPLATE__]
@@ -297,10 +306,17 @@ locals
 @include[aTemplateName;aOptions]
   $result[^self.__TEMPLATE__.render[$aTemplateName;$aOptions]]
 
-@import[aTemplateName]
+@import[aTemplateName;aOptions]
+## Динамически импортирует шаблон.
+## aOptions.forceLoad(false)
   $result[]
+  $lTemp[^self.__TEMPLATE__.storage.load[$aTemplateName;
+    $.base[^file:dirname[$self.__FILE__]]
+    $.force(^aOptions.forceLoad.bool(false))
+  ]]
+  ^__TEMPLATE__.applyImports[$self;$lTemp.text;$lTemp.path]
 
 @compact[]
 ## Вызывает принудительную сборку мусора.
   $result[]
-  ^pfRuntime::compact[]
+  ^pfRuntime:compact[]
