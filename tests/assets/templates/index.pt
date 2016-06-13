@@ -1,7 +1,9 @@
-#@import ./common.pt
+#@base base.pt
+#@import common.pt
 
 @main[]
-  Main template.
+  ^BASE:__main__[]
+  Main template!
 
 @json[]
   JSON template.

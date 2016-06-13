@@ -37,6 +37,7 @@ pfClass
 @auto[]
   $self.PFTEMPLATE_TN_REGEX[^regex::create[^^(.*?)(?:@(.*))?^$]]
   $self.PFTEMPLATE_IMPORTS_REGEX[^regex::create[^^#@import\s+(.+)^$][gmi]]
+  $self.PFTEMPLATE_BASE_REGEX[^regex::create[^^#@base\s+(.+)^$][gmi]]
 
 @assign[aName;aValue] -> []
   $result[]
@@ -62,6 +63,7 @@ pfClass
 @getTemplate[aTemplateName;aOptions] -> [object]
 ## aOptions.base — базовый путь от которого ищем шаблон
 ## aOptions.force(false)
+## aOptions.forceLoad(false)
   ^self.cleanMethodArgument[]
   $lForce(^aOptions.force.bool(false))
   $lTemplate[^self.parseTemplateName[$aTemplateName]]
@@ -72,15 +74,13 @@ pfClass
   }{
      $lTemplate.file[^self.storage.load[$lTemplate.path;
        $.base[$aOptions.base]
-#        $.force($lForce)
+       $.force(^aOptions.forceLoad.bool(false))
      ]]
      $lTemp[^self._compileTemplate[$lTemplate.file.text;$lTemplate.file.path]]
      ^if(!$lForce){
        $self.templates.[$lTemplateName][
          $.object[$lTemp.object]
          $.hits(0)
-         $.path[$lTemplate.file.path]
-         $.className[$lTemp.className]
       ]
      }
      $result[$lTemp.object]
@@ -100,8 +100,18 @@ pfClass
 ## Компилирует объект и возвращает ссылку
   $result[$.className[^self._makeClassName[$aTemplatePath]]]
 
+# Обрабатываем наследование
+  $lParent[]
+  $lBases[^aTemplateText.match[$self.PFTEMPLATE_BASE_REGEX]]
+  ^if($lBases > 1){^throw[template.base.fail;У шаблона "$aTemplatePath" может быть только один предок.]}
+  ^if($lBases){
+     $lBaseName[^lBases.1.trim[both; ]]
+     ^if($lBaseName eq ^file:basename[$aTemplatePath]){^throw[template.base.fail;Шаблон "$aTemplatePath" не может быть собственным предком.]}
+     $lParent[^self.getTemplate[$lBaseName;$.base[^file:dirname[$aTemplatePath]]]]
+  }
+
 # Компилируем шаблон и создаем объект
-  $result.object[^self._buildObject[$result.className;;$aTemplateText;$aTemplatePath]]
+  $result.object[^self._buildObject[$result.className;^if(def $lParent){$lParent.CLASS_NAME};$aTemplateText;$aTemplatePath]]
 
 @_makeClassName[aTemplatePath]
   $result[pfTemplateParserWrapper_^if(def $aTemplatePath){^math:md5[$aTemplatePath]}{^math:uid64[]}]
@@ -135,7 +145,7 @@ locals
 ## Ищем и компилируем импорты
   $result[]
 
-  $lImports[^aTemplateText.match[$self.PFTEMPLATE_IMPORTS_REGEX][]]
+  $lImports[^aTemplateText.match[$self.PFTEMPLATE_IMPORTS_REGEX]]
   $lBase[^file:dirname[$aTemplatePath]]
   $lTemplateName[^file:basename[$aTemplatePath]]
 
@@ -268,7 +278,7 @@ locals
   $result[$self.__LOCAL_CONTEXT__]
 
 @__main__[]
-  ^throw[template.empty;Не задано тело шаблона.]
+  ^throw[template.empty;Не задано тело шаблона. [$self.__FILE__]]
 
 @__render__[aOptions]
 ## aOptions.context

@@ -22,8 +22,10 @@ pf2/lib/web/templates2.p
   import: ^lTemp.print_title[Test title]
   footer: ^lTemp.footer[Footer text]
 
+  main: ^lTemp.__main__[]
+
   ^template.templates.foreach[k;v]{
-    "$k" -> $v.object.CLASS_NAME, $v.hits
+    "$k" -> $v.object.CLASS_NAME, $v.hits, $v.object.__FILE__
   }
 
   Finish tests.^#0A
