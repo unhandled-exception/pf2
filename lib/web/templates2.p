@@ -124,7 +124,7 @@ pfClass
   $result.object[^self.buildObject[$result.className;^if(def $lParent){$lParent.CLASS_NAME};$aTemplateText;$aTemplatePath]]
 
 @makeClassName[aTemplatePath]
-  $result[pfTemplateParserWrapper_^if(def $aTemplatePath){^math:md5[$aTemplatePath]}_^math:uid64[]]
+  $result[pfTemplateParserWrapper_^if(def $aTemplatePath){^math:md5[$aTemplatePath]_}^math:uid64[]]
 
 @buildObject[aClassName;aBaseName;aTemplateText;aTemplatePath]
 ## Формирует пустой класс aClassName с предком aBaseName по тексту шаблока aTemplate
@@ -300,9 +300,10 @@ locals
   ^throw[template.empty;Не задано тело шаблона. [$self.__FILE__]]
 
 @__render__[aOptions]
-## aOptions.context
-## aOptions.call[__main__]
+## aOptions.context — переменные шаблона
+## aOptions.call[__main__] — имя «главной» функции шаблона
   ^self.cleanMethodArgument[]
+  $lOldLocalContext[$self.__LOCAL_CONTEXT__]
   $self.__LOCAL_CONTEXT__[^hash::create[$aOptions.context]]
 
   $lMethod[^self.ifdef[$aOptions.call]{__main__}]
@@ -311,7 +312,7 @@ locals
   }
   $result[^self.[$lMethod][]]
 
-  $self.__LOCAL_CONTEXT__[]
+  $self.__LOCAL_CONTEXT__[$lOldLocalContext]
 
 @include[aTemplateName;aOptions]
   $result[^self.__TEMPLATE__.render[$aTemplateName;$aOptions]]
