@@ -109,7 +109,7 @@ pfClass
   $result[^hash::create[]]
   $lParsed[^self._parseTemplateName[$aTemplateName]]
   $lStorage[^self._getStorage[$lParsed.protocol]]
-  $result[^lStorage.load[$aTemplateName;$aOptions]]
+  $result[^lStorage.load[$lParsed.path;$aOptions]]
 
 @assign[aVarName;aValue]
 ## Добавляет переменную в шаблон.
@@ -129,15 +129,21 @@ pfClass
 
 @render[aTemplateName;aOptions]
 ## Рендрит шаблон
-## $aTemplateName может быть задан в форме protocol:path/to/template/
+## $aTemplateName может быть задан в форме protocol:path/to/template.ext@functionName
 ## Если протокол не указан, то используем дефолтный — file
+## Если не указан functionName, то используем — __main__
 ## aOptions.vars — переменные, которые необходимо передать шаблону (замещают VARS)
 ## aOptions.force(false) — принудительно перекомпилировать шаблон и отменить кеширование
-## aOptions.engine[] — принудительно рендрит щаблон с помощью конкретного энжина
+## aOptions.engine[] — принудительно рендрит шаблон с помощью конкретного энжина
   ^self.cleanMethodArgument[]
+  $lParsed[^self._parseTemplateName[$aTemplateName]]
   $lEngine[^self.findEngine[$aTemplateName;$aOptions.engine]]
   $lTemplate[^self.loadTemplate[$aTemplateName;$.force($self._force || $aOptions.force)]]
-  $result[^lEngine.render[$lTemplate;$.vars[$aOptions.vars] $.force($self._force || $aOptions.force)]]
+  $result[^lEngine.render[$lTemplate;
+    $.vars[$aOptions.vars]
+    $.force($self._force || $aOptions.force)
+    $.call[$lParsed.functionName]
+  ]]
 
 @_getStorage[aStorageName]
 ## Возвращает объект стораджа
@@ -186,17 +192,19 @@ pfClass
 
 @_parseTemplateName[aTemplateName]
 ## Разбирает строку с именем шаблона и возвращает
-## хэш: $.protocol $.path
-  $lTemp[^aTemplateName.match[(?:(.*?):(?://)?)?(.*)]]
-  $lProtocol[$lTemp.1]
-  $lPath[$lTemp.2]
-  ^if(!def $lProtocol || !def $self._storages.$lProtocol){
-    $lProtocol[$self.defaultStorage]
+## хэш: $.protocol $.path $.functionName
+  $result[^hash::create[]]
+  $lResult[^aTemplateName.match[(?:(.*?):(?://)?)?(.*?)(?:@(.*))?^$]]
+  $result.protocol[$lResult.1]
+  $result.path[$lResult.2]
+  $result.functionName[$lResult.3]
+
+  ^if(!def $result.protocol || !def $self._storages.[$result.protocol]){
+    $result.protocol[$self.defaultStorage]
   }
-  ^if(!def $lProtocol){
-    ^throw[template.runtime;Storage "$lProtocol" not found.]
+  ^if(!def $result.protocol){
+    ^throw[template.runtime;Storage "$result.protocol" not found.]
   }
-  $result[$.protocol[$lProtocol] $.path[$lPath]]
 
 #---------------------------------------------------------------------------------------------------
 
@@ -273,7 +281,7 @@ locals
 pfClass
 
 @create[aTemplate;aOptions]
-## aTemplate — ссылка на объект темпла, которому принадлежит энжин
+## aTemplate — ссылка на объект шаблонизатора, которому принадлежит энжин
   ^pfAssert:isTrue($aTemplate is pfTemplate)[Не передан объект pfTemplate.]
   $self._template[$aTemplate]
 
@@ -309,11 +317,12 @@ pfTemplateEngine
 @render[aTemplate;aOptions]
 ## aTemplate[$.body $.path]
 ## aOptions.vars[]
+## aOptions.call[__main__]
   ^self.cleanMethodArgument[]
   $lClassName[^self._compileToPattern[$aTemplate]]
 
   $lPattern[^reflection:create[$lClassName;create;$.template[$template] $.file[$aTemplate.path]]]
-  $result[^lPattern.__process__[$.global[$template.vars] $.local[$aOptions.vars]]]
+  $result[^lPattern.__process__[$.global[$template.vars] $.local[$aOptions.vars] $.call[$aOptions.call]]]
 
 @_compileToPattern[aTemplate;aBaseName]
   $result[^self._buildClassName[$aTemplate.path]]
@@ -405,15 +414,22 @@ pfClass
   $result[$self.__LOCAL]
 
 @GET_TEMPLATE[]
-  $result[$self.__template]
+  $result[$self.__TEMPLATE]
 
 @__process__[aOptions]
 ## aOptions.global
 ## aOptions.local
-  ^if(!def $aOptions){$aOptions[^hash::create[]]}
+## aOptions.call[__main__]
+  $aOptions[^hash::create[$aOptions]]
   $self.__GLOBAL[^if(def $aOptions.global){$aOptions.global}{^hash::create[]}]
   $self.__LOCAL[^if(def $aOptions.local){$aOptions.local}{^hash::create[]}]
-  $result[^self.__main__[]]
+
+  $lMethod[^self.ifdef[$aOptions.call]{__main__}]
+  ^if(!($self.[$lMethod] is junction)){
+    ^throw[template.method.not.found;Метод json не найден в шаблоне $self.__FILE]
+  }
+  $result[^self.[$lMethod][]]
+
   $self.__GLOBAL[]
   $self.__LOCAL[]
 
