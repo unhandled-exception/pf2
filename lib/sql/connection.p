@@ -98,36 +98,55 @@ pfClass
     ^self._transactionsCount.inc(1)
 
     ^if($self._transactionsCount > 1){
-      $lSavePoint[^math:uid64[]]
-      $lSavePoint[^lSavePoint.lower[]]
-    }
+      ^if(^aOptions.save.bool(false)){
+##      Организуем вложенные транзакции с помощью savepoint'ов
 
-    ^self.startTransaction[$lSavePoint]
-    ^try{
-      $result[$aCode]
-      ^self.commit[$lSavePoint]
+        $lSavePoint[^math:uid64[]]
+        $lSavePoint[^lSavePoint.lower[]]
+
+        ^self.startTransaction[$lSavePoint]
+        ^try{
+          $result[$aCode]
+          ^self.commit[$lSavePoint]
+        }{
+           ^self.rollback[$lSavePoint]
+        }{
+           ^self._transactionsCount.dec(1)
+           $self._enableQueriesLog($lIsEnabledQueryLog)
+         }
+      }{
+##      Объединяем вложенные транзакции
+
+        $result[$aCode]
+      }
     }{
-       ^self.rollback[$lSavePoint]
-    }{
-       ^self._transactionsCount.dec(1)
-       $self._enableQueriesLog($lIsEnabledQueryLog)
-     }
+      ^self.startTransaction[]
+      ^try{
+        $result[$aCode]
+        ^self.commit[]
+      }{
+         ^self.rollback[]
+      }{
+         ^self._transactionsCount.dec(1)
+         $self._enableQueriesLog($lIsEnabledQueryLog)
+       }
+    }
   }
 
 @startTransaction[aSavePoint]
 ## Открывает транзакцию.
   $result[]
-  ^self.void{^if(def $aSavePoint)[savepoint $aSavePoint;begin]}
+  ^self.void{^if(def $aSavePoint){savepoint $aSavePoint;begin}}
 
 @commit[aSavePoint]
 ## Комитит транзакцию.
   $result[]
-  ^self.void{^if(def $aSavePoint)[release savepoint $aSavePoint;commit]}
+  ^self.void{^if(def $aSavePoint){release savepoint $aSavePoint;commit}}
 
 @rollback[aSavePoint]
 ## Откатывает текущую транзакцию.
   $result[]
-  ^self.void{rollback^if(def $aSavePoint)[ to $aSavePoint]}
+  ^self.void{rollback^if(def $aSavePoint){ to $aSavePoint}}
 
 
 @table[aQuery;aSQLOptions;aOptions]
