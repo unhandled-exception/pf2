@@ -98,36 +98,35 @@ pfClass
     ^self._transactionsCount.inc(1)
 
     ^if($self._transactionsCount > 1){
-##    Объединяем вложенные транзакции
-      $result[$aCode]
-    }{
-      ^self.startTransaction[]
-      ^try{
-        $result[$aCode]
-        ^self.commit[]
-      }{
-         ^self.rollback[]
-      }{
-         ^self._transactionsCount.dec(1)
-         $self._enableQueriesLog($lIsEnabledQueryLog)
-       }
+      $lSavePoint[savepoint_$self._transactionsCount]
     }
+
+    ^self.startTransaction[$lSavePoint]
+    ^try{
+      $result[$aCode]
+      ^self.commit[$lSavePoint]
+    }{
+       ^self.rollback[$lSavePoint]
+    }{
+       ^self._transactionsCount.dec(1)
+       $self._enableQueriesLog($lIsEnabledQueryLog)
+     }
   }
 
-@startTransaction[]
+@startTransaction[aSavePoint]
 ## Открывает транзакцию.
   $result[]
-  ^self.void{begin}
+  ^self.void{^if(def $aSavePoint)[savepoint $aSavePoint;begin]}
 
-@commit[]
+@commit[aSavePoint]
 ## Комитит транзакцию.
   $result[]
-  ^self.void{commit}
+  ^self.void{^if(def $aSavePoint)[release savepoint $aSavePoint;commit]}
 
-@rollback[]
+@rollback[aSavePoint]
 ## Откатывает текущую транзакцию.
   $result[]
-  ^self.void{rollback}
+  ^self.void{rollback^if(def $aSavePoint)[ to $aSavePoint]}
 
 
 @table[aQuery;aSQLOptions;aOptions]
