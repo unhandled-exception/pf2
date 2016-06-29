@@ -98,7 +98,8 @@ pfClass
     ^self._transactionsCount.inc(1)
 
     ^if($self._transactionsCount > 1){
-      $lSavePoint[savepoint_$self._transactionsCount]
+      $lSavePoint[^math:uid64[]]
+      $lSavePoint[^lSavePoint.lower[]]
     }
 
     ^self.startTransaction[$lSavePoint]
