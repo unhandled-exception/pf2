@@ -1,7 +1,7 @@
 #!../../../cgi-bin/parser3.cgi
 
 @USE
-pf2/lib/web/templates2.p
+pf2/lib/web/templates.p
 
 @main[][locals]
   Templates tests...
