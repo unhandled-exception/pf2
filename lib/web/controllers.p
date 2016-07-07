@@ -2,7 +2,7 @@
 
 @USE
 pf2/lib/common.p
-pf2/lib/web/templates2.p
+pf2/lib/web/templates.p
 
 @CLASS
 pfController
