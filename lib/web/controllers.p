@@ -201,8 +201,6 @@ pfClass
   ^if(!def $result.args){$result.args[^hash::create[]]}
 
 @processAction[aAction;aRequest;aLocalPrefix;aOptions] -> [response]
-#  $result[^pfResponse::create[Action create!]]
-
 ## Производит вызов экшна.
 ## aOptions.prefix — префикс, сформированный в processRequest.
   $lAction[$aAction]
@@ -304,7 +302,6 @@ pfClass
 
 @templateDefaults[]
 ## Задает переменные шаблона по умолчанию.
-
   $result[
     $.REQUEST[$self.request]
     $.ACTION[$self.action]
