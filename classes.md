@@ -126,7 +126,5 @@
 ### ./lib/web/templates.p
 * pfTemplate
 * pfTemplateStorage
-* pfTemplateEngine
-* pfTemplateParserEngine
-* pfTemplateParserPattern
+* pfTemplateParserWrapper
 

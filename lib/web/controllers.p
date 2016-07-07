@@ -48,7 +48,7 @@ pfClass
   $self.uriPrefix[$self.mountTo]
   $self._localUriPrefix[]
 
-  $self.template[^self.ifdef[$aOptions.template]{^pfTemplate::create[$.templateFolder[$aOptions.templateFolder]]}]
+  $self.template[^self.ifdef[$aOptions.template]{^pfTemplate::create[$.searchPath[$aOptions.templateFolder]]}]
   $self._templatePrefix[^aOptions.templatePrefix.trim[both;/]]
   $self._templateVars[^hash::create[]]
 
@@ -300,7 +300,7 @@ pfClass
   $lVars[^hash::create[$self._templateVars]]
   $lVars[^lVars.union[^self.templateDefaults[]]]
   ^lVars.add[$aContext]
-  $result[^self.template.render[^if(^aTemplateName.left(1) ne "/"){$self._templatePrefix/}$aTemplateName;$.vars[$lVars]]]
+  $result[^self.template.render[^if(^aTemplateName.left(1) ne "/"){$self._templatePrefix/}$aTemplateName;$.context[$lVars]]]
 
 @templateDefaults[]
 ## Задает переменные шаблона по умолчанию.
