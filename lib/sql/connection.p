@@ -98,29 +98,10 @@ pfClass
     ^self._transactionsCount.inc(1)
 
     ^if($self._transactionsCount > 1){
-      ^if(^aOptions.save.bool(false)){
-##      Организуем вложенные транзакции с помощью savepoint'ов
-
-        $lSavePoint[^math:uid64[]]
-        $lSavePoint[^lSavePoint.lower[]]
-
-        ^self.startTransaction[$lSavePoint]
-        ^try{
-          $result[$aCode]
-          ^self.commit[$lSavePoint]
-        }{
-           ^self.rollback[$lSavePoint]
-        }{
-           ^self._transactionsCount.dec(1)
-           $self._enableQueriesLog($lIsEnabledQueryLog)
-         }
-      }{
-##      Объединяем вложенные транзакции
-
-        $result[$aCode]
-      }
+##    Объединяем вложенные транзакции
+      $result[$aCode]
     }{
-      ^self.startTransaction[]
+      ^self.begin[]
       ^try{
         $result[$aCode]
         ^self.commit[]
@@ -133,21 +114,59 @@ pfClass
     }
   }
 
-@startTransaction[aSavePoint]
+@savepoint[aArg1;aArg2]
+## Делает сейвпоинт
+## ^savepoint[name] — выдает команду savepoint name
+## ^savepoint{code} — выполняет код внутри savepoint. Имя для сейвпоинта формируется автоматически.
+## ^savepoint[name]{code} — выполняет код внутри сейвпоинта name
+  $result[]
+  ^if(^reflection:is[aArg1;junction]){
+    $lSavepointName[AUTO_SAVEPOINT_^math:uid64[]]
+    $lSavepointCode{$aArg1}
+    $lHasCode(true)
+  }($aArg1 is string){
+    $lSavepointName[$aArg1]
+    ^if(^reflection:is[aArg2;junction]){
+      $lSavepointCode{$aArg2}
+      $lHasCode(true)
+    }
+  }{
+    ^throw[pf.sql.connetction;Методу pfSQLConnection.savepoint надо передать один или два параметра.]
+  }
+
+  ^self.connect{
+    ^if($lHasCode){
+      ^self.void{savepoint ^taint[$lSavepointName]}
+      ^try{
+        $result[$lSavepointCode]
+        ^self.release[$lSavepointName]
+      }{
+         ^self.rollback[$lSavepointName]
+       }
+    }{
+       ^self.void{savepoint ^taint[$lSavepointName]}
+     }
+  }
+
+@begin[]
 ## Открывает транзакцию.
   $result[]
-  ^self.void{^if(def $aSavePoint){savepoint $aSavePoint;begin}}
+  ^self.void{begin}
 
-@commit[aSavePoint]
+@commit[]
 ## Комитит транзакцию.
   $result[]
-  ^self.void{^if(def $aSavePoint){release savepoint $aSavePoint;commit}}
+  ^self.void{commit}
 
 @rollback[aSavePoint]
-## Откатывает текущую транзакцию.
+## Откатывает текущую транзакцию или сейвпоинт.
   $result[]
-  ^self.void{rollback^if(def $aSavePoint){ to $aSavePoint}}
+  ^self.void{rollback^if(def $aSavePoint){ to ^taint[$aSavePoint]}}
 
+@release[aSavePoint]
+## Освобождает сейвпоинт.
+  $result[]
+  ^self.void{release savepoint ^taint[$aSavePoint]}
 
 @table[aQuery;aSQLOptions;aOptions]
 ## aOptions.force — отключить кеширование в памяти
