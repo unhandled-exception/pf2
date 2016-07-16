@@ -11,11 +11,24 @@ SQL connection test!
     $db[^pfSQLConnection::create[sqlite://${dbFile};
       $.enableQueriesLog(true)
       $.enableMemoryCache(true)
+      $.nestedAsSavepoints(true)
     ]]
     Type: $db.serverType
 
     ^create_tables[$db]
     ^db.transaction{
+      ^db.transaction{
+        ^db.savepoint{
+          ^insert_data[$db]
+        }
+      }
+
+      ^db.transaction{
+        ^db.transaction{
+          ^insert_data[$db]
+        }[$.nestedAsSavepoints(false)]
+      }[$.nestedAsSavepoints(true)]
+
       ^db.transaction{
         ^db.savepoint{
           ^insert_data[$db]

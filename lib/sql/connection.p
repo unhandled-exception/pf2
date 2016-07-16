@@ -17,6 +17,7 @@ pfClass
 @create[aConnectString;aOptions]
 ## aOptions.enableMemoryCache(false) — добавлять результаты выборок из БД в кеш в памяти.
 ## aOptions.enableQueriesLog(false) — включить логирование sql-запросов.
+## aOptions.nestedAsSavepoints(false) — объединить вложенные транзакции в сейвпоинты.
   ^self.cleanMethodArgument[]
   ^pfAssert:isTrue(def $aConnectString)[Не задана строка соединения.]
 
@@ -48,6 +49,8 @@ pfClass
     ^case[pgsql]{^regex::create[duplicate key value][i]}
     ^case[DEFAULT]{^regex::create[duplicate entry][i]}
   }]
+
+  $self._nestedAsSavepoints(^aOptions.nestedAsSavepoints.bool(false))
 
 @GET_connectString[]
   $result[$self._connectString]
@@ -90,6 +93,7 @@ pfClass
 @transaction[aCode;aOptions]
 ## Организует транзакцию, обеспечивая возможность отката.
 ## aOptions.disableQueriesLog(false) — отключить лог на время работы транзакции
+## aOptions.nestedAsSavepoints(false) — заменить вложенные транзакции на сейвпоинты
   ^self.cleanMethodArgument[]
   $result[]
   ^self.connect{
@@ -97,20 +101,32 @@ pfClass
     ^if(^aOptions.disableQueriesLog.bool(false)){$self._enableQueriesLog(false)}
     ^self._transactionsCount.inc(1)
 
-    ^if($self._transactionsCount > 1){
-##    Объединяем вложенные транзакции
-      $result[$aCode]
-    }{
-      ^self.begin[]
-      ^try{
-        $result[$aCode]
-        ^self.commit[]
+    $lOldNestedAsSavepoints($self._nestedAsSavepoints)
+    $self._nestedAsSavepoints(^aOptions.nestedAsSavepoints.bool($self._nestedAsSavepoints))
+
+    ^try{
+      ^if($self._transactionsCount > 1){
+##      Объединяем вложенные транзакции
+        ^if($self._nestedAsSavepoints){
+          ^self.savepoint{
+            $result[$aCode]
+          }
+        }{
+          $result[$aCode]
+        }
       }{
-         ^self.rollback[]
-      }{
-         ^self._transactionsCount.dec(1)
-         $self._enableQueriesLog($lIsEnabledQueryLog)
-       }
+        ^self.begin[]
+        ^try{
+          $result[$aCode]
+          ^self.commit[]
+        }{
+           ^self.rollback[]
+        }
+      }
+    }{}{
+      ^self._transactionsCount.dec(1)
+      $self._enableQueriesLog($lIsEnabledQueryLog)
+      $self._nestedAsSavepoints($lOldNestedAsSavepoints)
     }
   }
 
