@@ -639,19 +639,26 @@ pfClass
 
 @_applyHeaders[]
   $result[]
+
+  $lHasContentTypeHeader(false)
   ^self.headers.foreach[k;v]{
     $response:$k[$v]
+    ^if(^k.lower[] eq "content-type"){
+      $lHasContentTypeHeader(true)
+    }
   }
   ^self.cookie.foreach[k;v]{
     $cookie:$k[$v]
   }
   $response:status[$self.status]
 
-  ^if(def $self.charset){$response:charset[$self.charset]}
-  $response:content-type[
-    $.value[^self.ifdef[$self.contentType]{text/html}]
-    $.charset[$response:charset]
-  ]
+  ^if(!$lHasContentTypeHeader){
+    ^if(def $self.charset){$response:charset[$self.charset]}
+    $response:content-type[
+      $.value[^self.ifdef[$self.contentType]{text/html}]
+      $.charset[$response:charset]
+    ]
+  }
 
 #--------------------------------------------------------------------------------------------------
 
