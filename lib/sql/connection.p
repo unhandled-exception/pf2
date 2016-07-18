@@ -130,20 +130,20 @@ pfClass
     }
   }
 
-@savepoint[aArg1;aArg2]
+@savepoint[aNameOrCode;aCode]
 ## Делает сейвпоинт
 ## ^savepoint[name] — выдает команду savepoint name
 ## ^savepoint{code} — выполняет код внутри savepoint. Имя для сейвпоинта формируется автоматически.
 ## ^savepoint[name]{code} — выполняет код внутри сейвпоинта name
   $result[]
-  ^if(^reflection:is[aArg1;junction]){
+  ^if(^reflection:is[aNameOrCode;junction]){
     $lSavepointName[AUTO_SAVEPOINT_^math:uid64[]]
-    $lSavepointCode{$aArg1}
+    $lSavepointCode{$aNameOrCode}
     $lHasCode(true)
-  }($aArg1 is string){
-    $lSavepointName[$aArg1]
-    ^if(^reflection:is[aArg2;junction]){
-      $lSavepointCode{$aArg2}
+  }($aNameOrCode is string){
+    $lSavepointName[$aNameOrCode]
+    ^if(^reflection:is[aCode;junction]){
+      $lSavepointCode{$aCode}
       $lHasCode(true)
     }
   }{
