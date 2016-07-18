@@ -17,6 +17,7 @@ pfClass
 @create[aConnectString;aOptions]
 ## aOptions.enableMemoryCache(false) — добавлять результаты выборок из БД в кеш в памяти.
 ## aOptions.enableQueriesLog(false) — включить логирование sql-запросов.
+## aOptions.nestedAsSavepoints(false) — объединить вложенные транзакции в сейвпоинты.
   ^self.cleanMethodArgument[]
   ^pfAssert:isTrue(def $aConnectString)[Не задана строка соединения.]
 
@@ -48,6 +49,8 @@ pfClass
     ^case[pgsql]{^regex::create[duplicate key value][i]}
     ^case[DEFAULT]{^regex::create[duplicate entry][i]}
   }]
+
+  $self._nestedAsSavepoints(^aOptions.nestedAsSavepoints.bool(false))
 
 @GET_connectString[]
   $result[$self._connectString]
@@ -90,6 +93,7 @@ pfClass
 @transaction[aCode;aOptions]
 ## Организует транзакцию, обеспечивая возможность отката.
 ## aOptions.disableQueriesLog(false) — отключить лог на время работы транзакции
+## aOptions.nestedAsSavepoints(false) — заменить вложенные транзакции на сейвпоинты
   ^self.cleanMethodArgument[]
   $result[]
   ^self.connect{
@@ -97,24 +101,70 @@ pfClass
     ^if(^aOptions.disableQueriesLog.bool(false)){$self._enableQueriesLog(false)}
     ^self._transactionsCount.inc(1)
 
-    ^if($self._transactionsCount > 1){
-##    Объединяем вложенные транзакции
-      $result[$aCode]
-    }{
-      ^self.startTransaction[]
-      ^try{
-        $result[$aCode]
-        ^self.commit[]
+    $lOldNestedAsSavepoints($self._nestedAsSavepoints)
+    $self._nestedAsSavepoints(^aOptions.nestedAsSavepoints.bool($self._nestedAsSavepoints))
+
+    ^try{
+      ^if($self._transactionsCount > 1){
+##      Объединяем вложенные транзакции
+        ^if($self._nestedAsSavepoints){
+          ^self.savepoint{
+            $result[$aCode]
+          }
+        }{
+          $result[$aCode]
+        }
       }{
-         ^self.rollback[]
-      }{
-         ^self._transactionsCount.dec(1)
-         $self._enableQueriesLog($lIsEnabledQueryLog)
-       }
+        ^self.begin[]
+        ^try{
+          $result[$aCode]
+          ^self.commit[]
+        }{
+           ^self.rollback[]
+        }
+      }
+    }{}{
+      ^self._transactionsCount.dec(1)
+      $self._enableQueriesLog($lIsEnabledQueryLog)
+      $self._nestedAsSavepoints($lOldNestedAsSavepoints)
     }
   }
 
-@startTransaction[]
+@savepoint[aNameOrCode;aCode]
+## Делает сейвпоинт
+## ^savepoint[name] — выдает команду savepoint name
+## ^savepoint{code} — выполняет код внутри savepoint. Имя для сейвпоинта формируется автоматически.
+## ^savepoint[name]{code} — выполняет код внутри сейвпоинта name
+  $result[]
+  ^if(^reflection:is[aNameOrCode;junction]){
+    $lSavepointName[AUTO_SAVEPOINT_^math:uid64[]]
+    $lSavepointCode{$aNameOrCode}
+    $lHasCode(true)
+  }($aNameOrCode is string){
+    $lSavepointName[$aNameOrCode]
+    ^if(^reflection:is[aCode;junction]){
+      $lSavepointCode{$aCode}
+      $lHasCode(true)
+    }
+  }{
+    ^throw[pf.sql.connetction;Методу pfSQLConnection.savepoint надо передать один или два параметра.]
+  }
+
+  ^self.connect{
+    ^if($lHasCode){
+      ^self.void{savepoint ^taint[$lSavepointName]}
+      ^try{
+        $result[$lSavepointCode]
+        ^self.release[$lSavepointName]
+      }{
+         ^self.rollback[$lSavepointName]
+       }
+    }{
+       ^self.void{savepoint ^taint[$lSavepointName]}
+     }
+  }
+
+@begin[]
 ## Открывает транзакцию.
   $result[]
   ^self.void{begin}
@@ -124,11 +174,15 @@ pfClass
   $result[]
   ^self.void{commit}
 
-@rollback[]
-## Откатывает текущую транзакцию.
+@rollback[aSavePoint]
+## Откатывает текущую транзакцию или сейвпоинт.
   $result[]
-  ^self.void{rollback}
+  ^self.void{rollback^if(def $aSavePoint){ to ^taint[$aSavePoint]}}
 
+@release[aSavePoint]
+## Освобождает сейвпоинт.
+  $result[]
+  ^self.void{release savepoint ^taint[$aSavePoint]}
 
 @table[aQuery;aSQLOptions;aOptions]
 ## aOptions.force — отключить кеширование в памяти
