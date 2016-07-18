@@ -136,13 +136,13 @@ pfClass
 ## ^savepoint{code} — выполняет код внутри savepoint. Имя для сейвпоинта формируется автоматически.
 ## ^savepoint[name]{code} — выполняет код внутри сейвпоинта name
   $result[]
-  ^if(^reflection:is[aNameOrCode;junction]){
+  ^if(^reflection:is[aNameOrCode;code]){
     $lSavepointName[AUTO_SAVEPOINT_^math:uid64[]]
     $lSavepointCode{$aNameOrCode}
     $lHasCode(true)
   }($aNameOrCode is string){
     $lSavepointName[$aNameOrCode]
-    ^if(^reflection:is[aCode;junction]){
+    ^if(^reflection:is[aCode;code]){
       $lSavepointCode{$aCode}
       $lHasCode(true)
     }
