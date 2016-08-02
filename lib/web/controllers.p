@@ -192,23 +192,13 @@ pfClass
   ^if(def $aLocalPrefix){$self.localUriPrefix[$aLocalPrefix]}
   ^if(def $aOptions.prefix){$self.uriPrefix[$aOptions.prefix]}
 
-# Если у нас в первой части экшна имя модуля, то передаем управление ему
   $lModule[^self._findModule[$aAction]]
   ^if(def $lModule){
-#   Если у нас есть экшн, совпадающий с именем модуля, то зовем его.
-#   При этом отсекая имя модуля от экшна перед вызовом (восстанавливаем после экшна).
+#   Если у нас в первой части экшна имя модуля, то передаем управление модулю
     $self.activeModule[$lModule.name]
-    $lModuleMountTo[$lModule.mountTo]
-
-    ^if(^self.hasAction[$lModuleMountTo]){
-      $self.action[^lAction.match[^^^taint[regex][$lModuleMountTo] (.*)][x]{^match.1.lower[]}]
-      $result[^self.[^self._makeActionName[$lModuleMountTo]][$lRequest]]
-      $self.action[$lAction]
-    }{
-       $result[^self.[$lModule.name].dispatch[^lAction.mid(^lModuleMountTo.length[]);$lRequest;
-         $.prefix[$uriPrefix/^if(def $aLocalPrefix){$aLocalPrefix/}{$lModuleMountTo/}]
-       ]]
-     }
+    $result[^self.[$lModule.name].dispatch[^lAction.mid(^lModule.mountTo.length[]);$lRequest;
+      $.prefix[$uriPrefix/^if(def $aLocalPrefix){$aLocalPrefix/}{$lModule.mountTo/}]
+    ]]
   }{
 #    Если модуля нет, то пытаемся найти и запустить экш из нашего модуля
      $lHandler[^self._findHandler[$lAction;$lRequest]]
