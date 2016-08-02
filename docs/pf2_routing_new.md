@@ -4,6 +4,9 @@
 — Переписать _findHandler: два раза зовем _makeAction_name, странная логика поиска метода по глаголу (например onDEFAULTGET не найдем никогда; а это вообще нужно? :).
 — Сделать обработку json'а в postProcess. $result[$.body[hash] $.type[json]] -> pfResponse[$.type[json] $.body[^json:string[$result.body]]] (???)
 
+— Переделываем pfRouter. Убираем префиксы, связваем роутер с модулем. Делаем универсальные методы для работы с путями и переменными.
+— Модули монтируем в путь с перменными
+
 
 Как смонитровать моудль в путь с перемеными
 -------------------------------------------
@@ -15,5 +18,26 @@
 _findModule должен будет вернуть начало (prefix) и остаток (action) uri. И переменны из префикса.
 
 
+Новый синтаксис роутов
+----------------------
+^router.requirements[...] (^routes.where[...]) — добавляет ограничения
+^assignModule[clients#people/:id;path/to/cont.p@Controller::create] -> assignModule + router.assign[people/:id;clients]
+
+^router.assign[clients/:id/name;clients#name/:id;$.as[clients_name]]
+   module#path/to/:action или module@onActionFunction (без модуля — @onActionFunction)
+   $.name -> $.as… по as строим обратный индекс
+   prefix: clients/:id -> clients/104
+
+$.requirements -> $.where
+
+^router.resource[clients;path/to/clients.p@Clients] … формируем список марщрутов для редактирования одной командой… ???
+
+
+Работа с путями
+---------------
+Экшн брать из request:uri вместо form:_action
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule ^ index.php [L]
 
 
