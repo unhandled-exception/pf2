@@ -370,16 +370,11 @@ pfClass
     $aAction[^aAction.lower[]]
     $lSplitted[^pfString:rsplit[$aAction;[/\.]]]
     ^if($lSplitted){
-     $result[on^lSplitted.menu{^self._makeSpecialName[$lSplitted.piece]}]
+     $result[on^lSplitted.menu{$lStr[$lSplitted.piece]$lFirst[^lStr.left(1)]^lFirst.upper[]^lStr.mid(1)}]
    }
   }{
      $result[onINDEX]
    }
-
-@_makeSpecialName[aStr]
-## Возвращает aStr в которой первая буква прописная
-  $lFirst[^aStr.left(1)]
-  $result[^lFirst.upper[]^aStr.mid(1)]
 
 @_findModule[aAction]
 ## Ищет модуль по имени экшна
