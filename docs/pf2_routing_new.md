@@ -1,7 +1,9 @@
 
 + Переносим код метода rewriteAction в processRequest. Удаляем rewrieAction.
 + Прибиваем передачу управления методу onModule, если он определен в модуле. [Вряд ли это кому-то вообще нужно было хотябы раз. :)]
++ Убрать получение пути из _action. Получаем путь через request:uri.
 — Переписать _findHandler: два раза зовем _makeAction_name, странная логика поиска метода по глаголу (например onDEFAULTGET не найдем никогда; а это вообще нужно? :).
+
 — Сделать обработку json'а в postProcess. $result[$.body[hash] $.type[json]] -> pfResponse[$.type[json] $.body[^json:string[$result.body]]] (???)
 
 — Переделываем pfRouter. Убираем префиксы, связваем роутер с модулем. Делаем универсальные методы для работы с путями и переменными.
@@ -36,8 +38,8 @@ $.requirements -> $.where
 Откуда брать первоначальный экшн
 --------------------------------
 Экшн брать из request:uri вместо form:_action
-RewriteCond %{REQUEST_FILENAME} !-d
+
 RewriteCond %{REQUEST_FILENAME} !-f
-RewriteRule ^ index.php [L]
+RewriteRule ^ _ind.html [L,QSA]
 
 

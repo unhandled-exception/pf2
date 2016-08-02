@@ -420,6 +420,7 @@ locals
 @create[aOptions]
 ## aOptions — хеш с переменными объекта, которые надо заменить. [Для тестов.]
   $self.ifdef[$pfClass:ifdef]
+  $self.ifcontains[$pfClass:ifcontains]
   $self.__CONTEXT__[^hash::create[]]
 
   $self.form[^self.ifdef[$aOptions.form]{$form:fields}]
@@ -437,14 +438,14 @@ locals
 
   $self.ENV[^self.ifdef[$aOptions.ENV]{$env:fields}]
 
-  $self.URI[^self.ifdef[$aOptions.URI]{$request:uri}]
-  $self.QUERY[^self.ifdef[$aOptions.QUERY]{$request:query}]
+  $self.URI[^self.ifcontains[$aOptions;URI]{$request:uri}]
+  $self.QUERY[^self.ifcontains[$aOptions;QUERY]{$request:query}]
   $self.PATH[^self.URI.left(^self.URI.pos[?])]
 
-  $self.ACTION[^self.ifdef[$aOptions.ACTION]{^self.ifdef[$form.action]{$form._action}}]
+  $self.ACTION[^self.ifcontains[$aOptions;ACTION]{^self.PATH.trim[/]}]
 
   $self.PORT[^self.ifdef[$aOptions.PORT]{^self.ENV.SERVER_PORT.int(80)}]
-  $self.isSECURE(^self.ifdef[$aOptions.isSECURE](^self.ENV.HTTPS.lower[] eq "on" || $self.PORT eq "443"))
+  $self.isSECURE(^self.ifcontains[$aOptions;isSECURE](^self.ENV.HTTPS.lower[] eq "on" || $self.PORT eq "443"))
   $self.SCHEME[http^if($self.isSECURE){s}]
 
   $self.HOST[^self.ifdef[$aOptions.HOST]{^self.header[X-Forwarded-Host;^self.header[Host;$self.ENV.SERVER_NAME]]}]
@@ -455,7 +456,7 @@ locals
   $self.isLOCALREFERER(^self.REFERER.pos[${self.SCHEME}://$self.HOST] == 0)
 
   $self.REMOTE_IP[^self.ifdef[$aOptions.REMOTE_IP]{$ENV.REMOTE_ADDR}]
-  $self.DOCUMENT_ROOT[^self.ifdef[$aOptions.DOCUMENT_ROOT]{$request:document-root}]
+  $self.DOCUMENT_ROOT[^self.ifcontains[$aOptions;DOCUMENT_ROOT]{$request:document-root}]
 
   $self.CHARSET[^self.ifdef[$aOptions.CHARSET]{$request:charset}]
   $self.RESPONSE_CHARSET[^self.ifdef[$aOptions.RESPONSE_CHARSET]{^response:charset.lower[]}]
