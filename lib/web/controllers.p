@@ -396,15 +396,16 @@ pfClass
 @_findHandler[aAction;aRequest]
 ## Ищет и возвращает имя функции-обработчика для экшна.
   $result[^self._makeActionName[$aAction]]
-  ^if(!def $result || !($self.[$result] is junction)){
-    $result[^if($onDEFAULT is junction){onDEFAULT}]
-  }
 
 # Ищем onActionHTTPMETHOD-обработчик
-  $lMethod[^if(def $aRequest.METHOD){^aRequest.METHOD.upper[]}]
-  ^if(def $lMethod){
-    $lActionName[^self._makeActionName[$aAction]]
-    ^if(def $lActionName && $self.[${lActionName}$lMethod] is junction){$result[${lActionName}$lMethod]}
+  $lMethod[^aRequest.method.upper[]]
+  ^if(def $result && $self.[${result}$lMethod] is junction){
+    $result[${result}$lMethod]
+  }
+
+# Если обработчика нет, то ищем onDEFAULT.
+  ^if(!def $result || !($self.[$result] is junction)){
+    $result[^if($onDEFAULT is junction){onDEFAULT}]
   }
 
 #--------------------------------------------------------------------------------------------------
