@@ -175,30 +175,14 @@ pfClass
 @processRequest[aAction;aRequest;aOptions] -> [$.action[] $.request[] $.prefix[] $.response[]]
 ## Производит предобработку запроса
 ## $result[$.action[] $.request[] $.prefix[] $.render[]] — экшн, запрос, префикс, параметры шаблона, которые будут переданы обработчикам
-  $lRewrite[^self.rewriteAction[$aAction;$aRequest;$aOptions]]
-  $aAction[$lRewrite.action]
-  ^if($lRewrite.args){
-    ^aRequest.assign[$lRewrite.args]
-  }
-  $result[
-    $.action[$aAction]
-    $.request[$aRequest]
-    $.prefix[$lRewrite.prefix]
-    $.render[$lRewrite.render]
-  ]
-
-@rewriteAction[aAction;aRequest;aOptions]
-## Вызывается каждый раз перед диспатчем — внутренний аналог mod_rewrite.
-## $result.action — новый экшн.
-## $result.args — параметры, которые надо добавить к аргументам и передать обработчику.
-## $result.prefix — локальный префикс, который необходимо передать диспетчеру
-## Стандартный обработчик проходит по карте преобразований и ищет подходящий шаблон,
-## иначе возвращает оригинальный экшн.
   $result[^self.router.route[$aAction;$.args[$aRequest]]]
   ^if(!$result){
-    $result[$.action[$aAction] $.args[] $.prefix[]]
+    $result[$.action[$aAction] $.args[^hash::create[]] $.prefix[]]
   }
-  ^if(!def $result.args){$result.args[^hash::create[]]}
+  $result.request[$aRequest]
+  ^if($result.args){
+    ^result.request.assign[$result.args]
+  }
 
 @processAction[aAction;aRequest;aLocalPrefix;aOptions] -> [response]
 ## Производит вызов экшна.
