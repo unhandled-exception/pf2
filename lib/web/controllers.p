@@ -17,7 +17,7 @@ pfClass
 ## aOptions.mountTo[/] — место монтирования. Нужно передавать только в головной модуль,
 ##                       поскольку метод assignModule будт вычислять точку монтирования самостоятельно.
 ## aOptions.parentModule — ссылка на объект-контейнер.
-## aOptions.appendSlash(false) — нужно ли добавлять к урлам слеш.
+## aOptions.appendSlash(true) — нужно ли добавлять к урлам слеш.
 ## aOptions.router
 ## aOptions.rootController
 ## aOptions.parentController
@@ -114,7 +114,7 @@ pfClass
   $lModule.mountTo[^if(def $aArgs.mountTo){^aArgs.mountTo.trim[both;/]}{$aName}]
 
   $lModule.args.mountTo[$self.mountTo/$lModule.mountTo]
-  $lModule.args.templatePrefix[^self.ifdef[$lModule.args.templatePrefix]{$self._templatePrefix/$aName}]
+  $lModule.args.templatePrefix[^self.ifcontains[$lModule.args;templatePrefix]{$self._templatePrefix/$aName}]
 
 @hasModule[aName]
 ## Проверяет есть ли у нас модуль с имененм aName
@@ -404,7 +404,7 @@ locals
 ## aOptions.where[] — хеш с регулярными выражениями для проверки переменных шаблона
   ^self.cleanMethodArgument[]
   $result[]
-  $lCompiledPattern[^self._compilePattern[$aPattern;$aOptions]]
+  $lCompiledPattern[^self.compilePattern[$aPattern;$aOptions]]
   $lRouteTo[^_makeRouteTo[$aRouteTo]]
   $lRoute[
     $.pattern[$lCompiledPattern.pattern]
@@ -440,12 +440,12 @@ locals
 ## Выполняет поиск и преобразование пути по списку маршрутов
   ^self.cleanMethodArgument[]
   $result[^hash::create[]]
-  $result.action[^self._trimPath[$aAction]]
+  $result.action[^self.trimPath[$aAction]]
   $result.request[$aRequest]
 
   ^if(def $result.action){
     ^self.routes.foreach[k;it]{
-      $lParsedPath[^self._parsePathByRoute[$result.action;$it;$.args[$self._defaults]]]
+      $lParsedPath[^self.parsePathByRoute[$result.action;$it;$.args[$self._defaults]]]
       ^if($lParsedPath){
         ^result.request.assign[$lParsedPath.args]
         $result.action[$lParsedPath.action]
@@ -463,12 +463,14 @@ locals
 @reverse[aAction;aArgs;aOptions]
   $result[^hash::create[]]
 
-@_compilePattern[aRoute;aOptions]
-## result[$.pattern[] $.regexp[] $.vars[] $.trap[]]
+@compilePattern[aRoute;aOptions]
+## aOptions.asPrefix(false) — компилировать как префикс
+## result[$.pattern[] $.regexp[] $.vars[] $.trap[] $.hasVars]
   $result[
     $.vars[^hash::create[]]
-    $.pattern[^self._trimPath[$aRoute]]
+    $.pattern[^self.trimPath[$aRoute]]
     $.trap[]
+    $.hasVars(0)
   ]
   $lPattern[^untaint[regex]{/$result.pattern}]
 
@@ -487,16 +489,17 @@ locals
        $.hasVars($lHasVars)
        $.hasTrap($lHasTrap)
      ]
+     ^if($lHasVars){^result.hasVars.inc[]}
   }
 
 # Собираем регулярное выражение для всего шаблона.
 # Закрывающие скобки ставим в обратном порядке. :)
-  $result.regexp[^^^lSegments.foreach[k;it]{^if($it.hasVars){(?:}^if($k>1){\$it.prefix}$it.regexp}^for[i](1;$lSegments){$it[^lSegments._at(-$i)]^if($it.hasVars){)^if($it.hasTrap){?}}}^$]
+  $result.regexp[^^^lSegments.foreach[k;it]{^if($it.hasVars){(?:}^if($k>1){\$it.prefix}$it.regexp}^for[i](1;$lSegments){$it[^lSegments._at(-$i)]^if($it.hasVars){)^if($it.hasTrap){?}}}^if(^aOptions.asPrefix.bool(false)){(?:/|^$)}{^$}]
 
-@_trimPath[aPath]
+@trimPath[aPath]
   $result[^aPath.trim[both;/. ^#0A]]
 
-@_parsePathByRoute[aPath;aRoute;aOptions]
+@parsePathByRoute[aPath;aRoute;aOptions]
 ## Преобразует aPath по правилу aRoute.
 ## aOptions.args
 ## result[$.action $.args $.prefix]
@@ -513,10 +516,10 @@ locals
         ^i.inc[]
       }
     }
-    $result.action[^self._applyPath[$aRoute.routeTo;$result.args;$aOptions.args]]
+    $result.action[^self.applyPath[$aRoute.routeTo;$result.args;$aOptions.args]]
   }
 
-@_applyPath[aPath;aVars;aArgs]
+@applyPath[aPath;aVars;aArgs]
 ## Заменяет переменные в aPath. Значения переменных ищутся в aVars и aArgs.
   ^self.cleanMethodArgument[aVars;aArgs]
   $result[^if(def $aPath){^aPath.match[$self._pfRouterPatternRegex][]{^if(^aVars.contains[$match.2]){$aVars.[$match.2]}{^if(^aArgs.contains[$match.2] || $match.1 eq "*"){$aArgs.[$match.2]}}}}]
@@ -554,7 +557,7 @@ locals
   $lAction[$aAction]
   $lRequest[$aRequest]
 
-  ^if(def $aLocalPrefix){$lController.localUriPrefix[$aLocalPrefix]}
+  ^if(def $aPrefix){$lController.localUriPrefix[$aPrefix]}
   ^if(def $aOptions.prefix){$lController.uriPrefix[$aOptions.prefix]}
 
   $lModule[^self.findModule[$aAction]]
@@ -562,7 +565,7 @@ locals
 #   Если у нас в первой части экшна имя модуля, то передаем управление модулю
     $lController.activeModule[$lModule.name]
     $result[^lController.[$lModule.name].dispatch[^lAction.mid(^lModule.mountTo.length[]);$lRequest;
-      $.prefix[$lController.uriPrefix/^if(def $aLocalPrefix){$aLocalPrefix/}{$lModule.mountTo/}]
+      $.prefix[$lController.uriPrefix/^if(def $aPrefix){$aPrefix/}{$lModule.mountTo/}]
     ]]
   }{
 #    Если модуля нет, то пытаемся найти и запустить экш из нашего модуля
