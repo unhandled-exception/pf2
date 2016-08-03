@@ -68,7 +68,7 @@ locals
 @create[aOptions]
   ^BASE:create[$aOptions]
 
-  $router.where[$.clientID[\d+]]
+  ^router.where[$.clientID[\d+]]
   ^router.assign[:clientID;client]
 
 @onINDEX[aRequest]

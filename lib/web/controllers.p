@@ -364,6 +364,18 @@ locals
   $self.processors[^hash::create[]]
   ^self.registerProcessor[default;pfRouterDefaultProcessor]
 
+  $self.routes[^hash::create[]]
+  $self._where[^hash::create[]]
+  $self._defaults[^hash::create[]]
+
+@auto[]
+  $self._pfRouterPatternVar[([:\*])\{?([\p{L}\p{Nd}_\-]+)\}?]
+  $self._pfRouterPatternRegex[^regex::create[$self._pfRouterPatternVar][g]]
+  $self._pfRouteRootRegex[^regex::create[^^^$]]
+  $self._pfRouterSegmentSeparators[\./]
+  $self._pfRouterVarRegexp[[^^$self._pfRouterSegmentSeparators]+]
+  $self._pfRouterTrapRegexp[(.*)]
+
 @registerProcessor[aName;aClassDef;aOptions] -> []
 ## Регистрирует новый процессор для вызова
 ## Процессор с именем default считаем процессором по-умолчанию.
@@ -373,11 +385,37 @@ locals
   $lProcessor.options[$aOptions]
   $self.processors.[$aName][$lProcessor]
 
-@auto[]
-  $self.__pfRouter__[$void]
-
-@assign[aPattern;aRouteTo;aOptions]
+@where[aWhere]
   $result[]
+  ^self._where.add[$aWhere]
+
+@defaults[aDefaults]
+  $result[]
+  ^self._defaults.add[$aDefaults]
+
+@assign[aPattern;aRouteTo;aOptions] -> []
+## Добавляет новый маршрут в роутер.
+## aRouteTo — новый маршрут (может содержать переменные)
+## aOptions.as[] — имя шаблона (используется в reverse, нечувствительно к регистру)
+## aOptions.defaults[] — хеш со значениями переменных шаблона "по-умолчанию"
+## aOptions.where[] — хеш с регулярными выражениями для проверки переменных шаблона
+  ^self.cleanMethodArgument[]
+  $result[]
+  $lCompiledPattern[^self._compilePattern[$aPattern;$aOptions]]
+  $self.routes.[^eval($self._routes + 1)][
+    $.pattern[$lCompiledPattern.pattern]
+    $.regexp[^regex::create[$lCompiledPattern.regexp][]]
+    $.vars[$lCompiledPattern.vars]
+    $.trap[$lCompiledPattern.trap]
+
+    $.routeTo[^self._trimPath[$aRouteTo]]
+    $.prefix[$aOptions.prefix]
+    $.reversePrefix[$aOptions.reversePrefix]
+
+    $.defaults[^hash::create[$aOptions.defaults]]
+    $.where[^hash::create[$aOptions.requirements]]
+    $.as[$aOptions.as]
+  ]
 
 @route[aAction;aRequest;aOptions] -> [$.action $.request $.processor]
   $result[^hash::create[]]
@@ -393,6 +431,37 @@ locals
   $result[^hash::create[]]
 
 
+@_compilePattern[aRoute;aOptions]
+## result[$.pattern[] $.regexp[] $.vars[] $.trap[]]
+  $result[
+    $.vars[^hash::create[]]
+    $.pattern[^self._trimPath[$aRoute]]
+    $.trap[]
+  ]
+  $lPattern[^untaint[regex]{/$result.pattern}]
+
+# Разбиваем шаблон на сегменты и компилируем их в регулярные выражения
+  $lSegments[^hash::create[]]
+  $lParts[^lPattern.match[([$self._pfRouterSegmentSeparators])([^^$self._pfRouterSegmentSeparators]+)][g]]
+  $lWhere[^hash::create[$self._where] $aOptions.where]
+  ^lParts.menu{
+     $lHasVars(false)
+     $lHasTrap(false)
+     $lRegexp[^lParts.2.match[$self._pfRouterPatternRegex][]{^if($match.1 eq ":"){(^if(def $lWhere.[$match.2]){^lWhere.[$match.2].match[\((?!\?[=!<>])][g]{(?:}}{$self._pfRouterVarRegexp})}{$self._pfRouterTrapRegexp}^if($match.1 eq "*"){$result.trap[$match.2]$lHasTrap(true)}$result.vars.[$match.2](true)$lHasVars(true)}]
+     $lSegments.[^eval($lSegments + 1)][
+       $.prefix[$lParts.1]
+       $.regexp[$lRegexp]
+       $.hasVars($lHasVars)
+       $.hasTrap($lHasTrap)
+     ]
+  }
+
+# Собираем регулярное выражение для всего шаблона.
+# Закрывающие скобки ставим в обратном порядке. :)
+  $result.regexp[^^^lSegments.foreach[k;it]{^if($it.hasVars){(?:}^if($k>1){\$it.prefix}$it.regexp}^for[i](1;$lSegments){$it[^lSegments._at(-$i)]^if($it.hasVars){)^if($it.hasTrap){?}}}^$]
+
+@_trimPath[aPath]
+  $result[^aPath.trim[both;/. ^#0A]]
 
 
 @CLASS
