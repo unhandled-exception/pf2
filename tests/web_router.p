@@ -17,6 +17,12 @@ pf2/lib/web/controllers.p
   Sub module client page: ^c.test[clients/123/action/subaction]
   Invalid client page: ^c.test[clients/sumo/action/subaction]
 
+  Sub module render 1: ^c.test[clients/about]
+  Sub module render 2: ^c.test[clients/about2]
+  Sub module render 3: ^c.test[clients/123/about]
+
+  Sub module call: ^c.test[clients/345/edit]
+
   Finish tests.^#0A
 
 @print_fields[aObj][locals]
@@ -37,7 +43,9 @@ locals
 pfController
 
 @create[aOptions]
-  ^BASE:create[$aOptions]
+  ^BASE:create[
+    $.templateFolder[assets/router/templates/]
+  ]
 
   ^assignModule[clients;testSubModule]
   ^router.assign[users/:userID;users]
@@ -73,6 +81,12 @@ locals
   ^router.where[$.clientID[\d+]]
   ^router.defaults[$.filter[by_client]]
 
+  ^router.assign[about;$.render[about.pt]]
+  ^router.assign[about2;$.render[$.template[about.pt] $.context[$.var[Temp var]]]]
+  ^router.assign[:clientID/about;render::/about.pt]
+
+  ^router.assign[:clientID/edit;call::edit]
+
   ^router.assign[:clientID/*trap;client]
 
 @onINDEX[aRequest]
@@ -83,3 +97,6 @@ locals
 
 @onClient[aRequest]
   $result[Client page — $aRequest.clientID Trap — $aRequest.trap  Prefix — $self.uriPrefix Filter — $aRequest.filter]
+
+@edit[aRequest]
+  $result[Edit client page. clientID — $aRequest.clientID]

@@ -363,6 +363,8 @@ locals
 
   $self.processors[^hash::create[]]
   ^self.registerProcessor[default;pfRouterDefaultProcessor]
+  ^self.registerProcessor[render;pfRouterRenderProcessor]
+  ^self.registerProcessor[call;pfRouterCallProcessor]
 
   $self.routes[^hash::create[]]
   $self._where[^hash::create[]]
@@ -375,6 +377,7 @@ locals
   $self._pfRouterSegmentSeparators[\./]
   $self._pfRouterVarRegexp[[^^$self._pfRouterSegmentSeparators]+]
   $self._pfRouterTrapRegexp[(.*)]
+  $self._pfRouterProcessorRegexp[^regex::create[^^(?:\s*(.*?)\s*::)?(.*)^$]]
 
 @registerProcessor[aName;aClassDef;aOptions] -> []
 ## Регистрирует новый процессор для вызова
@@ -402,13 +405,14 @@ locals
   ^self.cleanMethodArgument[]
   $result[]
   $lCompiledPattern[^self._compilePattern[$aPattern;$aOptions]]
+  $lRouteTo[^_makeRouteTo[$aRouteTo]]
   $lRoute[
     $.pattern[$lCompiledPattern.pattern]
     $.regexp[^regex::create[$lCompiledPattern.regexp][]]
     $.vars[$lCompiledPattern.vars]
     $.trap[$lCompiledPattern.trap]
 
-    $.routeTo[^self._trimPath[$aRouteTo]]
+    $.routeTo[$lRouteTo.routeTo]
     $.prefix[$aOptions.prefix]
     $.reversePrefix[$aOptions.reversePrefix]
 
@@ -416,9 +420,21 @@ locals
     $.where[^hash::create[$aOptions.requirements]]
     $.as[$aOptions.as]
   ]
-  $lRoute.processor[^self.createProcessor[default]]
+  $lRoute.processor[$lRouteTo.processor]
 
-  $self.routes.[^eval($self._routes + 1)][$lRoute]
+  $self.routes.[^eval($self.routes + 1)][$lRoute]
+
+@_makeRouteTo[aRouteTo] -> [$.routeTo[] $.processor[]]
+  $result[$.routeTo[]]
+  ^if($aRouteTo is pfRouterProcessor){
+    $result.processor[$aRouteTo]
+  }($aRouteTo is hash){
+    $result.processor[^self.createProcessor[^aRouteTo.at[first;key];^aRouteTo.at[first;value]]]
+  }{
+    $lParsedRouteTo[^aRouteTo.match[$self._pfRouterProcessorRegexp]]
+    $result.routeTo[$lParsedRouteTo.2]
+    $result.processor[^self.createProcessor[$lParsedRouteTo.1;$lParsedRouteTo.2]]
+  }
 
 @route[aAction;aRequest;aOptions] -> [$.action $.request $.processor]
 ## Выполняет поиск и преобразование пути по списку маршрутов
@@ -438,7 +454,6 @@ locals
       }
     }
   }
-
   $result.processor[^ifdef[$result.processor]{^self.createProcessor[default]}]
 
 @createProcessor[aName;aProcessorData;aOptions]
@@ -460,7 +475,8 @@ locals
 # Разбиваем шаблон на сегменты и компилируем их в регулярные выражения
   $lSegments[^hash::create[]]
   $lParts[^lPattern.match[([$self._pfRouterSegmentSeparators])([^^$self._pfRouterSegmentSeparators]+)][g]]
-  $lWhere[^hash::create[$self._where] $aOptions.where]
+  $lWhere[^hash::create[$self._where]]
+  ^lWhere.add[$aOptions.where]
   ^lParts.menu{
      $lHasVars(false)
      $lHasTrap(false)
@@ -596,6 +612,47 @@ locals
   ^if(!def $result || !($self.controller.[$result] is junction)){
     $result[^if($self.controller.onDEFAULT is junction){onDEFAULT}]
   }
+
+
+
+@CLASS
+pfRouterRenderProcessor
+
+@BASE
+pfRouterProcessor
+
+@OPTIONS
+locals
+
+@create[aRouter;aProcessorData;aOptions]
+  ^BASE:create[$aRouter;$aProcessorData;$aOptions]
+  ^if($aProcessorData is hash){
+    $self.template[^aProcessorData.template.trim[/ .]]
+    $self.context[^hash::create[$aProcessorData.context]]
+  }{
+     $self.template[^aProcessorData.trim[/ .]]
+   }
+
+@process[aAction;aRequest;aPrefix;aOptions]
+  $result[^self.controller.render[$self.template;$self.context]]
+
+
+
+@CLASS
+pfRouterCallProcessor
+
+@BASE
+pfRouterProcessor
+
+@OPTIONS
+locals
+
+@create[aRouter;aProcessorData;aOptions]
+  ^BASE:create[$aRouter;$aProcessorData;$aOptions]
+  $self.functionName[^aProcessorData.trim[/ .]]
+
+@process[aAction;aRequest;aPrefix;aOptions]
+  $result[^self.controller.[$self.functionName][$aRequest]]
 
 #--------------------------------------------------------------------------------------------------
 
