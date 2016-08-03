@@ -174,7 +174,7 @@ pfClass
 
 @processRequest[aAction;aRequest;aOptions] -> [$.action[] $.request[] $.prefix[] $.response[] $.processor[]]
 ## Производит предобработку запроса
-  $result[^self.router.route[$aAction;$.args[$aRequest]]]
+  $result[^self.router.route[$aAction;$aRequest]]
   ^if(!$result){
     $result[$.action[$aAction] $.args[^hash::create[]] $.prefix[]]
   }
@@ -402,7 +402,7 @@ locals
   ^self.cleanMethodArgument[]
   $result[]
   $lCompiledPattern[^self._compilePattern[$aPattern;$aOptions]]
-  $self.routes.[^eval($self._routes + 1)][
+  $lRoute[
     $.pattern[$lCompiledPattern.pattern]
     $.regexp[^regex::create[$lCompiledPattern.regexp][]]
     $.vars[$lCompiledPattern.vars]
@@ -416,12 +416,30 @@ locals
     $.where[^hash::create[$aOptions.requirements]]
     $.as[$aOptions.as]
   ]
+  $lRoute.processor[^self.createProcessor[default]]
+
+  $self.routes.[^eval($self._routes + 1)][$lRoute]
 
 @route[aAction;aRequest;aOptions] -> [$.action $.request $.processor]
+## Выполняет поиск и преобразование пути по списку маршрутов
+  ^self.cleanMethodArgument[]
   $result[^hash::create[]]
-  $result.action[^aAction.trim[/]]
+  $result.action[^self._trimPath[$aAction]]
   $result.request[$aRequest]
-  $result.processor[^self.createProcessor[default]]
+
+  ^if(def $result.action){
+    ^self.routes.foreach[k;it]{
+      $lParsedPath[^self._parsePathByRoute[$result.action;$it;$.args[$self._defaults]]]
+      ^if($lParsedPath){
+        ^result.request.assign[$lParsedPath.args]
+        $result.action[$lParsedPath.action]
+        $result.processor[$it.processor]
+        ^break[]
+      }
+    }
+  }
+
+  $result.processor[^ifdef[$result.processor]{^self.createProcessor[default]}]
 
 @createProcessor[aName;aProcessorData;aOptions]
   $lProcessor[^self.ifcontains[$self.processors;$aName]{$self.processors.default}]
@@ -429,7 +447,6 @@ locals
 
 @reverse[aAction;aArgs;aOptions]
   $result[^hash::create[]]
-
 
 @_compilePattern[aRoute;aOptions]
 ## result[$.pattern[] $.regexp[] $.vars[] $.trap[]]
@@ -462,6 +479,31 @@ locals
 
 @_trimPath[aPath]
   $result[^aPath.trim[both;/. ^#0A]]
+
+@_parsePathByRoute[aPath;aRoute;aOptions]
+## Преобразует aPath по правилу aRoute.
+## aOptions.args
+## result[$.action $.args $.prefix]
+  $result[^hash::create[]]
+  $lVars[^aPath.match[$aRoute.regexp]]
+  ^if($lVars){
+    $result.args[^hash::create[$aOptions.args]]
+    ^if($aRoute.vars){
+      $i(1)
+      ^aRoute.vars.foreach[k;v]{
+        ^if(def $lVars.$i){
+          $result.args.[$k][$lVars.$i]
+        }
+        ^i.inc[]
+      }
+    }
+    $result.action[^self._applyPath[$aRoute.routeTo;$result.args;$aOptions.args]]
+  }
+
+@_applyPath[aPath;aVars;aArgs]
+## Заменяет переменные в aPath. Значения переменных ищутся в aVars и aArgs.
+  ^self.cleanMethodArgument[aVars;aArgs]
+  $result[^if(def $aPath){^aPath.match[$self._pfRouterPatternRegex][]{^if(^aVars.contains[$match.2]){$aVars.[$match.2]}{^if(^aArgs.contains[$match.2] || $match.1 eq "*"){$aArgs.[$match.2]}}}}]
 
 
 @CLASS

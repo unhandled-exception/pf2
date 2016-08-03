@@ -14,6 +14,8 @@ pf2/lib/web/controllers.p
 
   Sub module index: ^c.test[clients]
   Sub module client page: ^c.test[clients/123]
+  Sub module client page: ^c.test[clients/123/action/subaction]
+  Invalid client page: ^c.test[clients/sumo/action/subaction]
 
   Finish tests.^#0A
 
@@ -69,13 +71,15 @@ locals
   ^BASE:create[$aOptions]
 
   ^router.where[$.clientID[\d+]]
-  ^router.assign[:clientID;client]
+  ^router.defaults[$.filter[by_client]]
+
+  ^router.assign[:clientID/*trap;client]
 
 @onINDEX[aRequest]
-  $result[Sub module's Index page.]
+  $result[Sub module's Index page. Filter — $aRequest.filter]
 
 @onNOTFOUND[aRequest]
   $result[Sub module not found.]
 
 @onClient[aRequest]
-  $result[Client page — $aRequest.clientID]
+  $result[Client page — $aRequest.clientID Trap — $aRequest.trap  Prefix — $self.uriPrefix Filter — $aRequest.filter]
