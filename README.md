@@ -54,5 +54,5 @@ PF2 — веб-фреймворк для Parser 3
 Настройка mod_rewrite:
 
 RewriteCond %{REQUEST_FILENAME} !-f
-RewriteRule ^ _ind.html [L,QSA]
+RewriteRule ^ _ind.html [L]
 

@@ -22,17 +22,43 @@ _findModule должен будет вернуть начало (prefix) и ос
 
 Новый синтаксис роутов
 ----------------------
-^router.requirements[...] (^routes.where[...]) — добавляет ограничения
-^assignModule[clients#people/:id;path/to/cont.p@Controller::create] -> assignModule + router.assign[people/:id;clients]
 
-^router.assign[clients/:id/name;clients#name/:id;$.as[clients_name]]
-   module#path/to/:action или module@onActionFunction (без модуля — @onActionFunction)
-   $.name -> $.as… по as строим обратный индекс
-   prefix: clients/:id -> clients/104
+^router.where[$.userID[\d+] $.slug[\s+]]
+^router.defaults[$.filter[name]]
 
-$.requirements -> $.where
 
-^router.resource[clients;path/to/clients.p@Clients] … формируем список марщрутов для редактирования одной командой… ???
+Функции:
+^router.assign[:userID/edit;user/edit;$.where[$.userID[\d+]]] -> ^onUserEdit[$.userID[...]]
+^router.assign[:userID/edit;&edit;$.as[user/edit]] — ^edit[$.userID[...]]
+
+Модули:
+^assignModule[settings;path/to/settings.p@modSettings]
+
+// ^assignModule[account;path/to/account.p@modAccount#clients/:clientID/account;$.create[$.arg1[...] $.arg2[...]]]
+// ^assignModule[profile;path/to/profile.p@modProfile#clients/:clientID/profile]
+
+^assignModule[account;path/to/account.p@modAccount;
+  $.mountTo[clients/:clientID/account]
+  $.where[$.clientID[\d+]]
+  $.defaults[$.filter[name]]
+  $.options[$.constParam[...]]
+]
+-> ^router.assign[clients/:clientID/account;@account;...]
+-> ^router.assign[clients/:clientID/account;$.module[account];...]
+
+
+^router.assign[old/uri/:var;$.redirect[new/uri/:var]]
+^router.assign[old/uri/:var;$.redirect[http://some.domain/uri/:var]]
+^router.assign[old/uri/:var;
+  $.redirect[
+    $.to[http://some.domain/uri/:var]
+    $.status[303]
+  ]
+]
+
+^router.assign[about;$.render[about.pt]]
+^router.assign[about;$.render[$.template[about.pt] $.context[$.var[....]]]]
+
 
 
 Откуда брать первоначальный экшн
@@ -40,6 +66,6 @@ $.requirements -> $.where
 Экшн брать из request:uri вместо form:_action
 
 RewriteCond %{REQUEST_FILENAME} !-f
-RewriteRule ^ _ind.html [L,QSA]
+RewriteRule ^ _ind.html [L]
 
 
