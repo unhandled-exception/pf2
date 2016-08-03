@@ -30,6 +30,7 @@ _findModule должен будет вернуть начало (prefix) и ос
 Функции:
 ^router.assign[:userID/edit;user/edit;$.where[$.userID[\d+]]] -> ^onUserEdit[$.userID[...]]
 ^router.assign[:userID/edit;&edit;$.as[user/edit]] — ^edit[$.userID[...]]
+^router.assign[:userID/edit;$.function[edit];$.as[edit]] - ^edit[$.userID[...]]
 
 Модули:
 ^assignModule[settings;path/to/settings.p@modSettings]
@@ -46,6 +47,8 @@ _findModule должен будет вернуть начало (prefix) и ос
 -> ^router.assign[clients/:clientID/account;@account;...]
 -> ^router.assign[clients/:clientID/account;$.module[account];...]
 
+^router.assign[some/uri/:var/*trap;another/uri/*trap] - преобразование одного маршрута в другой. [Требуется рекурсивный проход?]
+
 
 ^router.assign[old/uri/:var;$.redirect[new/uri/:var]]
 ^router.assign[old/uri/:var;$.redirect[http://some.domain/uri/:var]]
@@ -59,6 +62,9 @@ _findModule должен будет вернуть начало (prefix) и ос
 ^router.assign[about;$.render[about.pt]]
 ^router.assign[about;$.render[$.template[about.pt] $.context[$.var[....]]]]
 
+^router.assign[about;render::/about.pt]
+^router.assign[edit;call::edit]
+^router.assign[old/uri/:var;redirect::/new/uri/:var]
 
 
 Откуда брать первоначальный экшн

@@ -58,7 +58,7 @@ pfClass
   $self.action[]
   $self.request[$aOptions.request]
 
-  $self.router[^self.ifdef[$aOptions.router]{^pfRouter::create[]}]
+  $self.router[^self.ifdef[$aOptions.router]{^pfRouter::create[$self]}]
 
   $self.MIDDLEWARES[^hash::create[]]
 
@@ -106,7 +106,7 @@ pfClass
 ## aArgs — параметры, которые передаются конструктору.
 ## aArgs.mountTo[$aName] — точка монтирования относительно текущего модуля.
   $result[]
-  ^self.cleanMethodArgument[]
+  ^self.cleanMethodArgument[aArgs]
   $aName[^aName.trim[both;/]]
 
   ^self.__pfChainMixin__.assignModule[$aName;$aClassDef;$aArgs]
@@ -144,7 +144,7 @@ pfClass
 @dispatch[aAction;aRequest;aOptions] -> [response]
 ## aOptions.prefix
   $result[]
-  $self.action[$aAction]
+  $self.action[^aAction.trim[/]]
   $self.request[$aRequest]
 
   ^self.MIDDLEWARES.foreach[_;lMiddleware]{
@@ -161,7 +161,7 @@ pfClass
     $self.action[$lResult.action]
     $self.request[$lResult.request]
     ^try{
-      $result[^self.processAction[$self.action;$self.request;$lResult.prefix;$aOptions]]
+      $result[^self.processAction[$self.action;$self.request;$lResult.prefix;$lResult.processor;$aOptions]]
       $result[^self.processResponse[$self.action;$self.request;$result;$aOptions]]
     }{
        $result[^self.processException[$self.action;$self.request;$exception;$aOptions]]
@@ -172,9 +172,8 @@ pfClass
     }
   }
 
-@processRequest[aAction;aRequest;aOptions] -> [$.action[] $.request[] $.prefix[] $.response[]]
+@processRequest[aAction;aRequest;aOptions] -> [$.action[] $.request[] $.prefix[] $.response[] $.processor[]]
 ## Производит предобработку запроса
-## $result[$.action[] $.request[] $.prefix[] $.render[]] — экшн, запрос, префикс, параметры шаблона, которые будут переданы обработчикам
   $result[^self.router.route[$aAction;$.args[$aRequest]]]
   ^if(!$result){
     $result[$.action[$aAction] $.args[^hash::create[]] $.prefix[]]
@@ -184,30 +183,13 @@ pfClass
     ^result.request.assign[$result.args]
   }
 
-@processAction[aAction;aRequest;aLocalPrefix;aOptions] -> [response]
+@processAction[aAction;aRequest;aLocalPrefix;aProcessor;aOptions] -> [response]
 ## Производит вызов экшна.
 ## aOptions.prefix — префикс, сформированный в processRequest.
-  $lAction[$aAction]
-  $lRequest[$aRequest]
-  ^if(def $aLocalPrefix){$self.localUriPrefix[$aLocalPrefix]}
-  ^if(def $aOptions.prefix){$self.uriPrefix[$aOptions.prefix]}
-
-  $lModule[^self._findModule[$aAction]]
-  ^if(def $lModule){
-#   Если у нас в первой части экшна имя модуля, то передаем управление модулю
-    $self.activeModule[$lModule.name]
-    $result[^self.[$lModule.name].dispatch[^lAction.mid(^lModule.mountTo.length[]);$lRequest;
-      $.prefix[$uriPrefix/^if(def $aLocalPrefix){$aLocalPrefix/}{$lModule.mountTo/}]
-    ]]
-  }{
-#    Если модуля нет, то пытаемся найти и запустить экш из нашего модуля
-     $lHandler[^self._findHandler[$lAction;$lRequest]]
-     ^if(def $lHandler){
-       $result[^self.[$lHandler][$lRequest]]
-     }{
-        ^self.abort(404)[Action "$lAction" not found.]
-      }
-   }
+  $result[]
+  ^if(def $aProcessor){
+    $result[^aProcessor.process[$aAction;$aRequest;$aLocalPrefix;$aOptions]]
+  }
 
 @processException[aAction;aRequest;aException;aOptions] -> [response]
 ## Обрабатывает исключительную ситуацию, возникшую в обработчике.
@@ -364,7 +346,108 @@ pfClass
     $result[${result}?^aOptions.foreach[key;value]{$key=^taint[uri][$value]}[^taint[&]]]
   }
 
-@_makeActionName[aAction]
+#--------------------------------------------------------------------------------------------------
+
+@CLASS
+pfRouter
+
+@BASE
+pfClass
+
+@OPTIONS
+locals
+
+@create[aController;aOptions]
+  ^BASE:create[]
+  $self.controller[$aController]
+
+  $self.processors[^hash::create[]]
+  ^self.registerProcessor[default;pfRouterDefaultProcessor]
+
+@registerProcessor[aName;aClassDef;aOptions] -> []
+## Регистрирует новый процессор для вызова
+## Процессор с именем default считаем процессором по-умолчанию.
+  $result[]
+  $lProcessor[^hash::create[]]
+  $lProcessor.classDef[^pfChainMixin:_parseClassDef[$aClassDef]]
+  $lProcessor.options[$aOptions]
+  $self.processors.[$aName][$lProcessor]
+
+@auto[]
+  $self.__pfRouter__[$void]
+
+@assign[aPattern;aRouteTo;aOptions]
+  $result[]
+
+@route[aAction;aRequest;aOptions] -> [$.action $.request $.processor]
+  $result[^hash::create[]]
+  $result.action[^aAction.trim[/]]
+  $result.request[$aRequest]
+  $result.processor[^self.createProcessor[default]]
+
+@createProcessor[aName;aProcessorData;aOptions]
+  $lProcessor[^self.ifcontains[$self.processors;$aName]{$self.processors.default}]
+  $result[^reflection:create[$lProcessor.classDef.className;$lProcessor.classDef.constructor;$self;$aProcessorData;$aOptions]]
+
+@reverse[aAction;aArgs;aOptions]
+  $result[^hash::create[]]
+
+
+
+
+@CLASS
+pfRouterProcessor
+
+@OPTIONS
+locals
+
+@create[aRouter;aProcessorData;aOptions] ::constructor
+  $self.router[$aRouter]
+  $self.controller[$aRouter.controller]
+
+@process[aAction;aRequest;aPrefix;aOptions]
+  $result[]
+
+
+
+@CLASS
+pfRouterDefaultProcessor
+
+@BASE
+pfRouterProcessor
+
+@OPTIONS
+locals
+
+@create[aRouter;aProcessorData;aOptions]
+  ^BASE:create[$aRouter;$aProcessorData;$aOptions]
+
+@process[aAction;aRequest;aPrefix;aOptions]
+  $lController[$self.controller]
+  $lAction[$aAction]
+  $lRequest[$aRequest]
+
+  ^if(def $aLocalPrefix){$lController.localUriPrefix[$aLocalPrefix]}
+  ^if(def $aOptions.prefix){$lController.uriPrefix[$aOptions.prefix]}
+
+  $lModule[^self.findModule[$aAction]]
+  ^if(def $lModule){
+#   Если у нас в первой части экшна имя модуля, то передаем управление модулю
+    $lController.activeModule[$lModule.name]
+    $result[^lController.[$lModule.name].dispatch[^lAction.mid(^lModule.mountTo.length[]);$lRequest;
+      $.prefix[$lController.uriPrefix/^if(def $aLocalPrefix){$aLocalPrefix/}{$lModule.mountTo/}]
+    ]]
+  }{
+#    Если модуля нет, то пытаемся найти и запустить экш из нашего модуля
+     $lHandler[^self.findHandler[$lAction;$lRequest]]
+     ^if(def $lHandler){
+       $result[^lController.[$lHandler][$lRequest]]
+     }{
+        ^lController.abort(404)[Action "$lAction" not found.]
+      }
+   }
+
+@makeActionName[aAction]
 ## Формирует имя метода для экшна.
   ^if(def $aAction){
     $aAction[^aAction.lower[]]
@@ -376,11 +459,11 @@ pfClass
      $result[onINDEX]
    }
 
-@_findModule[aAction]
+@findModule[aAction]
 ## Ищет модуль по имени экшна
   $result[]
   ^if(def $aAction){
-    ^self.MODULES.foreach[k;v]{
+    ^self.controller.MODULES.foreach[k;v]{
       ^if(^aAction.match[^^^taint[regex][$v.mountTo] (/|^$)][ixn]){
         $result[$v]
         ^break[]
@@ -388,19 +471,19 @@ pfClass
     }
   }
 
-@_findHandler[aAction;aRequest]
+@findHandler[aAction;aRequest]
 ## Ищет и возвращает имя функции-обработчика для экшна.
-  $result[^self._makeActionName[$aAction]]
+  $result[^self.makeActionName[$aAction]]
 
 # Ищем onActionHTTPMETHOD-обработчик
   $lMethod[^aRequest.method.upper[]]
-  ^if(def $result && $self.[${result}$lMethod] is junction){
+  ^if(def $result && $self.controller.[${result}$lMethod] is junction){
     $result[${result}$lMethod]
   }
 
 # Если обработчика нет, то ищем onDEFAULT.
-  ^if(!def $result || !($self.[$result] is junction)){
-    $result[^if($onDEFAULT is junction){onDEFAULT}]
+  ^if(!def $result || !($self.controller.[$result] is junction)){
+    $result[^if($self.controller.onDEFAULT is junction){onDEFAULT}]
   }
 
 #--------------------------------------------------------------------------------------------------
@@ -644,209 +727,6 @@ pfResponse
 ## aStatus[302]
   ^BASE:create[;$.type[redirect] $.status[^ifdef[$aStatus]{302}]]
   $self.headers.location[^untaint{$aLocation}]
-
-#--------------------------------------------------------------------------------------------------
-
-@CLASS
-pfRouter
-
-## Класс для преобразования url'ов. Реализует микроязык для поиска переменных в строках запроса.
-
-@OPTIONS
-locals
-
-@BASE
-pfClass
-
-@create[aOptions]
-  ^self.cleanMethodArgument[]
-  ^BASE:create[]
-
-  $self._routes[^hash::create[]]
-  $self._segmentSeparators[\./]
-  $self._varRegexp[[^^$self._segmentSeparators]+]
-  $self._trapRegexp[(.*)]
-
-  $self._rootRoute[]
-  ^self.root[]
-
-@auto[]
-  $self._pfRouterPatternVar[([:\*])\{?([\p{L}\p{Nd}_\-]+)\}?]
-  $self._pfRouterPatternRegex[^regex::create[$self._pfRouterPatternVar][g]]
-  $self._pfRouteRootRegex[^regex::create[^^^$]]
-
-@assign[aPattern;aRouteTo;aOptions]
-## Добавляет новый шаблон aPattern в список маршрутов
-## aRouteTo — новый маршрут (может содержать переменные)
-## aOptions.defaults[] — хеш со значениями переменных шаблона "по-умолчанию"
-## aOptions.requirements[] — хеш с регулярными выражениями для проверки переменных шаблона
-## aOptions.prefix[] — дополнительный, вычисляемый префикс для путей (может содержать переменные)
-## aOptions.reversePrefix[] — префикс маршрута при бэкрезолве
-## aOptions.name[] — имя шаблона (используется в reverse, нечувствительно к регистру)
-## aOptions.ignoreCase(true) — игнорироавть регистр букв при обработке шаблона
-## aOptions.strict(false) — включает "строгий" режим проверки шаблона.
-## aOptions.render[$.name $.template] — хеш с параметрами шаблона, который надо выполнить.
-  ^self.cleanMethodArgument[]
-  $result[]
-
-  ^if(!def $aOptions.defaults){$aOptions.defaults[^hash::create[]]}
-  ^if(!def $aOptions.requirements){$aOptions.requirements[^hash::create[]]}
-
-  $lCompiledPattern[^self._compilePattern[$aPattern;$aOptions]]
-  $self._routes.[^eval($self._routes + 1)][
-    $.pattern[$lCompiledPattern.pattern]
-    $.regexp[^regex::create[$lCompiledPattern.regexp][^if(^aOptions.ignoreCase.bool(true)){i}]]
-    $.ignoreCase(^aOptions.ignoreCase.bool(true))
-    $.vars[$lCompiledPattern.vars]
-    $.trap[$lCompiledPattern.trap]
-
-    $.routeTo[^self._trimPath[$aRouteTo]]
-    $.prefix[$aOptions.prefix]
-    $.reversePrefix[$aOptions.reversePrefix]
-
-    $.defaults[$aOptions.defaults]
-    $.requirements[$aOptions.requirements]
-    $.name[^if(def $aOptions.name){^aOptions.name.lower[]}]
-    $.strict(^aOptions.strict.bool(false))
-    $.render[$aOptions.render]
-  ]
-
-@root[aRouteTo;aOptions]
-## Добавляет действие для пустого роута
-## aRouteTo — новый маршрут (может содержать переменные)
-## aOptions.defaults[] — хеш со значениями переменных шаблона "по-умолчанию"
-## aOptions.prefix[] — дополнительный, вычисляемый префикс для путей (может содержать переменные)
-## aOptions.render[$.template $.vars] — хеш с параметрами шаблона, который надо выполнить.
-  ^self.cleanMethodArgument[]
-  ^if(!def $aOptions.defaults){$aOptions.defaults[^hash::create[]]}
-  ^if(!def $aOptions.requirements){$aOptions.requirements[^hash::create[]]}
-  $self._rootRoute[
-    $.routeTo[^self._trimPath[$aRouteTo]]
-    $.prefix[^if(def $aOptions.prefix){$aOptions.prefix}{^self._trimPath[$aRouteTo]}]
-    $.defaults[$aOptions.defaults]
-    $.regexp[$self._pfRouteRootRegex]
-    $.vars[^table::create{var}]
-    $.render[$aOptions.render]
-  ]
-
-@route[aPath;aOptions]
-## Выполняет поиск и преобразование пути по списку маршрутов
-## aOptions.args
-## result[$.action $.args $.prefix $.render]
-  ^self.cleanMethodArgument[]
-  $result[^hash::create[]]
-  $aPath[^self._trimPath[$aPath]]
-  ^if(def $aPath){
-    ^self._routes.foreach[k;it]{
-      $lParsedPath[^self._parsePathByRoute[$aPath;$it;$.args[$aOptions.args]]]
-      ^if($lParsedPath){
-        $result[$lParsedPath]
-        ^break[]
-      }
-    }
-  }{
-     $result[^self._parsePathByRoute[$aPath;$self._rootRoute;$.args[$aOptions.args]]]
-   }
-
-@reverse[aAction;aArgs;aOptions]
-## aAction — имя экшна или роута
-## aArgs — хеш с параметрами для преобразования
-## aOptions.form — дополнительные параметры для маршрута
-## aOptions.onlyPatternVars(false) — использовать только те переменные из aArgs, которые определены в маршруте или aOptions.form
-## result[$.path[] $.prefix[] $.reversePrefix[] $.args[]] — если ничего не нашли, возвращаем пустой хеш
-  ^self.cleanMethodArgument[]
-  $result[^hash::create[]]
-  $lOnlyPatternsVar(^aOptions.onlyPatternVars.bool(false))
-
-  $aAction[^self._trimPath[$aAction]]
-  $aArgs[^if($aArgs is table){$aArgs.fields}{^hash::create[$aArgs]}]
-  ^aArgs.add[$aOptions.form]
-  ^self._routes.foreach[k;it]{
-#   Ищем подходящий маршрут по action (если в routeTo содержатся переменные, то лучше использовать name для маршрута)
-    ^if((def $it.name && $aAction eq $it.name) || $aAction eq $it.routeTo){
-      $lPath[^self._applyPath[$it.pattern;$aArgs]]
-#     Проверяем соответствует ли полученный путь шаблоу (с ограничениями requirements)
-      ^if(^lPath.match[$it.regexp]){
-#       Добавляем оставшиеся параметры из aArgs или aOptions.form в result.args
-        $result.path[$lPath]
-        $result.prefix[^self._applyPath[$it.prefix;$aArgs]]
-        $result.reversePrefix[^self._applyPath[$it.reversePrefix;$aArgs]]
-        ^if($lOnlyPatternsVar){
-          $result.args[^hash::create[$aOptions.form]]
-        }{
-           $result.args[$aArgs]
-         }
-        ^result.args.sub[$it.vars]
-        ^break[]
-      }
-    }
-  }
-
-  ^if(!$result && $aAction eq $self._rootRoute.routeTo){
-#   Если не нашли реверс, то проверяем рутовый маршрут
-    $result.path[]
-    $result.prefix[^self._applyPath[$self._rootRoute.prefix;$aArgs]]
-    $result.args[$aArgs]
-  }
-
-@_trimPath[aPath]
-  $result[^if(def $aPath){^aPath.trim[both;/. ^#0A]}]
-
-@_compilePattern[aRoute;aOptions]
-## result[$.pattern[] $.regexp[] $.vars[] $.trap[]]
-  $result[
-    $.vars[^hash::create[]]
-    $.pattern[^self._trimPath[$aRoute]]
-    $.trap[]
-  ]
-  $lPattern[^untaint[regex]{/$result.pattern}]
-
-# Разбиваем шаблон на сегменты и компилируем их в регулярные выражения
-  $lSegments[^hash::create[]]
-  $lParts[^lPattern.match[([$self._segmentSeparators])([^^$self._segmentSeparators]+)][g]]
-  ^lParts.menu{
-     $lHasVars(false)
-     $lHasTrap(false)
-     $lRegexp[^lParts.2.match[$self._pfRouterPatternRegex][]{^if($match.1 eq ":"){(^if(def $aOptions.requirements.[$match.2]){^aOptions.requirements.[$match.2].match[\((?!\?[=!<>])][g]{(?:}}{$self._varRegexp})}{$self._trapRegexp}^if($match.1 eq "*"){$result.trap[$match.2]$lHasTrap(true)}$result.vars.[$match.2](true)$lHasVars(true)}]
-     $lSegments.[^eval($lSegments + 1)][
-       $.prefix[$lParts.1]
-       $.regexp[$lRegexp]
-       $.hasVars($lHasVars)
-       $.hasTrap($lHasTrap)
-     ]
-  }
-
-# Собираем регулярное выражение для всего шаблона.
-# Закрывающие скобки ставим в обратном порядке. :)
-  $result.regexp[^^^lSegments.foreach[k;it]{^if($it.hasVars){(?:}^if($k>1){\$it.prefix}$it.regexp}^for[i](1;$lSegments){$it[^lSegments._at(-$i)]^if($it.hasVars){)^if(!$aOptions.strict || $it.hasTrap){?}}}^$]
-
-@_parsePathByRoute[aPath;aRoute;aOptions]
-## Преобразует aPath по правилу aOptions.
-## aOptions.args
-## result[$.action $.args $.prefix]
-  $result[^hash::create[]]
-  $lVars[^aPath.match[$aRoute.regexp]]
-  ^if($lVars){
-    $result.args[^hash::create[$aRoute.defaults]]
-    ^if($aRoute.vars){
-      $i(1)
-      ^aRoute.vars.foreach[k;v]{
-        ^if(def $lVars.$i){
-          $result.args.[$k][$lVars.$i]
-        }
-        ^i.inc[]
-      }
-    }
-    $result.action[^self._applyPath[$aRoute.routeTo;$result.args;$aOptions.args]]
-    $result.prefix[^self._applyPath[$aRoute.prefix;$result.args;$aOptions.args]]
-    $result.render[$aRoute.render]
-  }
-
-@_applyPath[aPath;aVars;aArgs]
-## Заменяет переменные в aPath. Значения переменных ищутся в aVars и aArgs.
-  ^self.cleanMethodArgument[aVars]
-  ^self.cleanMethodArgument[aArgs]
-  $result[^if(def $aPath){^aPath.match[$self._pfRouterPatternRegex][]{^if(^aVars.contains[$match.2]){$aVars.[$match.2]}{^if(^aArgs.contains[$match.2] || $match.1 eq "*"){$aArgs.[$match.2]}}}}]
 
 #--------------------------------------------------------------------------------------------------
 
