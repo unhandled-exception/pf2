@@ -21,7 +21,10 @@ pf2/lib/web/controllers.p
   Sub module render 2: ^c.test[clients/about2]
   Sub module render 3: ^c.test[clients/123/about]
 
-  Sub module call: ^c.test[clients/345/edit]
+  Sub module call: ^c.test[/clients/345/edit]
+
+  Sub mount module: ^c.test[/mount/to/1/two]
+  Sub mount module: ^c.test[/mount/to/2/two/and/one/action]
 
   Finish tests.^#0A
 
@@ -47,7 +50,13 @@ pfController
     $.templateFolder[assets/router/templates/]
   ]
 
+  ^router.where[$.var2[\w+]]
+
   ^assignModule[clients;testSubModule]
+  ^assignModule[mount;testSubMountModule;
+    $.mountTo[mount/to/:var1/:var2]
+    $.mountToWhere[$.var1[\d+]]
+  ]
   ^router.assign[users/:userID;users]
 
 @test[aAction]
@@ -64,6 +73,25 @@ pfController
 @onUsers[aRequest]
   $result[User — $aRequest.userID]
 
+
+
+@CLASS
+testSubMountModule
+
+@BASE
+pfController
+
+@OPTIONS
+locals
+
+@create[aOptions]
+  ^BASE:create[$aOptions]
+
+@onINDEX[aRequest]
+  $result[Vars: $aRequest.var1, $aRequest.var2 Action — $self.action Prefix — $self.uriPrefix MountTo — $self.mountTo]
+
+@onNOTFOUND[aRequest]
+  $result[Mount module not found. Vars: $aRequest.var1, $aRequest.var2 Action — $self.action Prefix — $self.uriPrefix MountTo — $self.mountTo ^json:string[$self.mountToWhere]]
 
 
 @CLASS

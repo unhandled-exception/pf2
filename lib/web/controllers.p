@@ -14,8 +14,8 @@ locals
 pfClass
 
 @create[aOptions]
-## aOptions.mountTo[/] — место монтирования. Нужно передавать только в головной модуль,
-##                       поскольку метод assignModule будт вычислять точку монтирования самостоятельно.
+## aOptions.mountTo[/] — место монтирования. Вручную передавать не нужно — это сделает assignModule.
+## aOptions.mountToWhere
 ## aOptions.parentModule — ссылка на объект-контейнер.
 ## aOptions.appendSlash(true) — нужно ли добавлять к урлам слеш.
 ## aOptions.router
@@ -37,16 +37,19 @@ pfClass
       $.rootController[_rootController]
     ]
   ]
+  $self.router[^self.ifdef[$aOptions.router]{^pfRouter::create[$self]}]
 
   $self._exceptionPrefix[controller]
   $self._parentController[$aOptions.parent]
   $self._rootController[^self.ifdef[$aOptions.rootController]{$self}]
 
   $self.mountTo[^self.ifdef[^aOptions.mountTo.trim[end;/]]{/}]
-  $self._appendSlash(^aOptions.appendSlash.bool(true))
+  $self.mountToWhere[^hash::create[$aOptions.mountToWhere]]
+  $self._compiledMountTo[^self.router.compilePattern[$aOptions.mountTo;$.asPrefix(true)]]
 
-  $self.uriPrefix[$self.mountTo]
-  $self._localUriPrefix[]
+  $self._uriPrefix[^if(!$self.compiledMountTo.hasVars){$self.mountTo}]
+
+  $self._appendSlash(^aOptions.appendSlash.bool(true))
 
   $self.template[^self.ifdef[$aOptions.template]{^pfTemplate::create[$.searchPath[$aOptions.templateFolder]]}]
   $self._templatePrefix[^aOptions.templatePrefix.trim[both;/]]
@@ -58,7 +61,6 @@ pfClass
   $self.action[]
   $self.request[$aOptions.request]
 
-  $self.router[^self.ifdef[$aOptions.router]{^pfRouter::create[$self]}]
 
   $self.MIDDLEWARES[^hash::create[]]
 
@@ -84,13 +86,6 @@ pfClass
   $self._uriPrefix[^aUriPrefix.trim[right;/.]/]
   $self._uriPrefix[^_uriPrefix.match[$self.__pfController__.repeatableSlashRegex][][/]]
 
-@GET_localUriPrefix[]
-  $result[$self._localUriPrefix]
-
-@SET_localUriPrefix[aLocalUriPrefix]
-  $self._localUriPrefix[^aLocalUriPrefix.trim[right;/]]
-  $self._localUriPrefix[^self._localUriPrefix.match[$self.__pfController__.repeatableSlashRegex][][/]]
-
 @run[aRequest;aOptions] -> []
 ## Запускает процесс. Если вызван метод run, то модуль становится «менеджером».
   ^self.cleanMethodArgument[]
@@ -105,6 +100,7 @@ pfClass
 ## aClassDef[path/to/package.p@className::constructor]
 ## aArgs — параметры, которые передаются конструктору.
 ## aArgs.mountTo[$aName] — точка монтирования относительно текущего модуля.
+## aArgs.mountToWhere — регулярные выражения для проверки переменных в mountTo.
   $result[]
   ^self.cleanMethodArgument[aArgs]
   $aName[^aName.trim[both;/]]
@@ -112,18 +108,20 @@ pfClass
   ^self.__pfChainMixin__.assignModule[$aName;$aClassDef;$aArgs]
   $lModule[$MODULES.[$aName]]
   $lModule.mountTo[^if(def $aArgs.mountTo){^aArgs.mountTo.trim[both;/]}{$aName}]
+  $lModule.compiledMountTo[^self.router.compilePattern[$lModule.mountTo;
+    $.asPrefix(true)
+    $.where[$aArgs.mountToWhere]
+  ]]
 
-  $lModule.args.mountTo[$self.mountTo/$lModule.mountTo]
+  $lModule.args.mountTo[^if($self.mountTo ne "/"){$self.mountTo}/$lModule.mountTo]
+  $lModule.args.mountToWhere[^hash::create[$self.mountToWhere]]
+  ^lModule.args.mountToWhere.add[$lModule.compiledMountTo.where]
+
   $lModule.args.templatePrefix[^self.ifcontains[$lModule.args;templatePrefix]{$self._templatePrefix/$aName}]
 
 @hasModule[aName]
 ## Проверяет есть ли у нас модуль с имененм aName
   $result(^self.MODULES.contains[$aName])
-
-@hasAction[aAction]
-## Проверяем есть ли в модуле обработчик aAction
-  $lHandler[^self._makeActionName[$aAction]]
-  $result($$lHandler is junction)
 
 @assignMiddleware[aObject;aConstructorOptions] -> []
 ## aObject[class def|middleware object] — определение класса или вызов конструктора
@@ -142,10 +140,13 @@ pfClass
   $self.MIDDLEWARES.[^eval($self.MIDDLEWARES + 1)][$lMiddleware]
 
 @dispatch[aAction;aRequest;aOptions] -> [response]
-## aOptions.prefix
+## aOptions.prefix — вычисленный префикс для модуля
   $result[]
   $self.action[^aAction.trim[/]]
   $self.request[$aRequest]
+
+  $lOldPrefix[$self.uriPrefix]
+  $self.uriPrefix[$aOptions.prefix]
 
   ^self.MIDDLEWARES.foreach[_;lMiddleware]{
     $result[^lMiddleware.processRequest[$aAction;$aRequest;$self;$aOptions]]
@@ -171,6 +172,8 @@ pfClass
       $result[^lMiddleware.processResponse[$self.action;$self.request;$result;$self;$aOptions]]
     }
   }
+
+  $self.uriPrefix[$lOldPrefix]
 
 @processRequest[aAction;aRequest;aOptions] -> [$.action[] $.request[] $.prefix[] $.response[] $.processor[]]
 ## Производит предобработку запроса
@@ -408,7 +411,8 @@ locals
   $lRouteTo[^_makeRouteTo[$aRouteTo]]
   $lRoute[
     $.pattern[$lCompiledPattern.pattern]
-    $.regexp[^regex::create[$lCompiledPattern.regexp][]]
+    $.regexp[$lCompiledPattern.regexp]
+    $.compiledRegexp[^regex::create[$lCompiledPattern.regexp][]]
     $.vars[$lCompiledPattern.vars]
     $.trap[$lCompiledPattern.trap]
 
@@ -465,6 +469,7 @@ locals
 
 @compilePattern[aRoute;aOptions]
 ## aOptions.asPrefix(false) — компилировать как префикс
+## aOptions.where — регулярные выражения для переменных
 ## result[$.pattern[] $.regexp[] $.vars[] $.trap[] $.hasVars]
   $result[
     $.vars[^hash::create[]]
@@ -491,6 +496,7 @@ locals
      ]
      ^if($lHasVars){^result.hasVars.inc[]}
   }
+  $result.where[$lWhere]
 
 # Собираем регулярное выражение для всего шаблона.
 # Закрывающие скобки ставим в обратном порядке. :)
@@ -504,7 +510,7 @@ locals
 ## aOptions.args
 ## result[$.action $.args $.prefix]
   $result[^hash::create[]]
-  $lVars[^aPath.match[$aRoute.regexp]]
+  $lVars[^aPath.match[$aRoute.compiledRegexp]]
   ^if($lVars){
     $result.args[^hash::create[$aOptions.args]]
     ^if($aRoute.vars){
@@ -560,12 +566,12 @@ locals
   ^if(def $aPrefix){$lController.localUriPrefix[$aPrefix]}
   ^if(def $aOptions.prefix){$lController.uriPrefix[$aOptions.prefix]}
 
-  $lModule[^self.findModule[$aAction]]
-  ^if(def $lModule){
+  $lModule[^self.findModule[$aAction;$lRequest]]
+  ^if($lModule){
 #   Если у нас в первой части экшна имя модуля, то передаем управление модулю
-    $lController.activeModule[$lModule.name]
-    $result[^lController.[$lModule.name].dispatch[^lAction.mid(^lModule.mountTo.length[]);$lRequest;
-      $.prefix[$lController.uriPrefix/^if(def $aPrefix){$aPrefix/}{$lModule.mountTo/}]
+    $lController.activeModule[$lModule.module.name]
+    $result[^lController.[$lModule.module.name].dispatch[$lModule.action;$lRequest;
+      $.prefix[$lController.uriPrefix/$lModule.prefix]
     ]]
   }{
 #    Если модуля нет, то пытаемся найти и запустить экш из нашего модуля
@@ -589,13 +595,25 @@ locals
      $result[onINDEX]
    }
 
-@findModule[aAction]
+@findModule[aAction;aRequest] -> [$.module $.prefix $.action]
 ## Ищет модуль по имени экшна
-  $result[]
+  $result[^hash::create[]]
   ^if(def $aAction){
     ^self.controller.MODULES.foreach[k;v]{
-      ^if(^aAction.match[^^^taint[regex][$v.mountTo] (/|^$)][ixn]){
-        $result[$v]
+      $lFound[^aAction.match[$v.compiledMountTo.regexp][ix']]
+      ^if($lFound){
+        $result.module[$v]
+        $result.prefix[^lFound.match.trim[/]]
+        $result.action[$lFound.postmatch]
+        ^if($v.compiledMountTo.hasVars){
+          $lArgs[^hash::create[]]
+          $i(1)
+          ^v.compiledMountTo.vars.foreach[k;_]{
+            $lArgs.[$k][$lFound.[$i]]
+            ^i.inc[]
+          }
+          ^aRequest.assign[$lArgs]
+        }
         ^break[]
       }
     }
