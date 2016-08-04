@@ -137,7 +137,7 @@ pfClass
   }{
      $lMiddleware[$aObject]
    }
-  $self.MIDDLEWARES.[^eval($self.MIDDLEWARES + 1)][$lMiddleware]
+  $self.MIDDLEWARES.[^math:uid64[]][$lMiddleware]
 
 @dispatch[aAction;aRequest;aOptions] -> [response]
 ## aOptions.prefix — вычисленный префикс для модуля
@@ -366,6 +366,8 @@ locals
   ^self.registerProcessor[call;pfRouterCallProcessor]
 
   $self.routes[^hash::create[]]
+  $self._reverseIndex[^hash::create[]]
+
   $self._where[^hash::create[]]
   $self._defaults[^hash::create[]]
 
@@ -398,7 +400,7 @@ locals
 @assign[aPattern;aRouteTo;aOptions] -> []
 ## Добавляет новый маршрут в роутер.
 ## aRouteTo — новый маршрут (может содержать переменные)
-## aOptions.as[] — имя шаблона (используется в reverse, нечувствительно к регистру)
+## aOptions.as[] — имя шаблона (используется в reverse)
 ## aOptions.defaults[] — хеш со значениями переменных шаблона "по-умолчанию"
 ## aOptions.where[] — хеш с регулярными выражениями для проверки переменных шаблона
   ^self.cleanMethodArgument[]
@@ -418,11 +420,16 @@ locals
 
     $.defaults[^hash::create[$aOptions.defaults]]
     $.where[^hash::create[$aOptions.requirements]]
-    $.as[$aOptions.as]
+    $.as[^self.trimPath[^self.ifdef[$aOptions.as]{$lRouteTo.routeTo}]]
   ]
   $lRoute.processor[$lRouteTo.processor]
+  $self.routes.[^math:uid64[]][$lRoute]
 
-  $self.routes.[^eval($self.routes + 1)][$lRoute]
+# Добавляем маршрут в обратный индекс
+  ^if(def $lRoute.as){
+    $self._reverseIndex.[$lRoute.as][^self.ifcontains[$self._reverseIndex;$lRoute.as]{^hash::create[]}]
+    $self._reverseIndex.[$lRoute.as].[^math:uid64[]][$lRoute]
+  }
 
 @_makeRouteTo[aRouteTo] -> [$.routeTo[] $.processor[]]
   $result[$.routeTo[]]
@@ -483,19 +490,17 @@ locals
     }{
       $result.path[$lModule.mountTo]
     }
-  }{
-    ^self.routes.foreach[k;it]{
-#     Ищем подходящий маршрут по action (если в routeTo содержатся переменные, то лучше использовать $.as для маршрута)
-      ^if((def $it.as && $aAction eq $it.as) || $aAction eq $it.routeTo){
-        $lPath[^self.applyPath[$it.pattern;$aArgs]]
-#       Проверяем соответствует ли полученный путь шаблоу (с ограничениями requirements)
-        ^if(^lPath.match[$it.regexp][n]){
-#         Добавляем оставшиеся параметры из aArgs или aOptions.form в result.args
-          $result.path[$lPath]
-          $result.args[^if($lOnlyPatternsVar){^hash::create[$aOptions.form]}{$aArgs}]
-          ^result.args.sub[$it.vars]
-          ^break[]
-        }
+  }(^self._reverseIndex.contains[$aAction]){
+    $lRoutes[$self._reverseIndex.[$aAction]]
+    ^lRoutes.foreach[k;it]{
+      $lPath[^self.applyPath[$it.pattern;$aArgs]]
+#     Проверяем соответствует ли полученный путь шаблоу (с ограничениями requirements)
+      ^if(^lPath.match[$it.regexp][n]){
+#       Добавляем оставшиеся параметры из aArgs или aOptions.form в result.args
+        $result.path[$lPath]
+        $result.args[^if($lOnlyPatternsVar){^hash::create[$aOptions.form]}{$aArgs}]
+        ^result.args.sub[$it.vars]
+        ^break[]
       }
     }
   }
