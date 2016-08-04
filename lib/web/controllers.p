@@ -636,23 +636,31 @@ locals
 @findModule[aAction;aRequest] -> [$.module $.prefix $.action]
 ## Ищет модуль по имени экшна
   $result[^hash::create[]]
+  $aAction[^aAction.trim[/]]
   ^if(def $aAction){
-    ^self.controller.MODULES.foreach[k;v]{
-      $lFound[^aAction.match[$v.compiledMountTo.regexp][ix']]
-      ^if($lFound){
-        $result.module[$v]
-        $result.prefix[^lFound.match.trim[/]]
-        $result.action[$lFound.postmatch]
-        ^if($v.compiledMountTo.hasVars){
-          $lArgs[^hash::create[]]
-          $i(1)
-          ^v.compiledMountTo.vars.foreach[k;_]{
-            $lArgs.[$k][$lFound.[$i]]
-            ^i.inc[]
+    $lModule[$self.controller.MODULES.[$aAction]]
+    ^if(def $lModule){
+      $result.module[$lModule]
+      $result.prefix[$aAction]
+      $result.action[]
+    }{
+      ^self.controller.MODULES.foreach[k;v]{
+        $lFound[^aAction.match[$v.compiledMountTo.regexp][ix']]
+        ^if($lFound){
+          $result.module[$v]
+          $result.prefix[^lFound.match.trim[/]]
+          $result.action[$lFound.postmatch]
+          ^if($v.compiledMountTo.hasVars){
+            $lArgs[^hash::create[]]
+            $i(1)
+            ^v.compiledMountTo.vars.foreach[k;_]{
+              $lArgs.[$k][$lFound.[$i]]
+              ^i.inc[]
+            }
+            ^aRequest.assign[$lArgs]
           }
-          ^aRequest.assign[$lArgs]
+          ^break[]
         }
-        ^break[]
       }
     }
   }
