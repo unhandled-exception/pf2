@@ -275,16 +275,44 @@ pfClass
 @abort[aStatus;aData]
   ^throw[http.^aStatus.int(500);$aData]
 
+@makeLinkURI[aAction;aOptions;aAnchor;aPrefix]
+## Формирует url для экшна. Используется в linkTo/linkFor.
+## $uriPrefix$aAction?aOptions.foreach[key=value][&]#aAnchor
+  ^self.cleanMethodArgument[]
+  ^if(def $aAction){$aAction[^aAction.trim[both;/.]]}
+
+  $result[^if(def $aPrefix){^aPrefix.trim[end;/]/}^if(def $aAction){^taint[uri][$aAction]^if($self._appendSlash)[/]}]
+  ^if($self._appendSlash && def $result && ^result.match[$self.__pfController__.checkDotRegex]){$result[^result.trim[end;/]]}
+
+  ^if($aOptions is hash && $aOptions){
+    $result[${result}?^aOptions.foreach[key;value]{$key=^taint[uri][$value]}[^taint[&]]]
+  }
+
 @linkTo[aAction;aOptions;aAnchor]
 ## Формирует ссылку на экшн, выполняя бэкрезолв путей.
 ## aOptions — объект, который поддерживает свойство $aOptions.fields (хеш, таблица и пр.)
   ^self.cleanMethodArgument[]
   $aAction[^aAction.trim[both;/]]
-  $lReverse[^self.router.reverse[$aAction;$aOptions.fields]]
-  ^if($lReverse){
-    $result[^self.makeLinkURI[$lReverse.path;$lReverse.args;$aAnchor;$lReverse.reversePrefix]]
+  $lArgs[^hash::create[$aOptions.fields]]
+
+  ^if(^aAction.left(2) eq "::"){
+#   Для глобального маршрута вычисляем префикс модуля динамически
+    $aAction[^aAction.mid(2)]
+    ^if($self._compiledMountTo.hasVars){
+      $lPrefix[^router.applyPath[$self._compiledMountTo.pattern;$lArgs]]
+      ^lArgs.sub[$self._compiledMountTo.vars]
+    }{
+       $lPrefix[$self.mountTo]
+     }
   }{
-    $result[^self.makeLinkURI[$aAction;$aOptions.fields;$aAnchor]]
+     $lPrefix[$self.uriPrefix]
+   }
+
+  $lReverse[^self.router.reverse[$aAction;$lArgs]]
+  ^if($lReverse){
+    $result[^self.makeLinkURI[$lReverse.path;$lReverse.args;$aAnchor;$lPrefix]]
+  }{
+    $result[^self.makeLinkURI[$aAction;$lArgs;$aAnchor;$lPrefix]]
    }
 
 @linkFor[aAction;aObject;aOptions]
@@ -293,11 +321,25 @@ pfClass
 ## aOptions.form — поля, которые надо добавить к объекту/маршруту
 ## aOptions.anchor — «якорь»
   ^self.cleanMethodArgument[]
+  $aAction[^aAction.trim[both;/]]
+
+  ^if(^aAction.left(2) eq "::"){
+#   Для глобального маршрута вычисляем префикс модуля динамически
+    $aAction[^aAction.mid(2)]
+    ^if($self._compiledMountTo.hasVars){
+      $lPrefix[^router.applyPath[$self._compiledMountTo.pattern;$aObject;$aOptions.form]]
+    }{
+       $lPrefix[$self.mountTo]
+     }
+  }{
+     $lPrefix[$self.uriPrefix]
+   }
+
   $lReverse[^self.router.reverse[$aAction;$aObject;$.form[$aOptions.form] $.onlyPatternVars(true)]]
   ^if($lReverse){
-    $result[^self.makeLinkURI[$lReverse.path;$lReverse.args;$aOptions.anchor;$lReverse.reversePrefix]]
+    $result[^self.makeLinkURI[$lReverse.path;$lReverse.args;$aOptions.anchor;$lPrefix]]
   }{
-    $result[^self.makeLinkURI[$aAction;$aOptions.form;$aAnchor]]
+    $result[^self.makeLinkURI[$aAction;$aOptions.form;$aAnchor;$lPrefix]]
    }
 
 @redirect[aURL;aStatus]
@@ -329,21 +371,6 @@ pfClass
 
 @onINDEX[aRequest]
   ^throw[${self._exceptionPrefix}.index.not.implemented;An onINDEX method is not implemented in the $self.CLASS_NAME class.]
-
-#----- Private -----
-
-@makeLinkURI[aAction;aOptions;aAnchor;aPrefix]
-## Формирует url для экшна
-## $uriPrefix$aAction?aOptions.foreach[key=value][&]#aAnchor
-  ^self.cleanMethodArgument[]
-  ^if(def $aAction){$aAction[^aAction.trim[both;/.]]}
-
-  $result[${uriPrefix}^if(def $aPrefix){^aPrefix.trim[both;/]/}{^if(def $self.localUriPrefix){$self.localUriPrefix/}}^if(def $aAction){^taint[uri][$aAction]^if($self._appendSlash)[/]}]
-  ^if($self._appendSlash && def $result && ^result.match[$self.__pfController__.checkDotRegex]){$result[^result.trim[end;/]]}
-
-  ^if($aOptions is hash && $aOptions){
-    $result[${result}?^aOptions.foreach[key;value]{$key=^taint[uri][$value]}[^taint[&]]]
-  }
 
 #--------------------------------------------------------------------------------------------------
 
@@ -416,7 +443,6 @@ locals
 
     $.routeTo[$lRouteTo.routeTo]
     $.prefix[$aOptions.prefix]
-    $.reversePrefix[$aOptions.reversePrefix]
 
     $.defaults[^hash::create[$aOptions.defaults]]
     $.where[^hash::create[$aOptions.requirements]]
@@ -568,6 +594,7 @@ locals
   ^self.cleanMethodArgument[aVars;aArgs]
   $result[^if(def $aPath){^aPath.match[$self._pfRouterPatternRegex][]{^if(^aVars.contains[$match.2]){$aVars.[$match.2]}{^if(^aArgs.contains[$match.2] || $match.1 eq "*"){$aArgs.[$match.2]}}}}]
 
+#--------------------------------------------------------------------------------------------------
 
 @CLASS
 pfRouterProcessor
@@ -582,7 +609,7 @@ locals
 @process[aAction;aRequest;aPrefix;aOptions]
   $result[]
 
-
+#--------------------------------------------------------------------------------------------------
 
 @CLASS
 pfRouterDefaultProcessor
@@ -601,7 +628,6 @@ locals
   $lAction[$aAction]
   $lRequest[$aRequest]
 
-  ^if(def $aPrefix){$lController.localUriPrefix[$aPrefix]}
   ^if(def $aOptions.prefix){$lController.uriPrefix[$aOptions.prefix]}
 
   $lModule[^self.findModule[$aAction;$lRequest]]
@@ -680,7 +706,7 @@ locals
     $result[^if($self.controller.onDEFAULT is junction){onDEFAULT}]
   }
 
-
+#--------------------------------------------------------------------------------------------------
 
 @CLASS
 pfRouterRenderProcessor
@@ -703,7 +729,7 @@ locals
 @process[aAction;aRequest;aPrefix;aOptions]
   $result[^self.controller.render[$self.template;$self.context]]
 
-
+#--------------------------------------------------------------------------------------------------
 
 @CLASS
 pfRouterCallProcessor
@@ -855,7 +881,6 @@ locals
   $result[${self.SCHEME}://${self.HOST}$aLocation]
 
 #--------------------------------------------------------------------------------------------------
-
 
 @CLASS
 pfResponse

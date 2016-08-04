@@ -23,12 +23,18 @@ pf2/lib/web/controllers.p
 
   Sub module call: ^c.test[/clients/345/edit]
 
-  Sub mount module: ^c.test[/mount/to/1/two]
-  Sub mount module: ^c.test[/mount/to/2/two/and/one/action]
+  Sub mount module: ^c.test[/mount/1/to/two]
+  Sub mount module: ^c.test[/mount/2/to/two/and/one/action]
 
   ^c.test[clients/reverse]
   ^c.test[mount/to/456/three/reverse]
   ^c.test[reverse]
+
+  Global routing:
+    clients index: ^c.clients.linkTo[::/edit;$.clientID[456]]
+    mount action: ^c.mount.linkTo[::/action;$.var1[676] $.var2[345]]
+    mount account: ^c.mount.linkTo[::/account;$.var1[676] $.var2[345] $.clientID[123]]
+    mount account obj: ^c.mount.linkFor[::/account;$.var1[676] $.var2[345] $.clientID[123] $.empty[null]]
 
   Finish tests.^#0A
 
@@ -58,7 +64,7 @@ pfController
 
   ^assignModule[clients;testSubModule]
   ^assignModule[mount;testSubMountModule;
-    $.mountTo[mount/to/:var1/:var2]
+    $.mountTo[mount/:var1/to/:var2]
     $.mountToWhere[$.var1[\d+]]
   ]
   ^router.assign[users/:userID;users]
@@ -97,6 +103,7 @@ locals
 
 @create[aOptions]
   ^BASE:create[$aOptions]
+  ^router.assign[account/:clientID;account]
 
 @onINDEX[aRequest]
   $result[Vars: $aRequest.var1, $aRequest.var2 Action — $self.action Prefix — $self.uriPrefix MountTo — $self.mountTo]
@@ -105,6 +112,7 @@ locals
   $result[Sub mount module reverse...
     index: ^linkTo[/]
     action: ^linkTo[action/with/sub/uri]
+    account: ^linkTo[account;$.clientID[123]]
   ]
 
 @onNOTFOUND[aRequest]
@@ -143,6 +151,7 @@ locals
     action: ^linkTo[action/with/sub/uri]
     client: ^linkTo[client;$.clientID[234]]
     edit: ^linkTo[edit;$.clientID[234]]
+    edit for: ^linkFor[edit;$.clientID[234] $.var[value]]
   ]
 
 @onNOTFOUND[aRequest]
