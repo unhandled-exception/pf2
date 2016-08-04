@@ -282,11 +282,9 @@ pfClass
   $aAction[^aAction.trim[both;/]]
   $lReverse[^self.router.reverse[$aAction;$aOptions.fields]]
   ^if($lReverse){
-    $result[^self._makeLinkURI[$lReverse.path;$lReverse.args;$aAnchor;$lReverse.reversePrefix]]
-  }(^self.MODULES.contains[$aAction]){
-    $result[^self._makeLinkURI[$MODULES.[$aAction].mountTo;$aOptions.fields;$aAnchor]]
+    $result[^self.makeLinkURI[$lReverse.path;$lReverse.args;$aAnchor;$lReverse.reversePrefix]]
   }{
-    $result[^self._makeLinkURI[$aAction;$aOptions.fields;$aAnchor]]
+    $result[^self.makeLinkURI[$aAction;$aOptions.fields;$aAnchor]]
    }
 
 @linkFor[aAction;aObject;aOptions]
@@ -297,11 +295,9 @@ pfClass
   ^self.cleanMethodArgument[]
   $lReverse[^self.router.reverse[$aAction;$aObject;$.form[$aOptions.form] $.onlyPatternVars(true)]]
   ^if($lReverse){
-    $result[^self._makeLinkURI[$lReverse.path;$lReverse.args;$aOptions.anchor;$lReverse.reversePrefix]]
-  }(^self.MODULES.contains[$aAction]){
-    $result[^self._makeLinkURI[$MODULES.[$aAction].mountTo;$aOptions.form;$aAnchor]]
+    $result[^self.makeLinkURI[$lReverse.path;$lReverse.args;$aOptions.anchor;$lReverse.reversePrefix]]
   }{
-    $result[^self._makeLinkURI[$aAction;$aOptions.form;$aAnchor]]
+    $result[^self.makeLinkURI[$aAction;$aOptions.form;$aAnchor]]
    }
 
 @redirect[aURL;aStatus]
@@ -336,7 +332,7 @@ pfClass
 
 #----- Private -----
 
-@_makeLinkURI[aAction;aOptions;aAnchor;aPrefix]
+@makeLinkURI[aAction;aOptions;aAnchor;aPrefix]
 ## Формирует url для экшна
 ## $uriPrefix$aAction?aOptions.foreach[key=value][&]#aAnchor
   ^self.cleanMethodArgument[]
@@ -464,8 +460,45 @@ locals
   $lProcessor[^self.ifcontains[$self.processors;$aName]{$self.processors.default}]
   $result[^reflection:create[$lProcessor.classDef.className;$lProcessor.classDef.constructor;$self;$aProcessorData;$aOptions]]
 
-@reverse[aAction;aArgs;aOptions]
+@reverse[aAction;aArgs;aOptions] -> [$.path[] $.args[]]
+## aAction — имя экшна или роута
+## aArgs — хеш с параметрами для преобразования
+## aOptions.form — дополнительные параметры для маршрута
+## aOptions.onlyPatternVars(false) — использовать только те переменные из aArgs, которые определены в маршруте или aOptions.form
+  ^self.cleanMethodArgument[]
   $result[^hash::create[]]
+  $lOnlyPatternsVar(^aOptions.onlyPatternVars.bool(false))
+
+  $aAction[^self.trimPath[$aAction]]
+  $aArgs[^if($aArgs is table){$aArgs.fields}{^hash::create[$aArgs]}]
+  ^aArgs.add[$aOptions.form]
+
+  $lModule[$self.controller.MODULES.[$aAction]]
+  ^if($lModule){
+#   Если нам передали имя модуля, то вычисляем путь к нему
+    $result.args[^if($lOnlyPatternsVar){^hash::create[$aOptions.form]}{$aArgs}]
+    ^if($lModule.compiledMountTo.hasVars){
+      $result.path[^self.applyPath[$lModule.compiledMountTo.pattern;$aArgs]]
+      ^result.args.sub[$lModule.compiledMountTo.vars]
+    }{
+      $result.path[$lModule.mountTo]
+    }
+  }{
+    ^self.routes.foreach[k;it]{
+#     Ищем подходящий маршрут по action (если в routeTo содержатся переменные, то лучше использовать $.as для маршрута)
+      ^if((def $it.as && $aAction eq $it.as) || $aAction eq $it.routeTo){
+        $lPath[^self.applyPath[$it.pattern;$aArgs]]
+#       Проверяем соответствует ли полученный путь шаблоу (с ограничениями requirements)
+        ^if(^lPath.match[$it.regexp][n]){
+#         Добавляем оставшиеся параметры из aArgs или aOptions.form в result.args
+          $result.path[$lPath]
+          $result.args[^if($lOnlyPatternsVar){^hash::create[$aOptions.form]}{$aArgs}]
+          ^result.args.sub[$it.vars]
+          ^break[]
+        }
+      }
+    }
+  }
 
 @compilePattern[aRoute;aOptions]
 ## aOptions.asPrefix(false) — компилировать как префикс

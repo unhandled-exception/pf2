@@ -26,6 +26,10 @@ pf2/lib/web/controllers.p
   Sub mount module: ^c.test[/mount/to/1/two]
   Sub mount module: ^c.test[/mount/to/2/two/and/one/action]
 
+  ^c.test[clients/reverse]
+  ^c.test[mount/to/456/three/reverse]
+  ^c.test[reverse]
+
   Finish tests.^#0A
 
 @print_fields[aObj][locals]
@@ -67,6 +71,13 @@ pfController
 @onINDEX[aRequest]
   $result[Index page]
 
+@onReverse[aRequest]
+  $result[Main module reverse...
+    index: ^linkTo[/]
+    action: ^linkTo[action/with/sub/uri]
+    mount: ^linkTo[mount;$.var1[123] $.var2[test]]
+  ]
+
 @onNOTFOUND[aRequest]
   $result[Manager not found.]
 
@@ -90,8 +101,14 @@ locals
 @onINDEX[aRequest]
   $result[Vars: $aRequest.var1, $aRequest.var2 Action — $self.action Prefix — $self.uriPrefix MountTo — $self.mountTo]
 
+@onReverse[aRequest]
+  $result[Sub mount module reverse...
+    index: ^linkTo[/]
+    action: ^linkTo[action/with/sub/uri]
+  ]
+
 @onNOTFOUND[aRequest]
-  $result[Mount module not found. Vars: $aRequest.var1, $aRequest.var2 Action — $self.action Prefix — $self.uriPrefix MountTo — $self.mountTo ^json:string[$self.mountToWhere]]
+  $result[Mount module not found. Vars: $aRequest.var1, $aRequest.var2 Action — $self.action Prefix — $self.uriPrefix MountTo — $self.mountTo]
 
 
 @CLASS
@@ -113,12 +130,20 @@ locals
   ^router.assign[about2;$.render[$.template[about.pt] $.context[$.var[Temp var]]]]
   ^router.assign[:clientID/about;render::/about.pt]
 
-  ^router.assign[:clientID/edit;call::edit]
+  ^router.assign[:clientID/edit;call::edit;$.as[edit]]
 
   ^router.assign[:clientID/*trap;client]
 
 @onINDEX[aRequest]
   $result[Sub module's Index page. Filter — $aRequest.filter]
+
+@onReverse[aRequest]
+  $result[Sub module reverse...
+    index: ^linkTo[/]
+    action: ^linkTo[action/with/sub/uri]
+    client: ^linkTo[client;$.clientID[234]]
+    edit: ^linkTo[edit;$.clientID[234]]
+  ]
 
 @onNOTFOUND[aRequest]
   $result[Sub module not found.]
