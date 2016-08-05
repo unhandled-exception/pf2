@@ -48,3 +48,11 @@ PF2 — веб-фреймворк для Parser 3
 * io/pfCurlFile.p [Возможно, что его и стоит оставить как пару к pfCFile.]
 * pf/sql/generics. pfSQLSettings переводим на ORM.
 * Пишем документацию. Markdown. :)
+
+### Новый способ проброса экшна в контролеры
+
+Настройка mod_rewrite:
+
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule ^ _ind.html [L]
+

@@ -97,10 +97,14 @@
 
 ### ./lib/web/controllers.p
 * pfController
+* pfRouter
+* pfRouterProcessor
+* pfRouterDefaultProcessor
+* pfRouterRenderProcessor
+* pfRouterCallProcessor
 * pfRequest
 * pfResponse
 * pfResponseRedirect
-* pfRouter
 * pfMiddleware
 
 ### ./lib/web/helpers/antiflood.p
