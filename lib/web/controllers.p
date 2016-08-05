@@ -48,7 +48,7 @@ pfClass
   $self.uriPrefix[$self.mountTo]
   $self._localUriPrefix[]
 
-  $self.template[^self.ifdef[$aOptions.template]{^pfTemplate::create[$.templateFolder[$aOptions.templateFolder]]}]
+  $self.template[^self.ifdef[$aOptions.template]{^pfTemplate::create[$.searchPath[$aOptions.templateFolder]]}]
   $self._templatePrefix[^aOptions.templatePrefix.trim[both;/]]
   $self._templateVars[^hash::create[]]
 
@@ -300,7 +300,7 @@ pfClass
   $lVars[^hash::create[$self._templateVars]]
   $lVars[^lVars.union[^self.templateDefaults[]]]
   ^lVars.add[$aContext]
-  $result[^self.template.render[^if(^aTemplateName.left(1) ne "/"){$self._templatePrefix/}$aTemplateName;$.vars[$lVars]]]
+  $result[^self.template.render[^if(^aTemplateName.left(1) ne "/"){$self._templatePrefix/}$aTemplateName;$.context[$lVars]]]
 
 @templateDefaults[]
 ## Задает переменные шаблона по умолчанию.
@@ -639,19 +639,26 @@ pfClass
 
 @_applyHeaders[]
   $result[]
+
+  $lHasContentTypeHeader(false)
   ^self.headers.foreach[k;v]{
     $response:$k[$v]
+    ^if(^k.lower[] eq "content-type"){
+      $lHasContentTypeHeader(true)
+    }
   }
   ^self.cookie.foreach[k;v]{
     $cookie:$k[$v]
   }
   $response:status[$self.status]
 
-  ^if(def $self.charset){$response:charset[$self.charset]}
-  $response:content-type[
-    $.value[^self.ifdef[$self.contentType]{text/html}]
-    $.charset[$response:charset]
-  ]
+  ^if(!$lHasContentTypeHeader){
+    ^if(def $self.charset){$response:charset[$self.charset]}
+    $response:content-type[
+      $.value[^self.ifdef[$self.contentType]{text/html}]
+      $.charset[$response:charset]
+    ]
+  }
 
 #--------------------------------------------------------------------------------------------------
 
