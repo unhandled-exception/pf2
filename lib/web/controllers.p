@@ -398,6 +398,8 @@ locals
   $self._where[^hash::create[]]
   $self._defaults[^hash::create[]]
 
+  $self.hasRootRoute(false)
+
 @auto[]
   $self._pfRouterPatternVar[([:\*])\{?([\p{L}\p{Nd}_\-]+)\}?]
   $self._pfRouterPatternRegex[^regex::create[$self._pfRouterPatternVar][g]]
@@ -442,7 +444,6 @@ locals
     $.trap[$lCompiledPattern.trap]
 
     $.routeTo[$lRouteTo.routeTo]
-    $.prefix[$aOptions.prefix]
 
     $.defaults[^hash::create[$aOptions.defaults]]
     $.where[^hash::create[$aOptions.requirements]]
@@ -450,6 +451,8 @@ locals
   ]
   $lRoute.processor[$lRouteTo.processor]
   $self.routes.[^math:uid64[]][$lRoute]
+
+  ^if(!def $lRoute.pattern){$self.hasRootRoute(true)}
 
 # Добавляем маршрут в обратный индекс
   ^if(def $lRoute.as){
@@ -476,13 +479,15 @@ locals
   $result.action[^self.trimPath[$aAction]]
   $result.request[$aRequest]
 
-  ^self.routes.foreach[k;it]{
-    $lParsedPath[^self.parsePathByRoute[$result.action;$it;$.args[$self._defaults]]]
-    ^if($lParsedPath){
-      ^result.request.assign[$lParsedPath.args]
-      $result.action[$lParsedPath.action]
-      $result.processor[$it.processor]
-      ^break[]
+  ^if(def $aAction || $self.hasRootRoute){
+    ^self.routes.foreach[k;it]{
+      $lParsedPath[^self.parsePathByRoute[$result.action;$it;$.args[$self._defaults]]]
+      ^if($lParsedPath){
+        ^result.request.assign[$lParsedPath.args]
+        $result.action[$lParsedPath.action]
+        $result.processor[$it.processor]
+        ^break[]
+      }
     }
   }
   $result.processor[^ifdef[$result.processor]{^self.createProcessor[default]}]
