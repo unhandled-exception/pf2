@@ -134,7 +134,8 @@ locals
   ^router.where[$.clientID[\d+]]
   ^router.defaults[$.filter[by_client]]
 
-  ^router.assign[about;$.render[about.pt]]
+  ^router.assign[/;call::root;$.as[root]]
+  ^router.assign[about;$.render[about.pt];$.as[about]]
   ^router.assign[about2;$.render[$.template[about.pt] $.context[$.var[Temp var]]]]
   ^router.assign[:clientID/about;render::/about.pt]
 
@@ -145,9 +146,13 @@ locals
 @onINDEX[aRequest]
   $result[Sub module's Index page. Filter — $aRequest.filter]
 
+@root[aRequest]
+  $result[Sub module's Root page. Filter — $aRequest.filter]
+
 @onReverse[aRequest]
   $result[Sub module reverse...
     index: ^linkTo[/]
+    root: ^linkTo[root]
     action: ^linkTo[action/with/sub/uri]
     client: ^linkTo[client;$.clientID[234]]
     edit: ^linkTo[edit;$.clientID[234]]

@@ -476,15 +476,13 @@ locals
   $result.action[^self.trimPath[$aAction]]
   $result.request[$aRequest]
 
-  ^if(def $result.action){
-    ^self.routes.foreach[k;it]{
-      $lParsedPath[^self.parsePathByRoute[$result.action;$it;$.args[$self._defaults]]]
-      ^if($lParsedPath){
-        ^result.request.assign[$lParsedPath.args]
-        $result.action[$lParsedPath.action]
-        $result.processor[$it.processor]
-        ^break[]
-      }
+  ^self.routes.foreach[k;it]{
+    $lParsedPath[^self.parsePathByRoute[$result.action;$it;$.args[$self._defaults]]]
+    ^if($lParsedPath){
+      ^result.request.assign[$lParsedPath.args]
+      $result.action[$lParsedPath.action]
+      $result.processor[$it.processor]
+      ^break[]
     }
   }
   $result.processor[^ifdef[$result.processor]{^self.createProcessor[default]}]
@@ -586,7 +584,9 @@ locals
         ^i.inc[]
       }
     }
-    $result.action[^self.applyPath[$aRoute.routeTo;$result.args;$aOptions.args]]
+    ^if(def $aRoute.routeTo){
+      $result.action[^self.applyPath[$aRoute.routeTo;$result.args;$aOptions.args]]
+    }
   }
 
 @applyPath[aPath;aVars;aArgs]
