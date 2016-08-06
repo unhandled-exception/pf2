@@ -759,6 +759,8 @@ locals
 
 @create[aOptions]
 ## aOptions — хеш с переменными объекта, которые надо заменить. [Для тестов.]
+  $aOptions[^hash::create[$aOptions]]
+
   $self.ifdef[$pfClass:ifdef]
   $self.ifcontains[$pfClass:ifcontains]
   $self.__CONTEXT__[^hash::create[]]
