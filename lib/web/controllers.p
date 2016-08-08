@@ -61,7 +61,6 @@ pfClass
   $self.action[]
   $self.request[$aOptions.request]
 
-
   $self.MIDDLEWARES[^hash::create[]]
 
 # Контролер становится рутовым, если вызвали метод run.
@@ -84,7 +83,7 @@ pfClass
 
 @SET_uriPrefix[aUriPrefix]
   $self._uriPrefix[^aUriPrefix.trim[right;/.]/]
-  $self._uriPrefix[^_uriPrefix.match[$self.__pfController__.repeatableSlashRegex][][/]]
+  $self._uriPrefix[^self._uriPrefix.match[$self.__pfController__.repeatableSlashRegex][][/]]
 
 @run[aRequest;aOptions] -> []
 ## Запускает процесс. Если вызван метод run, то модуль становится «менеджером».
@@ -106,7 +105,7 @@ pfClass
   $aName[^aName.trim[both;/]]
 
   ^self.__pfChainMixin__.assignModule[$aName;$aClassDef;$aArgs]
-  $lModule[$MODULES.[$aName]]
+  $lModule[$self.MODULES.[$aName]]
   $lModule.mountTo[^if(def $aArgs.mountTo){^aArgs.mountTo.trim[both;/]}{$aName}]
   $lModule.compiledMountTo[^self.router.compilePattern[$lModule.mountTo;
     $.asPrefix(true)
@@ -257,7 +256,9 @@ pfClass
   $lVars[^hash::create[$self._templateVars]]
   $lVars[^lVars.union[^self.templateDefaults[]]]
   ^lVars.add[$aContext]
-  $result[^self.template.render[^if(^aTemplateName.left(1) ne "/"){$self._templatePrefix/}$aTemplateName;$.context[$lVars]]]
+  $result[^self.template.render[^if(^aTemplateName.left(1) ne "/"){$self._templatePrefix/}$aTemplateName;
+    $.context[$lVars]
+  ]]
 
 @templateDefaults[]
 ## Задает переменные шаблона по умолчанию.
@@ -299,7 +300,7 @@ pfClass
 #   Для глобального маршрута вычисляем префикс модуля динамически
     $aAction[^aAction.mid(2)]
     ^if($self._compiledMountTo.hasVars){
-      $lPrefix[^router.applyPath[$self._compiledMountTo.pattern;$lArgs]]
+      $lPrefix[^self.router.applyPath[$self._compiledMountTo.pattern;$lArgs]]
       ^lArgs.sub[$self._compiledMountTo.vars]
     }{
        $lPrefix[$self.mountTo]
@@ -327,7 +328,7 @@ pfClass
 #   Для глобального маршрута вычисляем префикс модуля динамически
     $aAction[^aAction.mid(2)]
     ^if($self._compiledMountTo.hasVars){
-      $lPrefix[^router.applyPath[$self._compiledMountTo.pattern;$aObject;$aOptions.form]]
+      $lPrefix[^self.router.applyPath[$self._compiledMountTo.pattern;$aObject;$aOptions.form]]
     }{
        $lPrefix[$self.mountTo]
      }
@@ -435,7 +436,7 @@ locals
   ^self.cleanMethodArgument[]
   $result[]
   $lCompiledPattern[^self.compilePattern[$aPattern;$aOptions]]
-  $lRouteTo[^_makeRouteTo[$aRouteTo]]
+  $lRouteTo[^self._makeRouteTo[$aRouteTo]]
   $lRoute[
     $.pattern[$lCompiledPattern.pattern]
     $.regexp[$lCompiledPattern.regexp]
