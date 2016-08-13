@@ -430,6 +430,14 @@ locals
   $result[]
   ^self._defaults.add[$aDefaults]
 
+@assignModule[aName;aClassDef;aArgs] -> []
+## Алиас для controller.assignModule, если удобнее писать ^router.assignModule[...]
+  $result[^self.controller.assignModule[$aName;$aClassDef;$aArgs]]
+
+@assignMiddleware[aObject;aConstructorOptions] -> []
+## Алиас для controller.assignMiddleware, если удобнее писать ^router.assignMiddleware[...]
+  $result[^self.controller.assignMiddleware[$aObject;$aConstructorOptions]]
+
 @assign[aPattern;aRouteTo;aOptions] -> []
 ## Добавляет новый маршрут в роутер.
 ## aRouteTo — новый маршрут (может содержать переменные)

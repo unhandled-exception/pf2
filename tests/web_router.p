@@ -61,9 +61,8 @@ pfController
   ]
 
   ^router.where[$.var2[\w+]]
-
-  ^assignModule[clients;testSubModule]
-  ^assignModule[mount;testSubMountModule;
+  ^router.assignModule[clients;testSubModule]
+  ^router.assignModule[mount;testSubMountModule;
     $.mountTo[mount/:var1/to/:var2]
     $.mountToWhere[$.var1[\d+]]
   ]
