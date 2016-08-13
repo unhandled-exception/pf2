@@ -25,6 +25,7 @@ pfClass
 ## aOptions.templateFolder[]
 ## aOptions.templatePrefix[]
 ## aOptions.request — объект запроса, если мы хотим передать его не в метод run, а в конструктор.
+## aOptions.exportFields[$.name1[] $.name2[field_name]] — список полей объекта, которые надо передать параметрами конструктору модулей. Ключ — имя переменной конструктора, значение — имя переменно в контролере. Значение можно не указывать, если оно совпадает с ключем.
 
   ^self.cleanMethodArgument[]
 
@@ -32,11 +33,13 @@ pfClass
     ^hash::create[$aOptions]
     $.exportModulesProperty(true)
     $.exportFields[
+      ^hash::create[$aOptions.exportFields]
       $.template[template]
       $.parentController[_parentController]
       $.rootController[_rootController]
     ]
   ]
+
   $self.router[^self.ifdef[$aOptions.router]{^pfRouter::create[$self]}]
 
   $self._exceptionPrefix[controller]
