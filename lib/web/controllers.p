@@ -25,6 +25,7 @@ pfClass
 ## aOptions.templateFolder[]
 ## aOptions.templatePrefix[]
 ## aOptions.request — объект запроса, если мы хотим передать его не в метод run, а в конструктор.
+## aOptions.exportFields[$.name1[] $.name2[field_name]] — список полей объекта, которые надо передать параметрами конструктору модулей. Ключ — имя переменной конструктора, значение — имя переменно в контролере. Значение можно не указывать, если оно совпадает с ключем.
 
   ^self.cleanMethodArgument[]
 
@@ -32,11 +33,13 @@ pfClass
     ^hash::create[$aOptions]
     $.exportModulesProperty(true)
     $.exportFields[
+      ^hash::create[$aOptions.exportFields]
       $.template[template]
       $.parentController[_parentController]
       $.rootController[_rootController]
     ]
   ]
+
   $self.router[^self.ifdef[$aOptions.router]{^pfRouter::create[$self]}]
 
   $self._exceptionPrefix[controller]
@@ -61,7 +64,6 @@ pfClass
   $self.action[]
   $self.request[$aOptions.request]
 
-
   $self.MIDDLEWARES[^hash::create[]]
 
 # Контролер становится рутовым, если вызвали метод run.
@@ -84,7 +86,7 @@ pfClass
 
 @SET_uriPrefix[aUriPrefix]
   $self._uriPrefix[^aUriPrefix.trim[right;/.]/]
-  $self._uriPrefix[^_uriPrefix.match[$self.__pfController__.repeatableSlashRegex][][/]]
+  $self._uriPrefix[^self._uriPrefix.match[$self.__pfController__.repeatableSlashRegex][][/]]
 
 @run[aRequest;aOptions] -> []
 ## Запускает процесс. Если вызван метод run, то модуль становится «менеджером».
@@ -106,7 +108,7 @@ pfClass
   $aName[^aName.trim[both;/]]
 
   ^self.__pfChainMixin__.assignModule[$aName;$aClassDef;$aArgs]
-  $lModule[$MODULES.[$aName]]
+  $lModule[$self.MODULES.[$aName]]
   $lModule.mountTo[^if(def $aArgs.mountTo){^aArgs.mountTo.trim[both;/]}{$aName}]
   $lModule.compiledMountTo[^self.router.compilePattern[$lModule.mountTo;
     $.asPrefix(true)
@@ -257,7 +259,9 @@ pfClass
   $lVars[^hash::create[$self._templateVars]]
   $lVars[^lVars.union[^self.templateDefaults[]]]
   ^lVars.add[$aContext]
-  $result[^self.template.render[^if(^aTemplateName.left(1) ne "/"){$self._templatePrefix/}$aTemplateName;$.context[$lVars]]]
+  $result[^self.template.render[^if(^aTemplateName.left(1) ne "/"){$self._templatePrefix/}$aTemplateName;
+    $.context[$lVars]
+  ]]
 
 @templateDefaults[]
 ## Задает переменные шаблона по умолчанию.
@@ -299,7 +303,7 @@ pfClass
 #   Для глобального маршрута вычисляем префикс модуля динамически
     $aAction[^aAction.mid(2)]
     ^if($self._compiledMountTo.hasVars){
-      $lPrefix[^router.applyPath[$self._compiledMountTo.pattern;$lArgs]]
+      $lPrefix[^self.router.applyPath[$self._compiledMountTo.pattern;$lArgs]]
       ^lArgs.sub[$self._compiledMountTo.vars]
     }{
        $lPrefix[$self.mountTo]
@@ -327,7 +331,7 @@ pfClass
 #   Для глобального маршрута вычисляем префикс модуля динамически
     $aAction[^aAction.mid(2)]
     ^if($self._compiledMountTo.hasVars){
-      $lPrefix[^router.applyPath[$self._compiledMountTo.pattern;$aObject;$aOptions.form]]
+      $lPrefix[^self.router.applyPath[$self._compiledMountTo.pattern;$aObject;$aOptions.form]]
     }{
        $lPrefix[$self.mountTo]
      }
@@ -426,6 +430,14 @@ locals
   $result[]
   ^self._defaults.add[$aDefaults]
 
+@assignModule[aName;aClassDef;aArgs] -> []
+## Алиас для controller.assignModule, если удобнее писать ^router.assignModule[...]
+  $result[^self.controller.assignModule[$aName;$aClassDef;$aArgs]]
+
+@assignMiddleware[aObject;aConstructorOptions] -> []
+## Алиас для controller.assignMiddleware, если удобнее писать ^router.assignMiddleware[...]
+  $result[^self.controller.assignMiddleware[$aObject;$aConstructorOptions]]
+
 @assign[aPattern;aRouteTo;aOptions] -> []
 ## Добавляет новый маршрут в роутер.
 ## aRouteTo — новый маршрут (может содержать переменные)
@@ -435,7 +447,7 @@ locals
   ^self.cleanMethodArgument[]
   $result[]
   $lCompiledPattern[^self.compilePattern[$aPattern;$aOptions]]
-  $lRouteTo[^_makeRouteTo[$aRouteTo]]
+  $lRouteTo[^self._makeRouteTo[$aRouteTo]]
   $lRoute[
     $.pattern[$lCompiledPattern.pattern]
     $.regexp[$lCompiledPattern.regexp]
