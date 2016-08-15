@@ -27,7 +27,7 @@ pf2/lib/web/controllers.p
   Sub mount module: ^c.test[/mount/2/to/two/and/one/action]
 
   ^c.test[clients/reverse]
-  ^c.test[mount/to/456/three/reverse]
+  ^c.test[mount/456/to/three/reverse]
   ^c.test[reverse]
 
   Global routing:
