@@ -1,0 +1,43 @@
+email@here.com
+weirder-email@here.and.there.com
+email@[127.0.0.1]
+email@[2001:dB8::1]
+email@[2001:dB8:0:0:0:0:0:1]
+email@[::fffF:127.0.0.1]
+email@127.0.0.1
+email@[127.0.0.256]
+email@[2001:db8::12345]
+email@[2001:db8:0:0:0:0:1]
+email@[::ffff:127.0.0.256]
+example@valid-----hyphens.com
+example@valid-with-hyphens.com
+test@domain.with.idn.tld.उदाहरण.परीक्षा
+email@localhost
+"test@test"@example.com
+example@atm.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+example@aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.atm
+example@aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.bbbbbbbbbb.atm
+"\\\011"@here.com
+a@aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.us
+prettyandsimple@example.com
+very.common@example.com
+disposable.style.email.with+symbol@example.com
+other.email-with-dash@example.com
+x@example.com
+#"much.more unusual"@example.com
+"very.unusual.@.unusual.com"@example.com
+#"very.(),:;<>[]\".VERY.\"very@\\ \"very\".unusual"@strange.example.com
+example-indeed@strange-example.com
+#admin@mailserver1
+#!$%&'*+-/=?^_`{}|~@example.org
+#"()<>[]:,;@\\\"!#$%&'-/=?^_`{}| ~.a"@example.org
+#" "@example.org
+example@localhost
+example@s.solutions
+#user@com
+#user@localserver
+Pelé@example.com
+δοκιμή@παράδειγμα.δοκιμή
+我買@屋企.香港
+甲斐@黒川.日本
+чебурашка@ящик-с-апельсинами.рф
