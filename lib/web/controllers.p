@@ -184,6 +184,9 @@ pfClass
     $result[$.action[$aAction] $.args[^hash::create[]] $.prefix[]]
   }
   $result.request[$aRequest]
+  ^if($result.defaults){
+    ^result.request.assign[$result.defaults]
+  }
   ^if($result.args){
     ^result.request.assign[$result.args]
   }
@@ -484,7 +487,7 @@ locals
     $result.processor[^self.createProcessor[$lParsedRouteTo.1;$lParsedRouteTo.2]]
   }
 
-@route[aAction;aRequest;aOptions] -> [$.action $.request $.processor]
+@route[aAction;aRequest;aOptions] -> [$.action $.request $.processor $.defaults]
 ## Выполняет поиск и преобразование пути по списку маршрутов
   ^self.cleanMethodArgument[]
   $result[^hash::create[]]
@@ -498,6 +501,10 @@ locals
         ^result.request.assign[$lParsedPath.args]
         $result.action[$lParsedPath.action]
         $result.processor[$it.processor]
+
+        $lDefaults[^hash::create[$self._defaults]]
+        ^lDefaults.add[$it.defaults]
+        $result.defaults[$lDefaults]
         ^break[]
       }
     }
