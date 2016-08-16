@@ -83,6 +83,14 @@ locals
 ## ^ifdef[value](expression)
   $result[^if(def $aValue){$aValue}{$aDefaultValue}]
 
+@ifcontains[aObject;aName;aDefaultValue]
+## Возвращает значение поля aObject.[aName], если поле в объекте есть или aDefaultValue если нет.
+## Для проверки поля вызывает метод contains объекта.
+## aDefaultValue лучше вызывать как код:
+## ^ifcontains[$hash;key]{default}
+## ^ifcontains[$hash;key](expression))
+  $result[^if(^aObject.contains[$aName]){$aObject.[$aName]}{$aDefaultValue}]
+
 #--------------------------------------------------------------------------------------------------
 
 @CLASS
@@ -163,7 +171,9 @@ locals
 pfMixin
 
 @auto[]
-  $self.__pfChainMixin__classDefRegex__[^regex::create[^^([^^@:]*)(?:@([^^:]+))?(?::+(.+))?^$]]
+  $self.__pfChainMixin__[
+    $.classDefRegex[^regex::create[^^([^^@:]*)(?:@([^^:]+))?(?::+(.+))?^$]]
+  ]
 
 @__init__[aThis;aOptions]
 ## aOptions.exportFields[$.name1[] $.name2[var_name]] — список полей объекта, которые надо передать параметрами модулую.
@@ -225,11 +235,11 @@ pfMixin
     }
   }
 
-@_parseClassDef[aClassDef]
+@_parseClassDef[aClassDef] -> [$.className $.constructor $.package $.classDef]
 ## Метод может быть вызван из других классов для разбора пути к пакетам.
   $aClassDef[^aClassDef.trim[]]
   $result[$.classDef[$aClassDef]]
-  ^aClassDef.match[$self.__pfChainMixin__classDefRegex__][]{
+  ^aClassDef.match[$self.__pfChainMixin__.classDefRegex][]{
     $result.constructor[^if(def $match.3){$match.3}{create}]
     ^if(def $match.2){
       $result.className[$match.2]
