@@ -461,7 +461,7 @@ locals
     $.routeTo[$lRouteTo.routeTo]
 
     $.defaults[^hash::create[$aOptions.defaults]]
-    $.where[^hash::create[$aOptions.requirements]]
+    $.where[^hash::create[$aOptions.where]]
     $.as[^self.trimPath[^self.ifdef[$aOptions.as]{$lRouteTo.routeTo}]]
   ]
   $lRoute.processor[$lRouteTo.processor]
@@ -542,7 +542,7 @@ locals
     $lRoutes[$self._reverseIndex.[$aAction]]
     ^lRoutes.foreach[k;it]{
       $lPath[^self.applyPath[$it.pattern;$aArgs]]
-#     Проверяем соответствует ли полученный путь шаблоу (с ограничениями requirements)
+#     Проверяем соответствует ли полученный путь шаблоу (с ограничениями «where»)
       ^if(^lPath.match[$it.regexp][n]){
 #       Добавляем оставшиеся параметры из aArgs или aOptions.form в result.args
         $result.path[$lPath]
