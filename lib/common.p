@@ -537,9 +537,43 @@ locals
   $self.onlyLettersRegex[\p{L}+]
   $self.onlyDigitsRegex[\p{Nd}+]
   $self.hexDecimalRegex[(?:[0-9A-Fa-f]{2})+]
-  $self.ipAddressRegex[(25[0-5]|2[0-4]\d|[0-1]?\d?\d)(\.(25[0-5]|2[0-4]\d|[0-1]?\d?\d)){3}]
-  $self.validEmailRegex[(?:[-!\#^$%&'*+/=?^^_`{}|~0-9A-Za-z]+(?:\.[-!\#^$%&'*+/=?^^_`{}|~0-9A-Za-z]+)*|"(?:[\001-\010\013\014\016-\037!\#-\[\]-\177]|\\[\001-011\013\014\016-\177])*")@(?:[A-Za-z0-9-]+\.)+[A-Za-z]{2,6}]
-  $self.validURLRegex[(?:[a-zA-Z\-0-9]+?\:(?://)?)(?:\S+?(?:\:\S+)?@)?(?:[a-zA-Z0-9\-\.]+\.[a-zA-Z]{2,5}|$self.ipAddressRegex)(?:\:\d+)?(?:(?:/|\?)\S*)?]
+# https://www.icann.org/en/system/files/files/idna-protocol-2003-2008.txt
+# 0030-2a6d6
+  $self.unicodeLetters[\x{00a1}-\x{ffff}]
+
+  $self.ip4AddressRegex[(25[0-5]|2[0-4]\d|[0-1]?\d?\d)(\.(25[0-5]|2[0-4]\d|[0-1]?\d?\d)){3}]
+  $self.ip6AddressRegex[\[[0-9a-f:.]+\]]
+  $self.hostnameRegex[[a-z0-9$self.unicodeLetters](?:[a-z0-9${self.unicodeLetters}-]{0,61}[a-z0-9$self.unicodeLetters])?]
+  $self.domainRegex[(?:\.(?!-)[a-z0-9${self.unicodeLetters}-]{1,63}(?<!-))*]
+  $self.TLDRegex[^regex::create[
+    \.                                       # dot
+    (?!-)                                    # can't start with a dash
+    (?:[a-z0-9${self.unicodeLetters}-]{2,63} # domain label
+    |xn--[a-z0-9]{1,59})                     # or punycode label
+    (?<!-)                                   # can't end with a dash
+    \.?                                      # may have a trailing dot
+  ][x]]
+  $self.TLDRegex[^taint[as-is;$self.TLDRegex.pattern]]
+  $self.hostRegex[(?:${self.hostnameRegex}${self.domainRegex}${self.TLDRegex}|localhost)]
+
+  $self.validURLRegex[^regex::create[
+    (?:(?:[a-z0-9.+-]*):)?// # scheme
+    (
+      (?:\S+(?::\S*)?@)?     # user:pass authentication
+      (?:$self.ip4AddressRegex|$self.ip6AddressRegex|$self.hostRegex)
+      (?::\d{2,5})?          # port
+    )
+    (?:[/?#][^^\s]*)?        # resource path
+  ][x]]
+  $self.validEmailRegex[^regex::create[
+    (?:
+      [-!\#^$%&'*+/=?^^_`{}|~0-9A-Za-z$self.unicodeLetters]+(?:\.[-!\#^$%&'*+/=?^^_`{}|~0-9A-Za-z$self.unicodeLetters]+)*
+      |"(?:[\001-\010\013\014\016-\037!\#-\[\]-\177]|\\[\001-011\013\014\016-\177])*" # quoted-string
+    )
+    @(?i:$self.ip4AddressRegex|$self.ip6AddressRegex|$self.hostRegex)                 # domain
+  ][x]]
+  $self.validURLRegex[^taint[as-is;$self.validURLRegex.pattern]]
+  $self.validEmailRegex[^taint[as-is;$self.validEmailRegex.pattern]]
 
 @create[]
   $result[]
@@ -590,20 +624,19 @@ locals
 
 @isValidIPV4Address[aString]
 ## Строка содержит корректный ip-адрес
-  $result(def $aString && ^aString.match[^^$self.ipAddressRegex^$][n])
+  $result(def $aString && ^aString.match[^^$self.ip4AddressRegex^$][n])
 
 @isValidEmail[aString]
 ## Строка содержит корректный e-mail.
-  $result(def $aString
-     && ^aString.match[^^$self.validEmailRegex^$]
-  )
+  $result(def $aString && ^aString.match[^^$self.validEmailRegex^$][xn])
 
 @isValidURL[aString;aOptions]
 ## Строка содержит синтаксически-правильный URL.
-## aOptions.onlyHTTP(false) — строка может содержать только URL с протоколом http
-  $result(def $aString && ^aString.match[^^$self.validURLRegex^$][n])
+## aOptions.onlyHTTP(false) — строка может содержать только URL с протоколом HTTP
+  $lMatch[^aString.match[^^$self.validURLRegex^$][xi]]
+  $result(def $aString && $lMatch && ^lMatch.1.length[] <= 253)
   ^if($result && ^aOptions.onlyHTTP.bool(false)){
-    $result(^aString.match[^^http://])
+    $result(^aString.left(7) eq 'http://')
   }
 
 @isExistingURL[aString]
