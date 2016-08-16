@@ -392,9 +392,9 @@ locals
   $self.controller[$aController]
 
   $self.processors[^hash::create[]]
-  ^self.registerProcessor[default;pfRouterDefaultProcessor]
-  ^self.registerProcessor[render;pfRouterRenderProcessor]
-  ^self.registerProcessor[call;pfRouterCallProcessor]
+  ^self.assignProcessor[default;pfRouterDefaultProcessor]
+  ^self.assignProcessor[render;pfRouterRenderProcessor]
+  ^self.assignProcessor[call;pfRouterCallProcessor]
 
   $self.routes[^hash::create[]]
   $self._reverseIndex[^hash::create[]]
@@ -413,7 +413,7 @@ locals
   $self._pfRouterTrapRegexp[(.*)]
   $self._pfRouterProcessorRegexp[^regex::create[^^(?:\s*(.*?)\s*::)?(.*)^$]]
 
-@registerProcessor[aName;aClassDef;aOptions] -> []
+@assignProcessor[aName;aClassDef;aOptions] -> []
 ## Регистрирует новый процессор для вызова
 ## Процессор с именем default считаем процессором по-умолчанию.
   $result[]
