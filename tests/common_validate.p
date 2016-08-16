@@ -22,10 +22,10 @@ pf2/lib/common.p
     $lURL is ^if(^pfValidate:isValidURL[$lURL;$.onlyHTTP(true)]){a valid}{an invalid} HTTP URL.
   }
 
-  $lValidURLs[^table::load[nameless;valid_urls.txt]]
-  $lInvalidURLs[^table::load[nameless;invalid_urls.txt]]
-  $lValidEmails[^table::load[nameless;valid_emails.txt]]
-  $lInvalidEmails[^table::load[nameless;invalid_emails.txt]]
+  $lValidURLs[^table::load[nameless;assets/validation/valid_urls.txt]]
+  $lInvalidURLs[^table::load[nameless;assets/validation/invalid_urls.txt]]
+  $lValidEmails[^table::load[nameless;assets/validation/valid_emails.txt]]
+  $lInvalidEmails[^table::load[nameless;assets/validation/invalid_emails.txt]]
 
   ^lValidURLs.menu{
     $lURL[$lValidURLs.0]
