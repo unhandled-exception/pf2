@@ -325,7 +325,7 @@ locals
     $.base[^file:dirname[$self.__FILE__]]
     $.force(^aOptions.forceLoad.bool(false))
   ]]
-  ^__TEMPLATE__.applyImports[$self;$lTemp.text;$lTemp.path]
+  ^self.__TEMPLATE__.applyImports[$self;$lTemp.text;$lTemp.path]
 
 @compact[]
 ## Вызывает принудительную сборку мусора.
