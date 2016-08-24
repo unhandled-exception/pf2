@@ -154,12 +154,12 @@ locals
 pfMiddleware
 
 @create[aOptions]
-## aOptions.enable(false) — включить вывод отладочной информации в конце страницы.
+## aOptions.enable(true) — включить вывод отладочной информации в конце страницы.
 ## aOptions.sql — класс с sql-соединением
 ## aOptions.hideQueryLog(false) — не показывать лог соединений.
 ## aOptions.enableHighlightJS(false) — подключить библиотеку highlight.js и подсветить синтаксис SQL.
   ^self.cleanMethodArgument[]
-  $self._enabled(^aOptions.enable.bool(false))
+  $self._enabled(^aOptions.enable.bool(true))
   $self._sql[$aOptions.sql]
   $self._enableHighlightJS(^aOptions.enableHighlightJS.bool(false))
   $self._hideQueryLog(^aOptions.hideQueryLog.bool(false))
@@ -218,4 +218,31 @@ pfMiddleware
         })^;
       </script>
     }
+  }
+
+#--------------------------------------------------------------------------------------------------
+
+@CLASS
+pfXFrameOptionsMiddleware
+
+## Добавлет в http-ответ заголовок X-Frame-Options для защиты от кликджекинга.
+## https://developer.mozilla.org/ru/docs/Web/HTTP/Headers/X-Frame-Options
+
+@OPTIONS
+locals
+
+@BASE
+pfMiddleware
+
+@create[aOptions]
+## aOptions.enable(true) — включить мидлваре.
+## aOptions.value[SAMEORIGIN] — тип блокировки (значение заголовка:  SAMEORIGIN, DENY и т.д.)
+  ^self.cleanMethodArgument[]
+  $self._enabled(^aOptions.enable.bool(true))
+  $self._value[^self.ifdef[$aOptions.value]{SAMEORIGIN}]
+
+@processResponse[aAction;aRequest;aResponse;aController;aProcessOptions] -> [response]
+  $result[$aResponse]
+  ^if($self._enabled && !^result.hasHeader[X-Frame-Options]){
+    $result.headers.[X-Frame-Options][$self._value]
   }

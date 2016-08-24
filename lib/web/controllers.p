@@ -918,6 +918,9 @@ pfResponse
 
 ## Класс с http-ответом.
 
+## Методы для работы с заголовками нужно использовать в мидлваре для измениня уже существующих объектов.
+## Если явно создаем объект, то заголовки лучше передать в конструктор.
+
 @OPTIONS
 locals
 
@@ -929,10 +932,10 @@ pfClass
 ## aOptions.type[html] — тип ответа
 ## aOptions.status(200) — http-статус
 ## aOptions.contentType[text/html]
-## aOptions.charset[]
+## aOptions.charset[$response:charset]
 ## aOptions.download[] — если задан, то заменяет aBody
-## aOptions.headers[]
-## aOptions.cookie[]
+## aOptions.headers[] — заголовки ответа
+## aOptions.cookie[] — куки
   ^self.cleanMethodArgument[]
 
   $self._body[$aBody]
@@ -964,6 +967,42 @@ pfClass
 
 @SET_download[aDownload]
   $self._download[$aDownload]
+
+@hasHeader[aName] -> [bool]
+## Проверяет установлен ли заголовок.
+  $result(false)
+  ^self.headers.foreach[k;v]{
+    ^if($aName eq ^k.upper[]){
+      $result(true)
+      ^break[]
+    }
+  }
+
+@getHeader[aName;aDefault] -> [value or aDefault]
+## Возвращает заголовок или aDefault
+  $result[$aDefault]
+  $aName[^aName.upper[]]
+  ^self.headers.foreach[k;v]{
+    ^if($aName eq ^k.upper[]){
+      $result[$v]
+      ^break[]
+    }
+  }
+
+@setHeader[aName;aValue] -> []
+## Устанавливает заголовок.
+  $result[]
+  $lSetHeader(true)
+  ^self.headers.foreach[k;v]{
+    ^if($aName eq ^k.upper[]){
+      $self.headers.[$k][$aValue]
+      $lSetHeader(false)
+      ^break[]
+    }
+  }
+  ^if($lSetHeader){
+    $self.headers.[$aName][$aValue]
+  }
 
 @apply[aOptions] -> []
 ## Записывает ответ в переменные Парсера
