@@ -87,6 +87,9 @@ pfClass
   $self._uriPrefix[^aUriPrefix.trim[right;/.]/]
   $self._uriPrefix[^self._uriPrefix.match[$self.__pfController__.repeatableSlashRegex][][/]]
 
+@GET_templatePrefix[]
+  $result[$self._templatePrefix]
+
 @run[aRequest;aOptions] -> []
 ## Запускает процесс. Если вызван метод run, то модуль становится «менеджером».
   ^self.cleanMethodArgument[]
@@ -270,10 +273,11 @@ pfClass
 @templateDefaults[]
 ## Задает переменные шаблона по умолчанию.
   $result[
-    $.REQUEST[$self.request]
-    $.ACTION[$self.action]
+    $.CONTROLLER[$self]
     $.PARENT[$self.PARENT]
     $.ROOT[$self.ROOT]
+    $.REQUEST[$self.request]
+    $.ACTION[$self.action]
     $.linkTo[$self.linkTo]
     $.redirectTo[$self.redirectTo]
     $.linkFor[$self.linkFor]

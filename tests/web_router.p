@@ -26,9 +26,12 @@ pf2/lib/web/controllers.p
   Sub mount module: ^c.test[/mount/1/to/two]
   Sub mount module: ^c.test[/mount/2/to/two/and/one/action]
 
+  ^c.test[reverse]
   ^c.test[clients/reverse]
   ^c.test[mount/456/to/three/reverse]
-  ^c.test[reverse]
+
+  ^c.test[clients/mount2/reverse]
+  ^c.test[clients/mount2/about]
 
   Global routing:
     clients index: ^c.clients.linkTo[::/edit;$.clientID[456]]
@@ -58,6 +61,7 @@ pfController
 @create[aOptions]
   ^BASE:create[
     $.templateFolder[assets/router/templates/]
+    $.templatePrefix[root]
   ]
 
   ^router.where[$.var2[\w+]]
@@ -81,6 +85,8 @@ pfController
     index: ^linkTo[/]
     action: ^linkTo[action/with/sub/uri]
     mount: ^linkTo[mount;$.var1[123] $.var2[test]]
+    parent class: $self.PARENT.CLASS_NAME
+    template prefix: $self.templatePrefix
   ]
 
 @onNOTFOUND[aRequest]
@@ -113,10 +119,14 @@ locals
     action: ^linkTo[action/with/sub/uri]
     account: ^linkTo[account;$.clientID[123]]
     parent class: $self.PARENT.CLASS_NAME
+    template prefix: $self.templatePrefix
   ]
 
 @onNOTFOUND[aRequest]
   $result[Mount module not found. Vars: $aRequest.var1, $aRequest.var2 Action — $self.action Prefix — $self.uriPrefix MountTo — $self.mountTo]
+
+@onAbout[aRequest]
+  $result[Sub mount module about render — ^render[about.pt]]
 
 
 @CLASS
@@ -133,6 +143,8 @@ locals
 
   ^router.where[$.clientID[\d+]]
   ^router.defaults[$.filter[by_client]]
+
+  ^router.assignModule[mount2;testSubMountModule]
 
   ^router.assign[/;call::root;$.as[root]]
   ^router.assign[about;$.render[about.pt];$.as[about]]
@@ -157,6 +169,7 @@ locals
     client: ^linkTo[client;$.clientID[234]]
     edit: ^linkTo[edit;$.clientID[234]]
     edit for: ^linkFor[edit;$.clientID[234] $.var[value]]
+    template prefix: $self.templatePrefix
   ]
 
 @onNOTFOUND[aRequest]
