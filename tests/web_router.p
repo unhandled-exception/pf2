@@ -112,6 +112,7 @@ locals
     index: ^linkTo[/]
     action: ^linkTo[action/with/sub/uri]
     account: ^linkTo[account;$.clientID[123]]
+    parent class: $self.PARENT.CLASS_NAME
   ]
 
 @onNOTFOUND[aRequest]

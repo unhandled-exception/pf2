@@ -35,7 +35,6 @@ pfClass
     $.exportFields[
       ^hash::create[$aOptions.exportFields]
       $.template[template]
-      $.parentController[_parentController]
       $.rootController[_rootController]
     ]
   ]
@@ -43,7 +42,7 @@ pfClass
   $self.router[^self.ifdef[$aOptions.router]{^pfRouter::create[$self]}]
 
   $self._exceptionPrefix[controller]
-  $self._parentController[$aOptions.parent]
+  $self._parentController[$aOptions.parentController]
   $self._rootController[^self.ifdef[$aOptions.rootController]{$self}]
 
   $self.mountTo[^self.ifdef[^aOptions.mountTo.trim[end;/]]{/}]
@@ -114,6 +113,8 @@ pfClass
     $.asPrefix(true)
     $.where[$aArgs.mountToWhere]
   ]]
+
+  $lModule.args.parentController[$self]
 
   $lModule.args.mountTo[^if($self.mountTo ne "/"){$self.mountTo}/$lModule.mountTo]
   $lModule.args.mountToWhere[^hash::create[$self.mountToWhere]]
