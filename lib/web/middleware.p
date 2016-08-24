@@ -228,6 +228,16 @@ pfXFrameOptionsMiddleware
 ## Добавлет в http-ответ заголовок X-Frame-Options для защиты от кликджекинга.
 ## https://developer.mozilla.org/ru/docs/Web/HTTP/Headers/X-Frame-Options
 
+## Чтобы отключить мидлваре из обработчика в контролере, надо установить
+## в объекте запроса bool-переменную xframeOptionsExempt:
+## @onAction[aRequest]
+##  $result[
+##    $.body[...]
+##    $.fields[
+##      $.xframeOptionsExempt(true)
+##    ]
+##  ]
+
 @OPTIONS
 locals
 
@@ -243,6 +253,8 @@ pfMiddleware
 
 @processResponse[aAction;aRequest;aResponse;aController;aProcessOptions] -> [response]
   $result[$aResponse]
-  ^if($self._enabled && !^result.hasHeader[X-Frame-Options]){
+  ^if($self._enabled
+    && !^result.xframeOptionsExempt.bool(false)
+    && !^result.hasHeader[X-Frame-Options]){
     $result.headers.[X-Frame-Options][$self._value]
   }

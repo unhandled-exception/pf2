@@ -936,7 +936,16 @@ pfClass
 ## aOptions.download[] — если задан, то заменяет aBody
 ## aOptions.headers[] — заголовки ответа
 ## aOptions.cookie[] — куки
+## aOptions.fields[hash] — поля объекта
   ^self.cleanMethodArgument[]
+
+  ^if($aOptions.fields){
+#   Если нам передали aOptions.fields,
+#   то устанавливаем сначала поля объекта
+    ^aOptions.fields.foreach[k;v]{
+      $self.[$k][$v]
+    }
+  }
 
   $self._body[$aBody]
   $self._download[]
