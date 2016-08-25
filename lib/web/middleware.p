@@ -272,6 +272,8 @@ pfSecurityMiddleware
 ##    $.contentTypeNosniff(true)
 ##    $.xssFilter(true)
 ##
+##    $.contentSecurityPolicy[*] # Можно задать заголовок Content-Security-Policy, но его надо тщательно настраивать и тестировать.
+##
 ##    $.sslRedirect(true) # Принудительный редирект нв https
 ##    $.sslRedirectExempt[$.tests[^^/tests]] # Не делаем редирект, если урл начинается с /tests
 ##  ]
@@ -284,6 +286,7 @@ pfMiddleware
 
 @create[aOptions]
 ## aOptions.enable(true) — включить мидлваре.
+## aOptions.contentSecurityPolicy[] — выдает содержимое параметра в заголовок Content-Security-Policy. https://wiki.mozilla.org/Security/Guidelines/Web_Security#Content_Security_Policy
 ## aOptions.stsSeconds(0) — время в секундах для заголовка Strict-Transport-Security (STS). 0 — не выводить заголовок, 3600 — час, 31536000 — год.
 ## aOptions.stsIncludeSubDomains(false) — добавить в STS-заголовк опцию includeSubdomains.
 ## aOptions.contentTypeNosniff(false) — добавить заголовок X-Content-Type-Options: nosniff.
@@ -293,6 +296,8 @@ pfMiddleware
 ## aOptions.sslRedirectExempt[hash<$.name[regexp]>] — хеш с регулярными выражениями для путей в урлах, которые не надо редиректить. Решудяркой может быть строка или объект regex. По-умолчанию регулярки case-insensiteve, если надо иное, то явно создаем regex-объект.
   ^self.cleanMethodArgument[]
   $self.enabled(^aOptions.enable.bool(true))
+
+  $self.contentSecurityPolicy[$aOptions.contentSecurityPolicy]
   $self.stsSeconds(^aOptions.stsSeconds.int(0))
   $self.stsIncludeSubDomains(^aOptions.stsIncludeSubDomains.bool(false))
   $self.contentTypeNosniff(^aOptions.contentTypeNosniff.bool(false))
@@ -334,5 +339,9 @@ pfMiddleware
 
     ^if($self.xssFilter && !^result.hasHeader[X-XSS-Protection]){
       $result.headers.[X-XSS-Protection][1^; mode=block]
+    }
+
+    ^if(def $self.contentSecurityPolicy && !^result.hasHeader[Content-Security-Policy]){
+      $result.headers.[Content-Security-Policy][$self.contentSecurityPolicy]
     }
   }
