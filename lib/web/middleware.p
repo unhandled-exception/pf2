@@ -223,45 +223,6 @@ pfMiddleware
 #--------------------------------------------------------------------------------------------------
 
 @CLASS
-pfXFrameOptionsMiddleware
-
-## Добавлет в http-ответ заголовок X-Frame-Options для защиты от кликджекинга.
-## https://developer.mozilla.org/ru/docs/Web/HTTP/Headers/X-Frame-Options
-
-## Чтобы отключить мидлваре из обработчика в контролере, надо установить
-## в объекте запроса bool-переменную xframeOptionsExempt:
-## @onAction[aRequest]
-##  $result[
-##    $.body[...]
-##    $.fields[
-##      $.xframeOptionsExempt(true)
-##    ]
-##  ]
-
-@OPTIONS
-locals
-
-@BASE
-pfMiddleware
-
-@create[aOptions]
-## aOptions.enable(true) — включить мидлваре.
-## aOptions.value[SAMEORIGIN] — тип блокировки (значение заголовка:  SAMEORIGIN, DENY и т.д.)
-  ^self.cleanMethodArgument[]
-  $self.enabled(^aOptions.enable.bool(true))
-  $self.value[^self.ifdef[$aOptions.value]{SAMEORIGIN}]
-
-@processResponse[aAction;aRequest;aResponse;aController;aProcessOptions] -> [response]
-  $result[$aResponse]
-  ^if($self.enabled
-    && !^result.xframeOptionsExempt.bool(false)
-    && !^result.hasHeader[X-Frame-Options]){
-    $result.headers.[X-Frame-Options][$self.value]
-  }
-
-#--------------------------------------------------------------------------------------------------
-
-@CLASS
 pfSecurityMiddleware
 
 ## Добавляет заголовки, связанные с безопасностью в объект ответа.
@@ -271,11 +232,22 @@ pfSecurityMiddleware
 ##    $.stsSeconds(31536000)
 ##    $.contentTypeNosniff(true)
 ##    $.xssFilter(true)
+##    $.xframeOptions(true)
 ##
 ##    $.contentSecurityPolicy[*] # Можно задать заголовок Content-Security-Policy, но его надо тщательно настраивать и тестировать.
 ##
 ##    $.sslRedirect(true) # Принудительный редирект нв https
 ##    $.sslRedirectExempt[$.tests[^^/tests]] # Не делаем редирект, если урл начинается с /tests
+##  ]
+##
+## Чтобы отключить xframeOptions из обработчика в контролере, надо установить
+## в объекте запроса bool-переменную xframeOptionsExempt:
+## @onAction[aRequest]
+##  $result[
+##    $.body[...]
+##    $.fields[
+##      $.xframeOptionsExempt(true)
+##    ]
 ##  ]
 
 @OPTIONS
@@ -294,6 +266,9 @@ pfMiddleware
 ## aOptions.sslRedirect(false) — сделать принудительный редирект на https.
 ## aOptions.sslRedirectHost[request.HOST] — хост на который редиректим.
 ## aOptions.sslRedirectExempt[hash<$.name[regexp]>] — хеш с регулярными выражениями для путей в урлах, которые не надо редиректить. Решудяркой может быть строка или объект regex. По-умолчанию регулярки case-insensiteve, если надо иное, то явно создаем regex-объект.
+## aOptions.xframeOptions(false) — включить заголовок X-Frame-Options  для защиты от кликджекинга. https://developer.mozilla.org/ru/docs/Web/HTTP/Headers/X-Frame-Options
+## aOptions.xframeOptionsValue[SAMEORIGIN] — тип блокировки (значение заголовка:  SAMEORIGIN, DENY и т.д.)
+
   ^self.cleanMethodArgument[]
   $self.enabled(^aOptions.enable.bool(true))
 
@@ -306,6 +281,9 @@ pfMiddleware
   $self.sslRedirect(^aOptions.sslRedirect.bool(false))
   $self.sslRedirectHost[$aOptions.sslRedirectHost]
   $self.sslRedirectExempt[^hash::create[$aOptions.sslRedirectExempt]]
+
+  $self.xframeOptions(^aOptions.xframeOptions.bool(false))
+  $self.xframeOptionsValue[^self.ifdef[$aOptions.xframeOptionsValue]{SAMEORIGIN}]
 
 @processRequest[aAction;aRequest;aController;aProcessOptions] -> [response|null]
   $result[]
@@ -344,4 +322,11 @@ pfMiddleware
     ^if(def $self.contentSecurityPolicy && !^result.hasHeader[Content-Security-Policy]){
       $result.headers.[Content-Security-Policy][$self.contentSecurityPolicy]
     }
+
+    ^if($self.xframeOptions
+        && !^result.xframeOptionsExempt.bool(false)
+        && !^result.hasHeader[X-Frame-Options]
+    ){
+       $result.headers.[X-Frame-Options][$self.xframeOptionsValue]
+     }
   }
