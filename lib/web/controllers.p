@@ -311,7 +311,7 @@ pfClass
 #   Для глобального маршрута вычисляем префикс модуля динамически
     $aAction[^aAction.mid(2)]
     ^if($self._compiledMountTo.hasVars){
-      $lPrefix[^self.router.applyPath[$self._compiledMountTo.pattern;$lArgs]]
+      $lPrefix[/^self.router.applyPath[$self._compiledMountTo.pattern;$lArgs]]
       ^lArgs.sub[$self._compiledMountTo.vars]
     }{
        $lPrefix[$self.mountTo]
@@ -339,7 +339,7 @@ pfClass
 #   Для глобального маршрута вычисляем префикс модуля динамически
     $aAction[^aAction.mid(2)]
     ^if($self._compiledMountTo.hasVars){
-      $lPrefix[^self.router.applyPath[$self._compiledMountTo.pattern;$aObject;$aOptions.form]]
+      $lPrefix[/^self.router.applyPath[$self._compiledMountTo.pattern;$aObject;$aOptions.form]]
     }{
        $lPrefix[$self.mountTo]
      }
