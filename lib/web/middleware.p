@@ -248,15 +248,15 @@ pfMiddleware
 ## aOptions.enable(true) — включить мидлваре.
 ## aOptions.value[SAMEORIGIN] — тип блокировки (значение заголовка:  SAMEORIGIN, DENY и т.д.)
   ^self.cleanMethodArgument[]
-  $self._enabled(^aOptions.enable.bool(true))
-  $self._value[^self.ifdef[$aOptions.value]{SAMEORIGIN}]
+  $self.enabled(^aOptions.enable.bool(true))
+  $self.value[^self.ifdef[$aOptions.value]{SAMEORIGIN}]
 
 @processResponse[aAction;aRequest;aResponse;aController;aProcessOptions] -> [response]
   $result[$aResponse]
-  ^if($self._enabled
+  ^if($self.enabled
     && !^result.xframeOptionsExempt.bool(false)
     && !^result.hasHeader[X-Frame-Options]){
-    $result.headers.[X-Frame-Options][$self._value]
+    $result.headers.[X-Frame-Options][$self.value]
   }
 
 #--------------------------------------------------------------------------------------------------
@@ -271,6 +271,9 @@ pfSecurityMiddleware
 ##    $.stsSeconds(31536000)
 ##    $.contentTypeNosniff(true)
 ##    $.xssFilter(true)
+##
+##    $.sslRedirect(true) # Принудительный редирект нв https
+##    $.sslRedirectExempt[$.tests[^^/tests]] # Не делаем редирект, если урл начинается с /tests
 ##  ]
 
 @OPTIONS
@@ -285,26 +288,51 @@ pfMiddleware
 ## aOptions.stsIncludeSubDomains(false) — добавить в STS-заголовк опцию includeSubdomains.
 ## aOptions.contentTypeNosniff(false) — добавить заголовок X-Content-Type-Options: nosniff.
 ## aOptions.xssFilter(false) — добавить заголовок X-XSS-Protection: 1; mode=block.
+## aOptions.sslRedirect(false) — сделать принудительный редирект на https.
+## aOptions.sslRedirectHost[request.HOST] — хост на который редиректим.
+## aOptions.sslRedirectExempt[hash<$.name[regexp]>] — хеш с регулярными выражениями для путей в урлах, которые не надо редиректить. Решудяркой может быть строка или объект regex. По-умолчанию регулярки case-insensiteve, если надо иное, то явно создаем regex-объект.
   ^self.cleanMethodArgument[]
-  $self._enabled(^aOptions.enable.bool(true))
-  $self._stsSeconds(^aOptions.stsSeconds.int(0))
-  $self._stsIncludeSubDomains(^aOptions.stsIncludeSubDomains.bool(false))
-  $self._contentTypeNosniff(^aOptions.contentTypeNosniff.bool(false))
-  $self._xssFilter(^aOptions.xssFilter.bool(false))
+  $self.enabled(^aOptions.enable.bool(true))
+  $self.stsSeconds(^aOptions.stsSeconds.int(0))
+  $self.stsIncludeSubDomains(^aOptions.stsIncludeSubDomains.bool(false))
+  $self.contentTypeNosniff(^aOptions.contentTypeNosniff.bool(false))
+  $self.xssFilter(^aOptions.xssFilter.bool(false))
+
+  $self.sslRedirect(^aOptions.sslRedirect.bool(false))
+  $self.sslRedirectHost[$aOptions.sslRedirectHost]
+  $self.sslRedirectExempt[^hash::create[$aOptions.sslRedirectExempt]]
+
+@processRequest[aAction;aRequest;aController;aProcessOptions] -> [response|null]
+  $result[]
+  ^if($self.enabled){
+    ^if($self.sslRedirect && !$aRequest.isSECURE){
+      $lPath[$aRequest.PATH]
+      $lPassRedirect(false)
+      ^self.sslRedirectExempt.foreach[_;v]{
+        ^if(^lPath.match[$v][^if($v is string){ni}]){
+          $lPassRedirect(true)
+          ^break[]
+        }
+      }
+      ^if(!$lPassRedirect){
+        $result[^pfResponseRedirect::create[https://^self.ifdef[$self.sslRedirectHost]{$aRequest.HOST}$lPath;301]]
+      }
+    }
+  }
 
 @processResponse[aAction;aRequest;aResponse;aController;aProcessOptions] -> [response]
   $result[$aResponse]
-  ^if($self._enabled){
-    ^if($self._stsSeconds && $aRequest.isSECURE && !^result.hasHeader[Strict-Transport-Security]){
+  ^if($self.enabled){
+    ^if($self.stsSeconds && $aRequest.isSECURE && !^result.hasHeader[Strict-Transport-Security]){
 #     STS-заголовки нужно выдавать только при соединении по https.
-      $result.headers.[Strict-Transport-Security][max-age: $self._stsSeconds^if($self._stsIncludeSubDomains){^; includeSubDomains}]
+      $result.headers.[Strict-Transport-Security][max-age: $self.stsSeconds^if($self.stsIncludeSubDomains){^; includeSubDomains}]
     }
 
-    ^if($self._contentTypeNosniff && !^result.hasHeader[X-Content-Type-Options]){
+    ^if($self.contentTypeNosniff && !^result.hasHeader[X-Content-Type-Options]){
       $result.headers.[X-Content-Type-Options][nosniff]
     }
 
-    ^if($self._xssFilter && !^result.hasHeader[X-XSS-Protection]){
+    ^if($self.xssFilter && !^result.hasHeader[X-XSS-Protection]){
       $result.headers.[X-XSS-Protection][1^; mode=block]
     }
   }
