@@ -330,7 +330,7 @@ pfMiddleware
   ^if($self.enabled){
     ^if($self.stsSeconds && $aRequest.isSECURE && !^result.hasHeader[Strict-Transport-Security]){
 #     STS-заголовки нужно выдавать только при соединении по https.
-      $result.headers.[Strict-Transport-Security][max-age: $self.stsSeconds^if($self.stsIncludeSubDomains){^; includeSubDomains}]
+      $result.headers.[Strict-Transport-Security][max-age=$self.stsSeconds^if($self.stsIncludeSubDomains){^; includeSubDomains}]
     }
 
     ^if($self.contentTypeNosniff && !^result.hasHeader[X-Content-Type-Options]){
