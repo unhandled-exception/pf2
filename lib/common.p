@@ -202,7 +202,7 @@ pfMixin
   $self.modules.[$aName][
     ^self._parseClassDef[$aClassDef]
     $.object[]
-    $.args[$aArgs]
+    $.args[^hash::create[$aArgs]]
     $.name[$aName]
   ]
 
