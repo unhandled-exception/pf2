@@ -258,3 +258,53 @@ pfMiddleware
     && !^result.hasHeader[X-Frame-Options]){
     $result.headers.[X-Frame-Options][$self._value]
   }
+
+#--------------------------------------------------------------------------------------------------
+
+@CLASS
+pfSecurityMiddleware
+
+## Добавляет заголовки, связанные с безопасностью в объект ответа.
+
+## Включаем расширения при инициализации мидлваре:
+## ^assignMiddleware[lib/web/middleware.p@pfSecurityMiddleware;
+##    $.stsSeconds(31536000)
+##    $.contentTypeNosniff(true)
+##    $.xssFilter(true)
+##  ]
+
+@OPTIONS
+locals
+
+@BASE
+pfMiddleware
+
+@create[aOptions]
+## aOptions.enable(true) — включить мидлваре.
+## aOptions.stsSeconds(0) — время в секундах для заголовка Strict-Transport-Security (STS). 0 — не выводить заголовок, 3600 — час, 31536000 — год.
+## aOptions.stsIncludeSubDomains(false) — добавить в STS-заголовк опцию includeSubdomains.
+## aOptions.contentTypeNosniff(false) — добавить заголовок X-Content-Type-Options: nosniff.
+## aOptions.xssFilter(false) — добавить заголовок X-XSS-Protection: 1; mode=block.
+  ^self.cleanMethodArgument[]
+  $self._enabled(^aOptions.enable.bool(true))
+  $self._stsSeconds(^aOptions.stsSeconds.int(0))
+  $self._stsIncludeSubDomains(^aOptions.stsIncludeSubDomains.bool(false))
+  $self._contentTypeNosniff(^aOptions.contentTypeNosniff.bool(false))
+  $self._xssFilter(^aOptions.xssFilter.bool(false))
+
+@processResponse[aAction;aRequest;aResponse;aController;aProcessOptions] -> [response]
+  $result[$aResponse]
+  ^if($self._enabled){
+    ^if($self._stsSeconds && $aRequest.isSECURE && !^result.hasHeader[Strict-Transport-Security]){
+#     STS-заголовки нужно выдавать только при соединении по https.
+      $result.headers.[Strict-Transport-Security][max-age: $self._stsSeconds^if($self._stsIncludeSubDomains){^; includeSubDomains}]
+    }
+
+    ^if($self._contentTypeNosniff && !^result.hasHeader[X-Content-Type-Options]){
+      $result.headers.[X-Content-Type-Options][nosniff]
+    }
+
+    ^if($self._xssFilter && !^result.hasHeader[X-XSS-Protection]){
+      $result.headers.[X-XSS-Protection][1^; mode=block]
+    }
+  }
