@@ -237,12 +237,12 @@ pfClass
 ## aOptions.passWrap(false) — не формировать объект вокруг ответа из строк и чисел.
   $result[$aResponse]
   ^if(!^aOptions.passWrap.bool(false)){
-    ^switch(true){
-      ^case($result is hash){
+    ^switch[$result.CLASS_NAME]{
+      ^case[hash]{
         $result.type[^self.ifdef[$result.type]{$self._defaultResponseType}]
         $result[^pfResponse::create[$result.body;$result]]
       }
-      ^case($result is string || $result is double || $result is int){
+      ^case[string;double;int]{
         $result[^pfResponse::create[$result;$.type[$self._defaultResponseType]]]
       }
     }
