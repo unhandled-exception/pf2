@@ -92,12 +92,17 @@ pfClass
 
 @run[aRequest;aOptions] -> []
 ## Запускает процесс. Если вызван метод run, то модуль становится «менеджером».
+## aOptions.returnResponse(false) — вернуть объет ответа вместо вызова response.apply
   ^self.cleanMethodArgument[]
   $result[]
   $aRequest[^self.ifdef[$aRequest]{^self.ifdef[$self.request]{^pfRequest::create[]}}]
   $self.asRoot(true)
   $lResponse[^self.dispatch[$aRequest.ACTION;$aRequest]]
-  ^lResponse.apply[]
+  ^if(^aOptions.returnResponse.bool(false)){
+    $result[$lResponse]
+  }{
+     ^lResponse.apply[]
+   }
 
 @assignModule[aName;aClassDef;aArgs] -> []
 ## aName — имя свойства со ссылкой на модуль.
@@ -838,7 +843,12 @@ locals
   $self._BODY_FILE[$aOptions.BODY_FILE]
 
 @GET[aContext]
-  $result($self.form || $self.__CONTEXT__)
+  ^switch[$aContext]{
+#   def, expression, bool, double, hash, table или file.
+    ^case[def]{$result(true)}
+    ^case[expression;double;bool]{$result($self.form || $self.__CONTEXT__)}
+    ^case[DEFAULT]{$result[$self]}
+  }
 
 @GET_DEFAULT[aName]
   $result[^if(^self.__CONTEXT__.contains[$aName]){$self.__CONTEXT__.[$aName]}{$form.[$aName]}]
