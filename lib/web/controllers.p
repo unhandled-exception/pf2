@@ -838,7 +838,12 @@ locals
   $self._BODY_FILE[$aOptions.BODY_FILE]
 
 @GET[aContext]
-  $result($self.form || $self.__CONTEXT__)
+  ^switch[$aContext]{
+#   def, expression, bool, double, hash, table или file.
+    ^case[def]{$result(true)}
+    ^case[expression;double;bool]{$result($self.form || $self.__CONTEXT__)}
+    ^case[DEFAULT]{$result[$self]}
+  }
 
 @GET_DEFAULT[aName]
   $result[^if(^self.__CONTEXT__.contains[$aName]){$self.__CONTEXT__.[$aName]}{$form.[$aName]}]
