@@ -7,7 +7,12 @@ pf2/lib/web/controllers.p
   Controller tests...
 
   $tc[^testController::create[]]
-  ^tc.run[^myRequest::create[]]
+
+  $r[^tc.run[]]
+  index: $r.body
+
+  $r[^tc.run[^myRequest::create[]]]
+  index (cr): $r.body
 
   Finish tests.^#0A
 
@@ -27,8 +32,14 @@ pfController
 @create[aOptions]
   ^BASE:create[$aOptions]
 
+@run[aRequest;aOptions]
+  $result[^BASE:run[$aRequest;
+    ^hash::create[$aOptions]
+    $.returnResponse(true)
+  ]]
+
 @onINDEX[aRequest]
-  $aRequest.CLASS_NAME
+  request type — $aRequest.CLASS_NAME
 
 
 @CLASS

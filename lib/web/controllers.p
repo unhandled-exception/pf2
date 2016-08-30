@@ -92,12 +92,17 @@ pfClass
 
 @run[aRequest;aOptions] -> []
 ## Запускает процесс. Если вызван метод run, то модуль становится «менеджером».
+## aOptions.returnResponse(false) — вернуть объет ответа вместо вызова response.apply
   ^self.cleanMethodArgument[]
   $result[]
   $aRequest[^self.ifdef[$aRequest]{^self.ifdef[$self.request]{^pfRequest::create[]}}]
   $self.asRoot(true)
   $lResponse[^self.dispatch[$aRequest.ACTION;$aRequest]]
-  ^lResponse.apply[]
+  ^if(^aOptions.returnResponse.bool(false)){
+    $result[$lResponse]
+  }{
+     ^lResponse.apply[]
+   }
 
 @assignModule[aName;aClassDef;aArgs] -> []
 ## aName — имя свойства со ссылкой на модуль.
