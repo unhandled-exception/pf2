@@ -635,10 +635,14 @@ locals
 @CLASS
 pfRouterProcessor
 
+@BASE
+pfClass
+
 @OPTIONS
 locals
 
 @create[aRouter;aProcessorData;aOptions] ::constructor
+  ^BASE:create[]
   $self.router[$aRouter]
   $self.controller[$aRouter.controller]
 
@@ -754,16 +758,27 @@ pfRouterProcessor
 locals
 
 @create[aRouter;aProcessorData;aOptions]
+## aProcessorData[string|hash]
+## aProcessorData.template — имя шаблона
+## aProcessorData.context — переменные шаблона
+## aProcessorData.status[200] — http-статус ответа
+## aProcessorData.type[controller.defaultResponseType] — тип ответа
   ^BASE:create[$aRouter;$aProcessorData;$aOptions]
   ^if($aProcessorData is hash){
     $self.template[^aProcessorData.template.trim[/ .]]
     $self.context[^hash::create[$aProcessorData.context]]
+    $self.status[$aProcessorData.status]
+    $self.type[$aProcessorData.type]
   }{
      $self.template[^aProcessorData.trim[/ .]]
    }
 
 @process[aAction;aRequest;aPrefix;aOptions]
-  $result[^self.controller.render[$self.template;$self.context]]
+  $result[
+    $.type[^self.ifdef[$self.type]{$self.controller.defaultResponseType}]
+    $.status[^self.ifdef[$self.status]{200}]
+    $.body[^self.controller.render[$self.template;$self.context]]
+  ]
 
 #--------------------------------------------------------------------------------------------------
 

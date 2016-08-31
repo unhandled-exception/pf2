@@ -148,7 +148,7 @@ locals
 
   ^router.assign[/;call::root;$.as[root]]
   ^router.assign[about;$.render[about.pt];$.as[about]]
-  ^router.assign[about2;$.render[$.template[about.pt] $.context[$.var[Temp var]]]]
+  ^router.assign[about2;$.render[$.template[about.pt] $.context[$.var[Temp var]] $.status[404] $.type[text]]]
   ^router.assign[:clientID/about;render::/about.pt]
 
   ^router.assign[:clientID/edit;call::edit;$.as[edit]]
