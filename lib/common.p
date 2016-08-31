@@ -200,7 +200,7 @@ pfMixin
   $result[]
   ^if(^self.modules.contains[$aName]){^throw[model.chain.module.exists;Модуль "$aName" уже привязан в объекте класса "$this.CLASS_NAME"]}
   $self.modules.[$aName][
-    ^self._parseClassDef[$aClassDef]
+    ^pfString:parseClassDef[$aClassDef]
     $.object[]
     $.args[^hash::create[$aArgs]]
     $.name[$aName]
@@ -233,20 +233,6 @@ pfMixin
     ^if(!^result.contains[$lField]){
       $result.[$lField][^if(def $lVarName){$this.[$lVarName]}{$this.[$lField]}]
     }
-  }
-
-@_parseClassDef[aClassDef] -> [$.className $.constructor $.package $.classDef]
-## Метод может быть вызван из других классов для разбора пути к пакетам.
-  $aClassDef[^aClassDef.trim[]]
-  $result[$.classDef[$aClassDef]]
-  ^aClassDef.match[$self.__pfChainMixin__.classDefRegex][]{
-    $result.constructor[^if(def $match.3){$match.3}{create}]
-    ^if(def $match.2){
-      $result.className[$match.2]
-    }{
-       $result.className[^file:justname[$match.1]]
-     }
-    $result.package[^if($match.1 ne $result.className){$match.1}]
   }
 
 #--------------------------------------------------------------------------------------------------
@@ -305,6 +291,12 @@ pfString
 
 @OPTIONS
 locals
+static
+
+@auto[]
+  $self.__pfString__[
+    $.classDefRegex[^regex::create[^^([^^@:]*)(?:@([^^:]+))?(?::+(.+))?^$]]
+  ]
 
 @trim[aString;aSide;aSymbols]
 ## Обертка над стандартным парсеровским trim'ом, которая проверяет существование строки.
@@ -519,6 +511,21 @@ locals
   }{
      $result(^math:abs($n - $m))
    }
+
+
+@parseClassDef[aClassDef] -> [$.className $.constructor $.package $.classDef]
+## Метод может быть вызван из других классов для разбора пути к пакетам.
+  $aClassDef[^aClassDef.trim[]]
+  $result[$.classDef[$aClassDef]]
+  ^aClassDef.match[$self.__pfString__.classDefRegex][]{
+    $result.constructor[^if(def $match.3){$match.3}{create}]
+    ^if(def $match.2){
+      $result.className[$match.2]
+    }{
+       $result.className[^file:justname[$match.1]]
+     }
+    $result.package[^if($match.1 ne $result.className){$match.1}]
+  }
 
 #--------------------------------------------------------------------------------------------------
 

@@ -140,7 +140,7 @@ pfClass
   $result[]
   ^pfAssert:isTrue(def $aObject){A middleware object not defined.}
   ^if($aObject is string){
-     $lMiddleware[^pfChainMixin:_parseClassDef[$aObject]]
+     $lMiddleware[^pfString:parseClassDef[$aObject]]
      ^if(def $lMiddleware.package){
        ^use[$lMiddleware.package]
      }
@@ -430,7 +430,7 @@ locals
 ## Процессор с именем default считаем процессором по-умолчанию.
   $result[]
   $lProcessor[^hash::create[]]
-  $lProcessor.classDef[^pfChainMixin:_parseClassDef[$aClassDef]]
+  $lProcessor.classDef[^pfString:parseClassDef[$aClassDef]]
   $lProcessor.options[$aOptions]
   $self.processors.[$aName][$lProcessor]
 
