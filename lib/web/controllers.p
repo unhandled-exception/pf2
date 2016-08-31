@@ -479,8 +479,13 @@ locals
   ^if(!def $lRoute.pattern){$self.hasRootRoute(true)}
 
 # Добавляем маршрут в обратный индекс
-  $self._reverseIndex.[$lRoute.as][^self.ifcontains[$self._reverseIndex;$lRoute.as]{^hash::create[]}]
-  $self._reverseIndex.[$lRoute.as].[^math:uid64[]][$lRoute]
+  $self._reverseIndex.[$lRoute.routeTo][^self.ifcontains[$self._reverseIndex;$lRoute.as]{^hash::create[]}]
+  $self._reverseIndex.[$lRoute.routeTo].[^math:uid64[]][$lRoute]
+
+  ^if($lRoute.routeTo ne $lRoute.as){
+    $self._reverseIndex.[$lRoute.as][^self.ifcontains[$self._reverseIndex;$lRoute.as]{^hash::create[]}]
+    $self._reverseIndex.[$lRoute.as].[^math:uid64[]][$lRoute]
+  }
 
 @_makeRouteTo[aRouteTo] -> [$.routeTo[] $.processor[]]
   $result[$.routeTo[]]

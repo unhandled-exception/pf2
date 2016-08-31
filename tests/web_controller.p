@@ -18,7 +18,6 @@ pf2/lib/web/controllers.p
 
   pager page: ^tc.run[^pfRequest::create[$.URI[pager/567]];$.returnBody(true)]
 
-
   Finish tests.^#0A
 
 @print_fields[aObj][locals]
@@ -65,8 +64,8 @@ pfController
 @onPager[aRequest]
   action — "$aRequest.ACTION", path — "$aRequest.path"
   page — "$aRequest.page"
-  link to pager — ^linkTo[paged/]
-  linkTo to pager page — ^linkTo[paged;$.page[789]]
+  link to pager — ^linkTo[paged/], ^linkTo[pager]
+  linkTo to pager page — ^linkTo[paged;$.page[789]], ^linkTo[pager;$.page[789]]
 
 @onNOTFOUND[aRequest]
   Not found!
