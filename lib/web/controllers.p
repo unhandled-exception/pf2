@@ -140,7 +140,7 @@ pfClass
   $result[]
   ^pfAssert:isTrue(def $aObject){A middleware object not defined.}
   ^if($aObject is string){
-     $lMiddleware[^pfChainMixin:_parseClassDef[$aObject]]
+     $lMiddleware[^pfString:parseClassDef[$aObject]]
      ^if(def $lMiddleware.package){
        ^use[$lMiddleware.package]
      }
@@ -430,7 +430,7 @@ locals
 ## Процессор с именем default считаем процессором по-умолчанию.
   $result[]
   $lProcessor[^hash::create[]]
-  $lProcessor.classDef[^pfChainMixin:_parseClassDef[$aClassDef]]
+  $lProcessor.classDef[^pfString:parseClassDef[$aClassDef]]
   $lProcessor.options[$aOptions]
   $self.processors.[$aName][$lProcessor]
 
@@ -479,8 +479,13 @@ locals
   ^if(!def $lRoute.pattern){$self.hasRootRoute(true)}
 
 # Добавляем маршрут в обратный индекс
-  $self._reverseIndex.[$lRoute.as][^self.ifcontains[$self._reverseIndex;$lRoute.as]{^hash::create[]}]
-  $self._reverseIndex.[$lRoute.as].[^math:uid64[]][$lRoute]
+  $self._reverseIndex.[$lRoute.routeTo][^self.ifcontains[$self._reverseIndex;$lRoute.routeTo]{^hash::create[]}]
+  $self._reverseIndex.[$lRoute.routeTo].[^math:uid64[]][$lRoute]
+
+  ^if($lRoute.routeTo ne $lRoute.as){
+    $self._reverseIndex.[$lRoute.as][^self.ifcontains[$self._reverseIndex;$lRoute.as]{^hash::create[]}]
+    $self._reverseIndex.[$lRoute.as].[^math:uid64[]][$lRoute]
+  }
 
 @_makeRouteTo[aRouteTo] -> [$.routeTo[] $.processor[]]
   $result[$.routeTo[]]
@@ -630,10 +635,14 @@ locals
 @CLASS
 pfRouterProcessor
 
+@BASE
+pfClass
+
 @OPTIONS
 locals
 
 @create[aRouter;aProcessorData;aOptions] ::constructor
+  ^BASE:create[]
   $self.router[$aRouter]
   $self.controller[$aRouter.controller]
 
@@ -749,16 +758,27 @@ pfRouterProcessor
 locals
 
 @create[aRouter;aProcessorData;aOptions]
+## aProcessorData[string|hash]
+## aProcessorData.template — имя шаблона
+## aProcessorData.context — переменные шаблона
+## aProcessorData.status[200] — http-статус ответа
+## aProcessorData.type[controller.defaultResponseType] — тип ответа
   ^BASE:create[$aRouter;$aProcessorData;$aOptions]
   ^if($aProcessorData is hash){
     $self.template[^aProcessorData.template.trim[/ .]]
     $self.context[^hash::create[$aProcessorData.context]]
+    $self.status[$aProcessorData.status]
+    $self.type[$aProcessorData.type]
   }{
      $self.template[^aProcessorData.trim[/ .]]
    }
 
 @process[aAction;aRequest;aPrefix;aOptions]
-  $result[^self.controller.render[$self.template;$self.context]]
+  $result[
+    $.type[^self.ifdef[$self.type]{$self.controller.defaultResponseType}]
+    $.status[^self.ifdef[$self.status]{200}]
+    $.body[^self.controller.render[$self.template;$self.context]]
+  ]
 
 #--------------------------------------------------------------------------------------------------
 
