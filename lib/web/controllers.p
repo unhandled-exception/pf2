@@ -190,9 +190,8 @@ pfClass
 ## Производит предобработку запроса
   $result[^self.router.route[$aAction;$aRequest]]
   ^if(!$result){
-    $result[$.action[$aAction] $.args[^hash::create[]] $.prefix[]]
+    $result[$.action[$aAction] $.request[$aRequest] $.args[^hash::create[]] $.prefix[]]
   }
-  $result.request[$aRequest]
   ^if($result.defaults){
     ^result.request.assign[$result.defaults]
   }
@@ -480,10 +479,8 @@ locals
   ^if(!def $lRoute.pattern){$self.hasRootRoute(true)}
 
 # Добавляем маршрут в обратный индекс
-  ^if(def $lRoute.as){
-    $self._reverseIndex.[$lRoute.as][^self.ifcontains[$self._reverseIndex;$lRoute.as]{^hash::create[]}]
-    $self._reverseIndex.[$lRoute.as].[^math:uid64[]][$lRoute]
-  }
+  $self._reverseIndex.[$lRoute.as][^self.ifcontains[$self._reverseIndex;$lRoute.as]{^hash::create[]}]
+  $self._reverseIndex.[$lRoute.as].[^math:uid64[]][$lRoute]
 
 @_makeRouteTo[aRouteTo] -> [$.routeTo[] $.processor[]]
   $result[$.routeTo[]]
@@ -497,7 +494,7 @@ locals
     $result.processor[^self.createProcessor[$lParsedRouteTo.1;$lParsedRouteTo.2]]
   }
 
-@route[aAction;aRequest;aOptions] -> [$.action $.request $.processor $.defaults]
+@route[aAction;aRequest;aOptions] -> [$.action $.args $.request $.processor $.defaults]
 ## Выполняет поиск и преобразование пути по списку маршрутов
   ^self.cleanMethodArgument[]
   $result[^hash::create[]]
@@ -508,7 +505,7 @@ locals
     ^self.routes.foreach[k;it]{
       $lParsedPath[^self.parsePathByRoute[$result.action;$it;$.args[$self._defaults]]]
       ^if($lParsedPath){
-        ^result.request.assign[$lParsedPath.args]
+        $result.args[$lParsedPath.args]
         $result.action[$lParsedPath.action]
         $result.processor[$it.processor]
 
@@ -659,7 +656,7 @@ locals
 
 @process[aAction;aRequest;aPrefix;aOptions]
   $lController[$self.controller]
-  $lAction[$aAction]
+  $lAction[^self.router.trimPath[$aAction]]
   $lRequest[$aRequest]
 
   ^if(def $aOptions.prefix){$lController.uriPrefix[$aOptions.prefix]}

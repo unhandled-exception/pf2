@@ -8,11 +8,16 @@ pf2/lib/web/controllers.p
 
   $tc[^testController::create[]]
 
-  $r[^tc.run[]]
-  index: $r.body
+  index: ^tc.run[;$.returnBody(true)]
 
-  $r[^tc.run[^myRequest::create[]]]
-  index (cr): $r.body
+  index (cr): ^tc.run[^myRequest::create[];$.returnBody(true)]
+
+  paged: ^tc.run[^pfRequest::create[$.URI[/134]];$.returnBody(true)]
+
+  pager index: ^tc.run[^pfRequest::create[$.URI[pager/]];$.returnBody(true)]
+
+  pager page: ^tc.run[^pfRequest::create[$.URI[pager/567]];$.returnBody(true)]
+
 
   Finish tests.^#0A
 
@@ -32,14 +37,42 @@ pfController
 @create[aOptions]
   ^BASE:create[$aOptions]
 
+  ^router.assign[pager/:page;pager;$.where[$.page[\d+]] $.as[paged]]
+  ^router.assign[pager/;pager;$.as[paged]]
+
+  ^router.assign[:page;/;$.where[$.page[\d+]] $.as[root]]
+  ^router.assign[/;/;$.as[root]]
+
 @run[aRequest;aOptions]
+## aOptions.returnBody(false)
   $result[^BASE:run[$aRequest;
     ^hash::create[$aOptions]
     $.returnResponse(true)
   ]]
+  ^if(^aOptions.returnBody.bool(false)){
+    $result[$result.body]
+  }
 
 @onINDEX[aRequest]
   request type — $aRequest.CLASS_NAME
+  action - "$aRequest.ACTION"
+  path - "$aRequest.PATH"
+  link to index — ^linkTo[root]
+  link to page - ^linkTo[root/;$.page[567]], ^linkTo[root;$.page[678]]
+  global link to page - ^linkTo[::root;$.page[4444]]
+#   ^router.routes.foreach[k;v]{{$k, as: "$v.as", pattern: "$v.pattern", regexp: "$v.regexp"}}[,^#0A]
+
+@onPager[aRequest]
+  action — "$aRequest.ACTION", path — "$aRequest.path"
+  page — "$aRequest.page"
+  link to pager — ^linkTo[paged/]
+  linkTo to pager page — ^linkTo[paged;$.page[789]]
+
+@onNOTFOUND[aRequest]
+  Not found!
+  action - "$aRequest.ACTION"
+  path - "$aRequest.PATH"
+  routes: ^router.routes.foreach[k;v]{{$k, $v.pattern, $v.regexp, "$v.as"}}[, ]
 
 
 @CLASS
