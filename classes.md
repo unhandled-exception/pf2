@@ -126,6 +126,7 @@
 * pfCommonMiddleware
 * pfSessionMiddleware
 * pfDebugInfoMiddleware
+* pfSecurityMiddleware
 
 ### ./lib/web/templates.p
 * pfTemplate

@@ -241,12 +241,12 @@ pfClass
 ## aOptions.passWrap(false) — не формировать объект вокруг ответа из строк и чисел.
   $result[$aResponse]
   ^if(!^aOptions.passWrap.bool(false)){
-    ^switch(true){
-      ^case($result is hash){
+    ^switch[$result.CLASS_NAME]{
+      ^case[hash]{
         $result.type[^self.ifdef[$result.type]{$self._defaultResponseType}]
         $result[^pfResponse::create[$result.body;$result]]
       }
-      ^case($result is string || $result is double || $result is int){
+      ^case[string;double;int]{
         $result[^pfResponse::create[$result;$.type[$self._defaultResponseType]]]
       }
     }
@@ -945,6 +945,9 @@ pfResponse
 
 ## Класс с http-ответом.
 
+## Методы для работы с заголовками нужно использовать в мидлваре для измениня уже существующих объектов.
+## Если явно создаем объект, то заголовки лучше передать в конструктор.
+
 @OPTIONS
 locals
 
@@ -956,11 +959,20 @@ pfClass
 ## aOptions.type[html] — тип ответа
 ## aOptions.status(200) — http-статус
 ## aOptions.contentType[text/html]
-## aOptions.charset[]
+## aOptions.charset[$response:charset]
 ## aOptions.download[] — если задан, то заменяет aBody
-## aOptions.headers[]
-## aOptions.cookie[]
+## aOptions.headers[] — заголовки ответа
+## aOptions.cookie[] — куки
+## aOptions.fields[hash] — поля объекта
   ^self.cleanMethodArgument[]
+
+  ^if($aOptions.fields){
+#   Если нам передали aOptions.fields,
+#   то устанавливаем сначала поля объекта
+    ^aOptions.fields.foreach[k;v]{
+      $self.[$k][$v]
+    }
+  }
 
   $self._body[$aBody]
   $self._download[]
@@ -991,6 +1003,42 @@ pfClass
 
 @SET_download[aDownload]
   $self._download[$aDownload]
+
+@hasHeader[aName] -> [bool]
+## Проверяет установлен ли заголовок.
+  $result(false)
+  ^self.headers.foreach[k;v]{
+    ^if($aName eq ^k.upper[]){
+      $result(true)
+      ^break[]
+    }
+  }
+
+@getHeader[aName;aDefault] -> [value or aDefault]
+## Возвращает заголовок или aDefault
+  $result[$aDefault]
+  $aName[^aName.upper[]]
+  ^self.headers.foreach[k;v]{
+    ^if($aName eq ^k.upper[]){
+      $result[$v]
+      ^break[]
+    }
+  }
+
+@setHeader[aName;aValue] -> []
+## Устанавливает заголовок.
+  $result[]
+  $lSetHeader(true)
+  ^self.headers.foreach[k;v]{
+    ^if($aName eq ^k.upper[]){
+      $self.headers.[$k][$aValue]
+      $lSetHeader(false)
+      ^break[]
+    }
+  }
+  ^if($lSetHeader){
+    $self.headers.[$aName][$aValue]
+  }
 
 @apply[aOptions] -> []
 ## Записывает ответ в переменные Парсера
