@@ -164,6 +164,8 @@ pfMiddleware
   $self._enableHighlightJS(^aOptions.enableHighlightJS.bool(false))
   $self._hideQueryLog(^aOptions.hideQueryLog.bool(false))
 
+  $self._highlightJSVersion[9.6.0]
+
 @processResponse[aAction;aRequest;aResponse;aController;aProcessOptions] -> [response]
   $result[$aResponse]
   ^if($self._enabled && $aResponse.type eq "html"){
@@ -173,8 +175,8 @@ pfMiddleware
 
 @_links[]
   ^if($self._enableHighlightJS){
-    <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.1.0/styles/default.min.css">
-    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.1.0/highlight.min.js"></script>
+    <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/${self._highlightJSVersion}/styles/default.min.css">
+    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/${self._highlightJSVersion}/highlight.min.js"></script>
   }
 
 @_template[]
