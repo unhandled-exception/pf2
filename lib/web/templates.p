@@ -55,7 +55,7 @@ pfClass
 
 @parseTemplateName[aTemplateName] -> [$.path $.mainFunction]
   $result[^hash::create[]]
-  ^aTemplateName.match[$PFTEMPLATE_TN_REGEX][]{
+  ^aTemplateName.match[$self.PFTEMPLATE_TN_REGEX][]{
     $result.path[$match.1]
     $result.mainFunction[^self.ifdef[$match.2]{__main__}]
   }
@@ -88,7 +88,7 @@ pfClass
 
 @render[aTemplateName;aOptions]
 ## Рендерит шаблон
-## aTemplateName[/path/to/template.pt[@__main__]] — имя шаблона и функция, которой передаем управление.
+## aTemplateName[/path/to/template.pt@__main__] — имя шаблона и функция, которой передаем управление.
 ## aOptions.context
 ## aOptions.force(false)
   ^self.cleanMethodArgument[]
