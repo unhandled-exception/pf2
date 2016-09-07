@@ -93,9 +93,10 @@ pfClass
 @run[aRequest;aOptions] -> []
 ## Запускает процесс. Если вызван метод run, то модуль становится «менеджером».
 ## aOptions.returnResponse(false) — вернуть объет ответа вместо вызова response.apply
+## aOptions.useXForwarded(false) — передать объекту запроса параметр $.useXForwarded.
   ^self.cleanMethodArgument[]
   $result[]
-  $aRequest[^self.ifdef[$aRequest]{^self.ifdef[$self.request]{^pfRequest::create[]}}]
+  $aRequest[^self.ifdef[$aRequest]{^self.ifdef[$self.request]{^pfRequest::create[$.useXForwarded(^aOptions.useXForwarded.bool(false))]}}]
   $self.asRoot(true)
   $lResponse[^self.dispatch[$aRequest.ACTION;$aRequest]]
   ^if(^aOptions.returnResponse.bool(false)){
@@ -810,6 +811,7 @@ locals
 
 @create[aOptions]
 ## aOptions — хеш с переменными объекта, которые надо заменить. [Для тестов.]
+## aOptions.useXForwarded(false) — использовать для полей HOST и PORT заголовки X-Forwarded-Host и X-Forwarded-Port.
   $aOptions[^hash::create[$aOptions]]
 
   $self.ifdef[$pfClass:ifdef]
@@ -837,12 +839,19 @@ locals
 
   $self.ACTION[^self.ifcontains[$aOptions;ACTION]{^self.PATH.trim[/]}]
 
-  $self.PORT[^self.ifdef[$aOptions.PORT]{^self.ENV.SERVER_PORT.int(80)}]
+  ^if(^aOptions.useXForwarded.bool(false)){
+    ^pfAssert:fail[stop]
+     $self.HOST[^self.ifdef[$aOptions.HOST]{^self.header[X-Forwarded-Host]{$self.ENV.SERVER_NAME}}]
+     $self.PORT[^self.ifdef[$aOptions.PORT]{^self.header[X-Forwarded-Port]{$self.ENV.SERVER_PORT}}]
+  }{
+     $self.HOST[^self.ifdef[$aOptions.HOST]{^self.header[Host]{$self.ENV.SERVER_NAME}}]
+     $self.PORT[^self.ifdef[$aOptions.PORT]{^self.ENV.SERVER_PORT.int(80)}]
+   }
+
+  $self.HOST[$self.HOST^if($self.PORT ne "80" && ($self.isSECURE && $self.PORT ne "443")){:$self.PORT}]
+
   $self.isSECURE(^self.ifcontains[$aOptions;isSECURE](^self.ENV.HTTPS.lower[] eq "on" || $self.PORT eq "443"))
   $self.SCHEME[http^if($self.isSECURE){s}]
-
-  $self.HOST[^self.ifdef[$aOptions.HOST]{^self.header[X-Forwarded-Host;^self.header[Host;$self.ENV.SERVER_NAME]]}]
-  $self.HOST[$self.HOST^if($self.PORT ne "80" && ($self.isSECURE && $self.PORT ne "443")){:$self.PORT}]
 
 # Проверяет является ли Referer локальным.
   $self.REFERER[^self.header[Referer]]
