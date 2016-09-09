@@ -177,6 +177,13 @@ pfMiddleware
   ^if($self._enableHighlightJS){
     <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/${self._highlightJSVersion}/styles/default.min.css">
     <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/${self._highlightJSVersion}/highlight.min.js"></script>
+    <script>
+      ^$(function() {
+        ^$('.sql-log-query').each(function(i, block) {
+          hljs.highlightBlock(block)^;
+        })^;
+      })^;
+    </script>
   }
 
 @_template[]
@@ -213,13 +220,6 @@ pfMiddleware
          </li>
        }
     </ol>
-    ^if($self._enableHighlightJS){
-      <script>
-        ^$('.sql-log-query').each(function(i, block) {
-          hljs.highlightBlock(block)^;
-        })^;
-      </script>
-    }
   }
 
 #--------------------------------------------------------------------------------------------------
