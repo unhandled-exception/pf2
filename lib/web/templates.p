@@ -38,6 +38,7 @@ pfClass
   $self.PFTEMPLATE_TN_REGEX[^regex::create[^^(.*?)(?:@(.*))?^$]]
   $self.PFTEMPLATE_IMPORTS_REGEX[^regex::create[^^#@import\s+(.+)^$][gmi]]
   $self.PFTEMPLATE_BASE_REGEX[^regex::create[^^#@base\s+(.+)^$][gmi]]
+  $self.PFTEMPLATE_FUNCTION_REGEX[^regex::create[^^@\S+;mn]]
 
 @assign[aName;aValue] -> []
   $result[]
@@ -168,7 +169,7 @@ locals
     ^self.applyImports[$aObject;$lTempl.text;$lTempl.path]
   }
 
-  ^process[$aObject]{^taint[as-is][$aTemplateText]}[
+  ^process[$aObject]{^if(!^aTemplateText.match[$self.PFTEMPLATE_FUNCTION_REGEX]){@__main__[]^#0A}^taint[as-is][$aTemplateText]}[
     $.main[__main__]
     $.file[$aTemplatePath]
   ]
