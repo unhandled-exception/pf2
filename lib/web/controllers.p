@@ -292,9 +292,9 @@ pfClass
 @abort[aStatus;aData]
   ^throw[http.^aStatus.int(500);$aData]
 
-@makeLinkURI[aAction;aOptions;aAnchor;aPrefix]
+@makeLinkURI[aAction;aOptions;aPrefix]
 ## Формирует url для экшна. Используется в linkTo/linkFor.
-## $uriPrefix$aAction?aOptions.foreach[key=value][&]#aAnchor
+## $uriPrefix$aAction?aOptions.foreach[key=value][&]
   ^self.cleanMethodArgument[]
   ^if(def $aAction){$aAction[^aAction.trim[both;/.]]}
 
@@ -305,7 +305,7 @@ pfClass
     $result[${result}?^aOptions.foreach[key;value]{$key=^taint[uri][$value]}[^taint[&]]]
   }
 
-@linkTo[aAction;aOptions;aAnchor]
+@linkTo[aAction;aOptions]
 ## Формирует ссылку на экшн, выполняя бэкрезолв путей.
 ## aOptions — объект, который поддерживает свойство $aOptions.fields (хеш, таблица и пр.)
   ^self.cleanMethodArgument[]
@@ -327,16 +327,15 @@ pfClass
 
   $lReverse[^self.router.reverse[$aAction;$lArgs]]
   ^if($lReverse){
-    $result[^self.makeLinkURI[$lReverse.path;$lReverse.args;$aAnchor;$lPrefix]]
+    $result[^self.makeLinkURI[$lReverse.path;$lReverse.args;$lPrefix]]
   }{
-    $result[^self.makeLinkURI[$aAction;$lArgs;$aAnchor;$lPrefix]]
+    $result[^self.makeLinkURI[$aAction;$lArgs;$lPrefix]]
    }
 
 @linkFor[aAction;aObject;aOptions]
 ## Формирует ссылку на объект.
 ## aObject[<hash>]
 ## aOptions.form — поля, которые надо добавить к объекту/маршруту
-## aOptions.anchor — «якорь»
   ^self.cleanMethodArgument[]
   $aAction[^aAction.trim[both;/]]
 
@@ -354,19 +353,19 @@ pfClass
 
   $lReverse[^self.router.reverse[$aAction;$aObject;$.form[$aOptions.form] $.onlyPatternVars(true)]]
   ^if($lReverse){
-    $result[^self.makeLinkURI[$lReverse.path;$lReverse.args;$aOptions.anchor;$lPrefix]]
+    $result[^self.makeLinkURI[$lReverse.path;$lReverse.args;$lPrefix]]
   }{
-    $result[^self.makeLinkURI[$aAction;$aOptions.form;$aAnchor;$lPrefix]]
+    $result[^self.makeLinkURI[$aAction;$aOptions.form;$lPrefix]]
    }
 
 @redirect[aURL;aStatus]
   ^self.abort(^aStatus.int(302))[$aURL]
 
-@redirectTo[aAction;aOptions;aAnchor]
-  ^self.abort(302)[^self.linkTo[$aAction;$aOptions;$aAnchor]]
+@redirectTo[aAction;aOptions]
+  ^self.abort(302)[^self.linkTo[$aAction;$aOptions]]
 
 @redirectFor[aAction;aObject;aOptions]
-  ^self.abort[http.302;^self.linkFor[$aAction;$aOptions;$aAnchor]]
+  ^self.abort[http.302;^self.linkFor[$aAction;$aOptions]]
 
 @assignVar[aName;aValue]
   $result[]
