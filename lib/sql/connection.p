@@ -6,30 +6,34 @@ pf2/lib/common.p
 @CLASS
 pfSQLConnection
 
+@OPTIONS
+locals
+
 ## Базовый класс для работы с sql-серверами.
 
 @BASE
 pfClass
 
 @create[aConnectString;aOptions]
-## aOptions.enableMemoryCache(false) - добавлять результаты выборок из БД в кеш в памяти.
-## aOptions.enableQueriesLog(false) - включить логирование sql-запросов.
-  ^cleanMethodArgument[]
+## aOptions.enableMemoryCache(false) — добавлять результаты выборок из БД в кеш в памяти.
+## aOptions.enableQueriesLog(false) — включить логирование sql-запросов.
+## aOptions.nestedAsSavepoints(false) — объединить вложенные транзакции в сейвпоинты.
+  ^self.cleanMethodArgument[]
   ^pfAssert:isTrue(def $aConnectString)[Не задана строка соединения.]
 
   ^BASE:create[]
 
-  $_connectString[$aConnectString]
-  $_connectionsCount(0)
-  $_transactionsCount(0)
+  $self._connectString[$aConnectString]
+  $self._connectionsCount(0)
+  $self._transactionsCount(0)
 
-  $_serverType[^aConnectString.left(^aConnectString.pos[:])]
+  $self._serverType[^aConnectString.left(^aConnectString.pos[:])]
 
-  $_enableMemoryCache[^aOptions.enableMemoryCache.bool(false)]
-  $_memoryCache[]
+  $self._enableMemoryCache[^aOptions.enableMemoryCache.bool(false)]
+  $self._memoryCache[]
 
-  $_enableQueriesLog(^aOptions.enableQueriesLog.bool(false))
-  $_stat[
+  $self._enableQueriesLog(^aOptions.enableQueriesLog.bool(false))
+  $self._stat[
     $.queriesCount(0)
     $.memoryCache[
       $.size(0)
@@ -40,33 +44,35 @@ pfClass
   ]
 
 # Регулярное вражение, которое проверят эксепшн при дублировании записей в safeInsert.
-  $_duplicateKeyExceptionRegex[^switch[$_serverType]{
+  $self._duplicateKeyExceptionRegex[^switch[$self._serverType]{
     ^case[sqlite]{^regex::create[SQL logic error][i]}
     ^case[pgsql]{^regex::create[duplicate key value][i]}
     ^case[DEFAULT]{^regex::create[duplicate entry][i]}
   }]
 
+  $self._nestedAsSavepoints(^aOptions.nestedAsSavepoints.bool(false))
+
 @GET_connectString[]
-  $result[$_connectString]
+  $result[$self._connectString]
 
 @GET_isConnected[]
-  $result($_connectionsCount)
+  $result($self._connectionsCount)
 
 @GET_isTransaction[]
-  $result($_transactionsCount)
+  $result($self._transactionsCount)
 
 @GET_memoryCache[]
-  ^if(!def $_memoryCache){
-    ^clearMemoryCache[]
+  ^if(!def $self._memoryCache){
+    ^self.clearMemoryCache[]
   }
-  $result[$_memoryCache]
+  $result[$self._memoryCache]
 
 @GET_serverType[]
-  $result[$_serverType]
+  $result[$self._serverType]
 
 @GET_stat[]
 ## Возвращает статистику по запросам
-  $result[$_stat]
+  $result[$self._stat]
 
 @connect[aCode]
 ## Выполняет соединение с сервером и выполняет код, если оно еще не установлено.
@@ -74,7 +80,7 @@ pfClass
   ^if($self._connectionsCount){
     $result[$aCode]
   }{
-     ^MAIN:connect[$_connectString]{
+     ^connect[$self._connectString]{
        ^self._connectionsCount.inc[]
        ^try{
          $result[$aCode]
@@ -84,142 +90,193 @@ pfClass
      }
    }
 
-@transaction[aCode;aOptions][locals]
+@transaction[aCode;aOptions]
 ## Организует транзакцию, обеспечивая возможность отката.
-## aOptions.disableQueriesLog(false) - отключить лог на время работы транзакции
-  ^cleanMethodArgument[]
+## aOptions.disableQueriesLog(false) — отключить лог на время работы транзакции
+## aOptions.nestedAsSavepoints(false) — заменить вложенные транзакции на сейвпоинты
+  ^self.cleanMethodArgument[]
   $result[]
   ^self.connect{
-    $lIsEnabledQueryLog($_enableQueriesLog)
+    $lIsEnabledQueryLog($self._enableQueriesLog)
     ^if(^aOptions.disableQueriesLog.bool(false)){$self._enableQueriesLog(false)}
     ^self._transactionsCount.inc(1)
 
-    ^if($self._transactionsCount > 1){
-##    Объединяем вложенные транзакции
-      $result[$aCode]
-    }{
-      ^startTransaction[]
-      ^try{
-        $result[$aCode]
-        ^commit[]
+    $lOldNestedAsSavepoints($self._nestedAsSavepoints)
+    $self._nestedAsSavepoints(^aOptions.nestedAsSavepoints.bool($self._nestedAsSavepoints))
+
+    ^try{
+      ^if($self._transactionsCount > 1){
+##      Объединяем вложенные транзакции
+        ^if($self._nestedAsSavepoints){
+          ^self.savepoint{
+            $result[$aCode]
+          }
+        }{
+          $result[$aCode]
+        }
       }{
-         ^rollback[]
-      }{
-         ^self._transactionsCount.dec(1)
-         $self._enableQueriesLog($lIsEnabledQueryLog)
-       }
+        ^self.begin[]
+        ^try{
+          $result[$aCode]
+          ^self.commit[]
+        }{
+           ^self.rollback[]
+        }
+      }
+    }{}{
+      ^self._transactionsCount.dec(1)
+      $self._enableQueriesLog($lIsEnabledQueryLog)
+      $self._nestedAsSavepoints($lOldNestedAsSavepoints)
     }
   }
 
-@startTransaction[]
+@savepoint[aNameOrCode;aCode]
+## Делает сейвпоинт
+## ^savepoint[name] — выдает команду savepoint name
+## ^savepoint{code} — выполняет код внутри savepoint. Имя для сейвпоинта формируется автоматически.
+## ^savepoint[name]{code} — выполняет код внутри сейвпоинта name
+  $result[]
+  ^if(^reflection:is[aNameOrCode;code]){
+    $lSavepointName[AUTO_SAVEPOINT_^math:uid64[]]
+    $lSavepointCode{$aNameOrCode}
+    $lHasCode(true)
+  }($aNameOrCode is string){
+    $lSavepointName[$aNameOrCode]
+    ^if(^reflection:is[aCode;code]){
+      $lSavepointCode{$aCode}
+      $lHasCode(true)
+    }
+  }{
+    ^throw[pf.sql.connetction;Методу pfSQLConnection.savepoint надо передать один или два параметра.]
+  }
+
+  ^self.connect{
+    ^if($lHasCode){
+      ^self.void{savepoint ^taint[$lSavepointName]}
+      ^try{
+        $result[$lSavepointCode]
+        ^self.release[$lSavepointName]
+      }{
+         ^self.rollback[$lSavepointName]
+       }
+    }{
+       ^self.void{savepoint ^taint[$lSavepointName]}
+     }
+  }
+
+@begin[]
 ## Открывает транзакцию.
   $result[]
-  ^void{begin}
+  ^self.void{begin}
 
 @commit[]
 ## Комитит транзакцию.
   $result[]
-  ^void{commit}
+  ^self.void{commit}
 
-@rollback[]
-## Откатывает текущую транзакцию.
+@rollback[aSavePoint]
+## Откатывает текущую транзакцию или сейвпоинт.
   $result[]
-  ^void{rollback}
+  ^self.void{rollback^if(def $aSavePoint){ to ^taint[$aSavePoint]}}
 
+@release[aSavePoint]
+## Освобождает сейвпоинт.
+  $result[]
+  ^self.void{release savepoint ^taint[$aSavePoint]}
 
-@table[aQuery;aSQLOptions;aOptions][locals]
+@table[aQuery;aSQLOptions;aOptions]
 ## aOptions.force — отключить кеширование в памяти
 ## aOptions.cacheKey — ключ для кешироапния. Если не задан, то вычисляется автоматически.
 ## aOptions.log[] — запись, которую надо сделать в логе вместо текста запроса.
   $lQuery[$aQuery]
-  $lOptions[^_getOptions[$lQuery;table;$aSQLOptions;$aOptions]]
-  $result[^_processMemoryCache{^_sql[table]{^table::sql{$lQuery}[$aSQLOptions]}[$lOptions]}[$lOptions]]
+  $lOptions[^self._getOptions[$lQuery;table;$aSQLOptions;$aOptions]]
+  $result[^self._processMemoryCache{^self._sql[table]{^table::sql{$lQuery}[$aSQLOptions]}[$lOptions]}[$lOptions]]
 
-@hash[aQuery;aSQLOptions;aOptions][locals]
+@hash[aQuery;aSQLOptions;aOptions]
 ## aOptions.force — отключить кеширование в памяти
 ## aOptions.cacheKey — ключ для кешироапния. Если не задан, то вычисляется автоматически.
 ## aOptions.log[] — запись, которую надо сделать в логе вместо текста запроса.
   $lQuery[$aQuery]
-  $lOptions[^_getOptions[$lQuery;hash;$aSQLOptions;$aOptions]]
-  $result[^_processMemoryCache{^_sql[hash]{^hash::sql{$lQuery}[$aSQLOptions]}[$lOptions]}[$lOptions]]
+  $lOptions[^self._getOptions[$lQuery;hash;$aSQLOptions;$aOptions]]
+  $result[^self._processMemoryCache{^self._sql[hash]{^hash::sql{$lQuery}[$aSQLOptions]}[$lOptions]}[$lOptions]]
 
-@file[aQuery;aSQLOptions;aOptions][locals]
+@file[aQuery;aSQLOptions;aOptions]
 ## aOptions.force — отключить кеширование в памяти
 ## aOptions.cacheKey — ключ для кешироапния. Если не задан, то вычисляется автоматически.
 ## aOptions.log[] — запись, которую надо сделать в логе вместо текста запроса.
   $lQuery[$aQuery]
-  $lOptions[^_getOptions[$lQuery;file;$aSQLOptions;$aOptions]]
-  $result[^_processMemoryCache{^_sql[file]{^file::sql{$lQuery}[$aSQLOptions]}[$lOptions]}[$lOptions]]
+  $lOptions[^self._getOptions[$lQuery;file;$aSQLOptions;$aOptions]]
+  $result[^self._processMemoryCache{^self._sql[file]{^file::sql{$lQuery}[$aSQLOptions]}[$lOptions]}[$lOptions]]
 
-@string[aQuery;aSQLOptions;aOptions][locals]
+@string[aQuery;aSQLOptions;aOptions]
 ## aOptions.force — отключить кеширование в памяти
 ## aOptions.cacheKey — ключ для кешироапния. Если не задан, то вычисляется автоматически.
 ## aOptions.log[] — запись, которую надо сделать в логе вместо текста запроса.
   $lQuery[$aQuery]
-  $lOptions[^_getOptions[$lQuery;string;$aSQLOptions;$aOptions]]
-  $result[^_processMemoryCache{^_sql[string]{^string:sql{$lQuery}[$aSQLOptions]}[$lOptions]}[$lOptions]]
+  $lOptions[^self._getOptions[$lQuery;string;$aSQLOptions;$aOptions]]
+  $result[^self._processMemoryCache{^self._sql[string]{^string:sql{$lQuery}[$aSQLOptions]}[$lOptions]}[$lOptions]]
 
-@double[aQuery;aSQLOptions;aOptions][locals]
+@double[aQuery;aSQLOptions;aOptions]
 ## aOptions.force — отключить кеширование в памяти
 ## aOptions.cacheKey — ключ для кешироапния. Если не задан, то вычисляется автоматически.
 ## aOptions.log[] — запись, которую надо сделать в логе вместо текста запроса.
   $lQuery[$aQuery]
-  $lOptions[^_getOptions[$lQuery;double;$aSQLOptions;$aOptions]]
-  $result(^_processMemoryCache{^_sql[double]{^double:sql{$lQuery}[$aSQLOptions]}[$lOptions]}[$lOptions])
+  $lOptions[^self._getOptions[$lQuery;double;$aSQLOptions;$aOptions]]
+  $result(^self._processMemoryCache{^self._sql[double]{^double:sql{$lQuery}[$aSQLOptions]}[$lOptions]}[$lOptions])
 
-@int[aQuery;aSQLOptions;aOptions][locals]
+@int[aQuery;aSQLOptions;aOptions]
 ## aOptions.force — отключить кеширование в памяти
 ## aOptions.cacheKey — ключ для кешироапния. Если не задан, то вычисляется автоматически.
 ## aOptions.log[] — запись, которую надо сделать в логе вместо текста запроса.
   $lQuery[$aQuery]
-  $lOptions[^_getOptions[$lQuery;int;$aSQLOptions;$aOptions]]
-  $result(^_processMemoryCache{^_sql[int]{^int:sql{$lQuery}[$aSQLOptions]}[$lOptions]}[$lOptions])
+  $lOptions[^self._getOptions[$lQuery;int;$aSQLOptions;$aOptions]]
+  $result(^self._processMemoryCache{^self._sql[int]{^int:sql{$lQuery}[$aSQLOptions]}[$lOptions]}[$lOptions])
 
-@void[aQuery;aSQLOptions;aOptions][locals]
+@void[aQuery;aSQLOptions;aOptions]
 ## aOptions.log[] — запись, которую надо сделать в логе вместо текста запроса.
   $lQuery[$aQuery]
-  $lOptions[^_getOptions[$lQuery;int;$aSQLOptions;$aOptions]]
-  $result[^_sql[void]{^void:sql{$lQuery}[$aSQLOptions]}[^hash::create[$lOptions]]]
+  $lOptions[^self._getOptions[$lQuery;int;$aSQLOptions;$aOptions]]
+  $result[^self._sql[void]{^void:sql{$lQuery}[$aSQLOptions]}[^hash::create[$lOptions]]]
 
 @clearMemoryCache[]
-  $_memoryCache[^hash::create[]]
-  $_stat.memoryCache.size($_memoryCache)
+  $self._memoryCache[^hash::create[]]
+  $self._stat.memoryCache.size($self._memoryCache)
 
 @safeInsert[aInsertCode;aExistsCode]
 ## Выполняет aInsertCode, если в нем произошел exception on duplicate, то выполняет aExistsCode.
 ## Реализует абстракцию insert ... on duplicate key update, которая нативно реализована не во всех СУБД.
-  $result[^try{$aInsertCode}{^if($exception.type eq "sql.execute" && ^exception.comment.match[$_duplicateKeyExceptionRegex][]){$exception.handled(true)$aExistsCode}}]
+  $result[^try{$aInsertCode}{^if($exception.type eq "sql.execute" && ^exception.comment.match[$self._duplicateKeyExceptionRegex][]){$exception.handled(true)$aExistsCode}}]
 
-@lastInsertID[][locals]
+@lastInsertID[]
 ## Возвращает идентификатор последней вставленной записи.
 ## Способ получения зависит от типа сервера.
   $result[]
-  $lQuery[^switch[$_serverType]{
+  $lQuery[^switch[$self._serverType]{
     ^case[sqlite]{select last_insert_rowid()}
     ^case[mysql]{select last_insert_id()}
     ^case[pgsql]{select lastval()}
   }]
   ^if(def $lQuery){
-    $result[^string{$lQuery}[$.limit(1)][$.force(true)]]
+    $result[^self.string{$lQuery}[$.limit(1)][$.force(true)]]
   }
 
-@_processMemoryCache[aCode;aOptions][lKey;lResult;lIsIM]
+@_processMemoryCache[aCode;aOptions]
 ## Возвращает результат запроса из коллекции объектов.
 ## Если объект не найден, то выполняет запрос и добавляет его результат в коллекцию.
   $result[]
-  $lIsIM($_enableMemoryCache && !^aOptions.force.bool(false))
+  $lIsIM($self._enableMemoryCache && !^aOptions.force.bool(false))
   $lKey[^if(def $aOptions.cacheKey){$aOptions.cacheKey}{$aOptions.queryKey}]
 
-  ^if($lIsIM && ^memoryCache.contains[$lKey]){
-    $result[$memoryCache.[$lKey]]
+  ^if($lIsIM && ^self.memoryCache.contains[$lKey]){
+    $result[$self.memoryCache.[$lKey]]
     ^_stat.memoryCache.usage.inc[]
   }{
      $result[$aCode]
      ^if($lIsIM){
-       $memoryCache.[$lKey][$result]
+       $self.memoryCache.[$lKey][$result]
      }
    }
-   $_stat.memoryCache.size($_memoryCache)
+   $self._stat.memoryCache.size($self._memoryCache)
 
 @_makeQueryKey[aQuery;aType;aSQLOptions]
 ## Формирует ключ для запроса
@@ -230,21 +287,21 @@ pfClass
 @_getOptions[aQuery;aType;aSQLOptions;aOptions]
 ## Объединяет опции запроса в один хеш, и, при необходимости,
 ## вычисляет ключ запроса.
-  ^cleanMethodArgument[]
-  ^cleanMethodArgument[aSQLOptions]
+  ^self.cleanMethodArgument[]
+  ^self.cleanMethodArgument[aSQLOptions]
   $result[^hash::create[$aOptions]]
   ^result.add[$aSQLOptions]
   $result.type[$aType]
-  ^if(!$aOptions.force && $_enableMemoryCache){
-    $result.queryKey[^_makeQueryKey[$aQuery;$aType;$aSQLOptions]]
+  ^if(!$aOptions.force && $self._enableMemoryCache){
+    $result.queryKey[^self._makeQueryKey[$aQuery;$aType;$aSQLOptions]]
   }
-  ^if($_enableQueriesLog){
+  ^if($self._enableQueriesLog){
     $result.query[$aQuery]
   }
 
-@_sql[aType;aCode;aOptions][locals]
+@_sql[aType;aCode;aOptions]
 ## Выполняет запрос и сохраняет статистику
-  ^cleanMethodArgument[]
+  ^self.cleanMethodArgument[]
   $lMemStart($status:memory.used)
   $lStart($status:rusage.tv_sec + $status:rusage.tv_usec/1000000.0)
 
@@ -256,10 +313,10 @@ pfClass
     $lEnd($status:rusage.tv_sec + $status:rusage.tv_usec/1000000.0)
     $lMemEnd($status:memory.used)
 
-    $_stat.queriesTime($_stat.queriesTime + ($lEnd-$lStart))
+    $self._stat.queriesTime($self._stat.queriesTime + ($lEnd-$lStart))
     ^_stat.queriesCount.inc[]
-    ^if($_enableQueriesLog){
-      $_stat.queries.[^_stat.queries._count[]][
+    ^if($self._enableQueriesLog){
+      $self._stat.queries.[^_stat.queries._count[]][
         $.type[$aType]
         $.query[^taint[^ifdef[$aOptions.log]{^self.connect{^apply-taint[sql][$aOptions.query]}}]]
         $.time($lEnd-$lStart)

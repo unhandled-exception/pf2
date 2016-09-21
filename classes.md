@@ -97,10 +97,14 @@
 
 ### ./lib/web/controllers.p
 * pfController
+* pfRouter
+* pfRouterProcessor
+* pfRouterDefaultProcessor
+* pfRouterRenderProcessor
+* pfRouterCallProcessor
 * pfRequest
 * pfResponse
 * pfResponseRedirect
-* pfRouter
 * pfMiddleware
 
 ### ./lib/web/helpers/antiflood.p
@@ -122,11 +126,10 @@
 * pfCommonMiddleware
 * pfSessionMiddleware
 * pfDebugInfoMiddleware
+* pfSecurityMiddleware
 
 ### ./lib/web/templates.p
 * pfTemplate
 * pfTemplateStorage
-* pfTemplateEngine
-* pfTemplateParserEngine
-* pfTemplateParserPattern
+* pfTemplateParserWrapper
 

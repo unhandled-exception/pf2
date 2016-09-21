@@ -1,423 +1,334 @@
-# PF2 library
+# PF2 Library
 
 @USE
 pf2/lib/common.p
 
-## Шиблонный движок.
 
 @CLASS
 pfTemplate
+
+## Шаблонизатор
+
+@OPTIONS
+locals
 
 @BASE
 pfClass
 
 @create[aOptions]
-## aOptions.templateFolder - путь к базовому каталогу с шаблонами
-## aOptions.force(false) - принудительно отменяет кеширование в стораджах и пр. местах
-## aOptions.defaultEnginePattern[(?:pt|htm|html)^$] - шаблон для дефолтного энжина
-## aOptions.defaultEngineOptions[] — опции, которые надо передать дефолтному энжину
-## Дефолтный энжин — parser
-  ^cleanMethodArgument[]
+## aOptions.storage[pfTemplateStorage] — сторадж
+## aOptions.searchPath[/../views] — путь к каталогу с шаблонами
+  ^self.cleanMethodArgument[]
   ^BASE:create[$aOptions]
 
-# Массив путей для поиска шаблонов (hash[$.0 $.1 ...])
-  $_templatePath[^hash::create[]]
-  ^appendPath[^if(def $aOptions.templateFolder){$aOptions.templateFolder}{/../views}]
+# Переменные шаблона
+  $self.context[^hash::create[]]
 
-  $_force($aOptions.force)
-
-  $_storages[^hash::create[]]
-  ^registerStorage[file;pfTemplateStorage;$.force($_force)]
-  $_defaultStorage[file]
-
-  $_engines[^hash::create[]]
-  $_defaultEnginePattern[^if(def $aOptions.defaultEnginePattern){$aOptions.defaultEnginePattern}{(?:pt|htm|html)^$}]
-  ^registerEngine[parser;;pfTemplateParserEngine;$.options[$aOptions.defaultEngineOptions]]
-  $_defaultEngine[parser]
-
-  $_globalVars[^hash::create[]]
-  $_profiles[^hash::create[]]
-
-@GET_templatePath[]
-  $result[$_templatePath]
-
-@GET_defaultStorage[]
-  $result[$_defaultStorage]
-
-@SET_defaultStorage[aName]
-  $_defaultStorage[$aName]
-
-@GET_defaultEngine[]
-  $result[$_defaultEngine]
-
-@SET_defaultEngine[aName]
-  $_defaultEngine[$aName]
-
-@GET_defaultEnginePattern[]
-  $result[$_defaultEnginePattern]
-
-@SET_defaultEnginePattern[aName]
-  $_defaultEnginePattern[$aName]
-
-@GET_vars[]
-  $result[$_globalVars]
-
-@appendPath[aPath]
-## Добавляет путь для поиска шаблонов
-  ^if(def $aPath){
-    $_templatePath.[^_templatePath._count[]][$aPath]
-  }
-  $result[]
-
-@registerStorage[aStorageName;aClassName;aOptions]
-## aOptions.file - имя файла с классом
-## aOptions.options - переменные, которые надо передать конструктору стораджа
-  ^cleanMethodArgument[]
-  ^pfAssert:isTrue(def $aStorageName)[Не задано имя стораджа.]
-  ^pfAssert:isTrue(def $aClassName)[Не задано имя класса стораджа.]
-  $_storages.[$aStorageName][
-    $.className[$aClassName]
-    $.file[$aOptions.file]
-    $.options[$aOptions.options]
-    $.object[]
+# Хранилище шаблонов
+  $self.storage[
+    ^self.ifdef[$aOptions.storage]{
+      ^pfTemplateStorage::create[$.searchPath[$aOptions.searchPath]]
+    }
   ]
+
+# Кеш откомпилированных шаблонов
+  $self.templates[^hash::create[]]
+
+@auto[]
+  $self.PFTEMPLATE_TN_REGEX[^regex::create[^^(.*?)(?:@(.*))?^$]]
+  $self.PFTEMPLATE_IMPORTS_REGEX[^regex::create[^^#@import\s+(.+)^$][gmi]]
+  $self.PFTEMPLATE_BASE_REGEX[^regex::create[^^#@base\s+(.+)^$][gmi]]
+  $self.PFTEMPLATE_FUNCTION_REGEX[^regex::create[^^@\S+;mn]]
+
+@assign[aName;aValue] -> []
   $result[]
+  $self.context.[$aName][$aValue]
 
-@registerEngine[aEngineName;aPattern;aClassName;aOptions]
-## aPattern[] - регулярное выражение для определения типа движка по имени шаблона, если не задано, то опеределяем движок
-## aOptions.file - имя файла с классом
-## aOptions.options - переменные, которые надо передать конструктору энжина
-  ^cleanMethodArgument[]
-  ^pfAssert:isTrue(def $aEngineName)[Не задано имя энжина.]
-  ^pfAssert:isTrue(def $aClassName)[Не задано имя класса энжина.]
-  $_engines.[$aEngineName][
-    $.pattern[^if(def $aPattern){$aPattern}]
-    $.className[$aClassName]
-    $.file[$aOptions.file]
-    $.options[$aOptions.options]
-    $.object[]
-  ]
+@multiAssign[aVars] -> []
   $result[]
-
-@loadTemplate[aTemplateName;aOptions][lParsed;lStorage]
-## Загружает шаблон
-## result: $.body $.path
-  ^cleanMethodArgument[]
-  $result[^hash::create[]]
-  $lParsed[^_parseTemplateName[$aTemplateName]]
-  $lStorage[^_getStorage[$lParsed.protocol]]
-  $result[^lStorage.load[$aTemplateName;$aOptions]]
-
-@assign[aVarName;aValue]
-## Добавляет переменную в шаблон.
-  $_globalVars.[$aVarName][$aValue]
-  $result[]
-
-@multiAssign[aVars][k;v]
-## Добавляет сразу несколько переменных в шаблон.
   ^aVars.foreach[k;v]{
-    ^assign[$k;$v]
+    ^self.assign[$k;$v]
   }
+
+@resetVars[]
+  $result[]
+  $self.vars[^hash::create[]]
+
+@parseTemplateName[aTemplateName] -> [$.path $.mainFunction]
+  $result[^hash::create[]]
+  ^aTemplateName.match[$self.PFTEMPLATE_TN_REGEX][]{
+    $result.path[$match.1]
+    $result.mainFunction[^self.ifdef[$match.2]{__main__}]
+  }
+
+@getTemplate[aTemplateName;aOptions] -> [object]
+## aTemplateName — имя шаблона.
+## aOptions.base — базовый путь от которого ищем шаблон
+## aOptions.force(false)
+## aOptions.forceLoad(false)
+  ^self.cleanMethodArgument[]
+  $lForce(^aOptions.force.bool(false))
+  $lTemplateName[^aOptions.base.trim[right;/]/$aTemplateName]
+  ^if(!$lForce && ^self.templates.contains[$lTemplateName]){
+    $result[$self.templates.[$lTemplateName].object]
+    ^self.templates.[$lTemplateName].hits.inc[]
+  }{
+     $lTempFile[^self.storage.load[$aTemplateName;
+       $.base[$aOptions.base]
+       $.force(^aOptions.forceLoad.bool(false))
+     ]]
+     $lTemp[^self.compileTemplate[$lTempFile.text;$lTempFile.path]]
+     ^if(!$lForce){
+       $self.templates.[$lTemplateName][
+         $.object[$lTemp.object]
+         $.hits(0)
+      ]
+     }
+     $result[$lTemp.object]
+   }
+
+@render[aTemplateName;aOptions]
+## Рендерит шаблон
+## aTemplateName[/path/to/template.pt@__main__] — имя шаблона и функция, которой передаем управление.
+## aOptions.context
+## aOptions.force(false)
+  ^self.cleanMethodArgument[]
+  $lTemp[^self.parseTemplateName[$aTemplateName]]
+  $lObj[^self.getTemplate[$lTemp.path;
+    $.force(^aOptions.force.bool(false))
+  ]]
+  $result[^lObj.__render__[
+    $.context[$aOptions.context]
+    $.call[$lTemp.mainFunction]
+  ]]
+
+@GET_DEFAULT[aTemplateName] -> [object]
+## Возвращает объект с шаблоном
+## ^template.[/path/to/template.pt].function[arg1;arg2;...]
+  $result[^self.getTemplate[$aTemplateName]]
+
+@compileTemplate[aTemplateText;aTemplatePath] -> [$.object $.className]
+## Компилирует объект и возвращает ссылку
+  $result[$.className[^self.makeClassName[$aTemplatePath]]]
+
+# Обрабатываем наследование
+  $lParent[]
+  $lBases[^aTemplateText.match[$self.PFTEMPLATE_BASE_REGEX]]
+  ^if($lBases > 1){^throw[template.base.fail;У шаблона "$aTemplatePath" может быть только один предок.]}
+  ^if($lBases){
+     $lBaseName[^lBases.1.trim[both; ]]
+     ^if($lBaseName eq ^file:basename[$aTemplatePath]){^throw[template.base.fail;Шаблон "$aTemplatePath" не может быть собственным предком.]}
+     $lParent[^self.getTemplate[$lBaseName;$.base[^file:dirname[$aTemplatePath]]]]
+  }
+
+# Компилируем шаблон и создаем объект
+  $result.object[^self.buildObject[$result.className;^if(def $lParent){$lParent.CLASS_NAME};$aTemplateText;$aTemplatePath]]
+
+@makeClassName[aTemplatePath]
+  $result[pfTemplateParserWrapper_^if(def $aTemplatePath){^math:md5[$aTemplatePath]_}^math:uid64[]]
+
+@buildObject[aClassName;aBaseName;aTemplateText;aTemplatePath]
+## Формирует пустой класс aClassName с предком aBaseName по тексту шаблока aTemplate
   $result[]
 
-@clearAllAssigned[]
-  $_globalVars[^hash::create[]]
+# Компилируем базовый клас с учетом наследования
+^process{
+^@CLASS
+$aClassName
+
+^@OPTIONS
+locals
+
+^@BASE
+^self.ifdef[$aBaseName]{pfTemplateParserWrapper}
+
+^@__create__[aOptions]
+  ^^BASE:__create__[^$aOptions]
+}[$.file[$aTemplatePath]]
+
+  $result[^reflection:create[$aClassName;__create__;
+    $.template[$self]
+    $.file[$aTemplatePath]
+  ]]
+  ^self.applyImports[$result;$aTemplateText;$aTemplatePath]
+
+@applyImports[aObject;aTemplateText;aTemplatePath] -> []
+## Ищем и компилируем импорты
   $result[]
 
-@render[aTemplateName;aOptions][lEngine;lTemplate]
-## Рендрит шаблон
-## $aTemplateName может быть задан в форме protocol:path/to/template/
-## Если протокол не указан, то используем дефолтный - file
-## aOptions.vars - переменные, которые необходимо передать шаблону (замещают VARS)
-## aOptions.force(false) - принудительно перекомпилировать шаблон и отменить кеширование
-## aOptions.engine[] - принудительно рендрит щаблон с помощью конкретного энжина
-  ^cleanMethodArgument[]
-  $lEngine[^findEngine[$aTemplateName;$aOptions.engine]]
-  $lTemplate[^loadTemplate[$aTemplateName;$.force($_force || $aOptions.force)]]
-  $result[^lEngine.render[$lTemplate;$.vars[$aOptions.vars] $.force($_force || $aOptions.force)]]
+  $lImports[^aTemplateText.match[$self.PFTEMPLATE_IMPORTS_REGEX]]
+  $lBase[^file:dirname[$aTemplatePath]]
+  $lTemplateName[^file:basename[$aTemplatePath]]
 
-@_getStorage[aStorageName][lStorage]
-## Возвращает объект стораджа
-  ^if(^_storages.contains[$aStorageName]){
-    $lStorage[$_storages.[$aStorageName]]
-    ^if(!def $lStorage.object){
-      ^if(def $lStorage.file){
-        ^use[$lStorage.file]
-      }
-      $lStorage.object[^reflection:create[$lStorage.className;create;$self;$lStorage.options]]
-    }
-    $result[$lStorage.object]
-  }{
-     ^throw[template.runtime;Не зарегистрирован сторадж "$aStorageName".]
-   }
+  ^lImports.menu{
+    $lImportName[^lImports.1.trim[both; ]]
+    ^if($lImportName eq $lTemplateName){^throw[temlate.import.recursive;Нельзя импортировать шаблон "$aTemplatePath" самого в себя.]}
+    $lTempl[^self.storage.load[$lImportName;$.base[$lBase]]]
 
-@_getEngine[aEngineName][lEngine]
-  ^if(^_engines.contains[$aEngineName]){
-    $lEngine[$_engines.[$aEngineName]]
-    ^if(!def $lEngine.object){
-      ^if(def $lEngine.file){
-        ^use[$lEngine.file]
-      }
-      $lEngine.object[^reflection:create[$lEngine.className;create;$self;$lEngine.options]]
-    }
-    $result[$lEngine.object]
-  }{
-     ^throw[runtime;Не зарегистрирован энжин "$aEngineName".]
-   }
-
-@findEngine[aTemplateName;aEngineName][lEngineName;k;v]
-## Ищет энжин для шаблона по имени или по типу энжина.
-  ^_engines.foreach[k;v]{
-    ^if($k eq $aEngineName || ^aTemplateName.match[^if(def $v.pattern){$v.pattern}{$_defaultEnginePattern}][n]){
-      $lEngineName[$k]
-      ^break[]
-    }
+#   Рекурсивно обрабатываем импорты
+    ^self.applyImports[$aObject;$lTempl.text;$lTempl.path]
   }
-  ^if(def $aEngineName){$lEngineName[$aEngineName]}
-  ^if(!def $lEngineName){$lEngineName[$_defaultEngine]}
-  ^if(def $lEngineName){
-    $result[^_getEngine[$lEngineName]]
-  }{
-     ^throw[template.engine.not.found;Не найден энжин для шаблона "$aTemplateName".]
-   }
 
-@_parseTemplateName[aTemplateName][lTemp;lProtocol;lPath]
-## Разбирает строку с именем шаблона и возвращает
-## хэш: $.protocol $.path
-  $lTemp[^aTemplateName.match[(?:(.*?):(?://)?)?(.*)]]
-  $lProtocol[$lTemp.1]
-  $lPath[$lTemp.2]
-  ^if(!def $lProtocol || !def $_storages.$lProtocol){
-    $lProtocol[$defaultStorage]
-  }
-  ^if(!def $lProtocol){
-    ^throw[template.runtime;Storage "$lProtocol" not found.]
-  }
-  $result[$.protocol[$lProtocol] $.path[$lPath]]
+  ^process[$aObject]{^if(!^aTemplateText.match[$self.PFTEMPLATE_FUNCTION_REGEX]){@__main__[]^#0A}^taint[as-is][$aTemplateText]}[
+    $.main[__main__]
+    $.file[$aTemplatePath]
+  ]
 
 #---------------------------------------------------------------------------------------------------
 
 @CLASS
 pfTemplateStorage
 
-@BASE
-pfClass
+## Хранилище шаблонов
 
-@create[aTemplate;aOptions]
-## aTemplate - ссылка на объект темпла, которому принадлежит сторадж
-## aOptions.force(false)
-  ^cleanMethodArgument[]
-  ^pfAssert:isTrue(def $aTemplate)[Не задан объект Темпла.]
-
-  $_template[$aTemplate]
-  $_isForce($aOptions.force)
-  $_cache[^hash::create[]]
-
-@load[aTemplateName;aOptions][lPath;lFile;v;i;c]
-## Возвращает шаблон
-## aOptions.base[] - базовый путь в котором начинается поиск шаблона
-## aOptions.force(false)
-## result: $.body $.path
-## throw: tepmlate.not.found - возбуждается, если шаблон не найден
-  ^cleanMethodArgument[]
-  $result[^hash::create[]]
-
-# Ищем файл
-  $lPath[^if(def $aOptions.base && -f "$aOptions.base/$aTemplateName"){$aOptions.base/$aTemplateName}]
-  ^if(!def $lPath){
-    $c($_template.templatePath)
-    ^for[i](1;$c){
-      $v[$_template.templatePath.[^eval($c - $i)]]
-      ^if(-f "$v/$aTemplateName"){
-        $lPath[$v/$aTemplateName]
-        ^break[]
-      }
-    }
-  }
-
-# Загружаем файл или достаем его из кеша
-  ^if(def $lPath){
-    $result.path[$lPath]
-    ^if((!$_isForce || !$aOptions.force) && ^_cache.contains[$lPath]){
-      $result.body[$_cache.[$lPath]]
-    }{
-       $lFile[^file::load[text;$lPath]]
-       $result.body[$lFile.text]
-       ^if(!$_isForce){
-         $_cache.[$lPath][$result.body]
-       }
-     }
-  }{
-     ^throw[template.not.found;Шаблон "$aTemplateName" не найден.]
-   }
-
-@flushCache[]
-## Очищает кеш
-  $_cache[^hash::create[]]
-
-#---------------------------------------------------------------------------------------------------
-
-@CLASS
-pfTemplateEngine
-
-@BASE
-pfClass
-
-@create[aTemplate;aOptions]
-## aTemplate - ссылка на объект темпла, которому принадлежит энжин
-  ^pfAssert:isTrue($aTemplate is pfTemplate)[Не передан объект pfTemplate.]
-  $_template[$aTemplate]
-
-@GET_template[]
-  $result[$_template]
-
-@render[aTemplate;aOptions]
-## aTemplate[$.body $.path]
-## aOptions.vars[]
-  ^_abstractMethod[]
-
-@applyImports[aTemplate;lClass]
-  $result[]
-
-#---------------------------------------------------------------------------------------------------
-
-@CLASS
-pfTemplateParserEngine
-
-@BASE
-pfTemplateEngine
-
-@create[aTemplate;aOptions]
-## aTemplate - ссылка на объект темпла, которому принадлежит энжин
-## aOptions.locals(false) — включить options locals в классе-обертке шаблона
-  ^cleanMethodArgument[]
-  ^BASE:create[$aTemplate;$aOptions]
-  $self._locals(^aOptions.locals.bool(false))
-
-@render[aTemplate;aOptions][lPattern]
-## aTemplate[$.body $.path]
-## aOptions.vars[]
-  ^cleanMethodArgument[]
-  $lClassName[^_compileToPattern[$aTemplate]]
-
-  $lPattern[^reflection:create[$lClassName;create;$.template[$template] $.file[$aTemplate.path]]]
-  $result[^lPattern.__process__[$.global[$template.vars] $.local[$aOptions.vars]]]
-
-@_compileToPattern[aTemplate;aBaseName][lBases;lClass;lParent;lTemplateName]
-  $result[^_buildClassName[$aTemplate.path]]
-
-# Обрабатываем наследование
-  $lBases[^aTemplate.body.match[^^#@base\s+(.+)^$][gmi]]
-  ^if($lBases > 1){^throw[template.base.fail;У шаблона "$aTemplate.path" может быть только один предок.]}
-  ^if($lBases){
-    $lTemplateName[^lBases.1.trim[both; ]]
-    ^if($lTemplateName eq ^file:basename[$aTemplate.path]){^throw[template.base.fail;Шаблон "$aTemplate.path" не может быть собственным предком.]}
-    $lParent[^_compileToPattern[^template.loadTemplate[$lTemplateName;$.base[^file:dirname[$aTemplate.path]]];$lParent]]
-  }
-
-# Компилируем текущий шаблон
-  ^_buildClass[$result;$lParent;$aTemplate]
-
-@_buildClassName[aFileName]
-  $result[^math:uid64[]]
-
-@_buildClass[aClassName;aBaseName;aTemplate][lClass;lImports;lTempl;lBase;lTemplateName;lImportName]
-## Формирует пустой класс aClassName с предком aBaseName
-$result[]
-
-# Компилируем базовый клас с учетом наследования
-^process{
-^@CLASS
-$aClassName
-^if($_locals){
-^@OPTIONS
+@OPTIONS
 locals
-}
-^@BASE
-^if(def $aBaseName){$aBaseName}{pfTemplateParserPattern}
-^@__create__[]
-
-}[$.file[$aTemplate.file]]
-
-  $lClass[^reflection:create[$aClassName;__create__]]
-  ^applyImports[$aTemplate;$lClass]
-
-# Компилируем тело шаблона в класс
-  ^process[$lClass.CLASS]{^taint[as-is][$aTemplate.body]}[$.main[__main__] $.file[$aTemplate.path]]
-
-@applyImports[aTemplate;lClass][lImports;lBase;lTemplateName;lImportName;lTempl]
-## Ищем и компилируем импорты
-  $result[]
-
-  $lImports[^aTemplate.body.match[^^#@import\s+(.+)^$][gmi]]
-  $lBase[^file:dirname[$aTemplate.path]]
-  $lTemplateName[^file:basename[$aTemplate.path]]
-
-  ^lImports.menu{
-    $lImportName[^lImports.1.trim[both; ]]
-    ^if($lImportName eq $lTemplateName){^throw[temlate.import.fail;Нельзя импортировать шаблон "$aTemplate.path" самого в себя.]}
-    $lTempl[^template.loadTemplate[$lImportName;$.base[$lBase]]]
-
-    ^applyImports[$lTempl;$lClass]
-  }
-
-  ^process[$lClass.CLASS]{^taint[as-is][$aTemplate.body]}[$.main[__main__] $.file[$aTemplate.path]]
-
-#---------------------------------------------------------------------------------------------------
-
-@CLASS
-pfTemplateParserPattern
 
 @BASE
 pfClass
 
 @create[aOptions]
+## aOptions.searchPath[table<path>|string{/../views/}]
+  ^self.cleanMethodArgument[]
+  ^BASE:create[$aOptions]
+
+  $self.searchPath[^table::create{path}]
+  ^if(def $aOptions.searchPath){
+    ^switch[$aOptions.searchPath.CLASS_NAME]{
+      ^case[table]{^self.searchPath.append[$aOptions.searchPath]}
+      ^case[string]{^self.searchPath.append{$aOptions.searchPath}}
+    }
+  }{
+     ^self.searchPath.append{/../views/}
+   }
+
+  $self.templates[^hash::create[]]
+
+@appendSearchPath[aPath]
+## Добавдяет путь для поиска шаблонов
+  $result[]
+  ^self.searchPath.append{$aPath}
+
+@load[aFileName;aOptions] -> [$.text $.path]
+## Загружает шаблон
+## aOptions.base — базовый путь от которого ищем шаблон
+## aOptions.force(false) — отменяет кеширование
+  ^self.cleanMethodArgument[]
+  $lForce(^aOptions.force.bool(false))
+  $result[^hash::create[]]
+  $lFullName[^self.find[$aFileName;$.base[$aOptions.base]]]
+  ^if(!def $lFullName){
+    ^throw[template.not.found;Не найден шаблон "$aFileName".]
+  }
+  ^if($lForce || !^self.templates.contains[$lFullName]){
+    $lFile[^file::load[text;$lFullName]]
+    $result.text[$lFile.text]
+    $result.path[$lFullName]
+    ^if(!$lForce){
+      $self.templates.[$lFullName][$result]
+    }
+  }{
+     $result[$self.templates.[$lFullName]]
+   }
+
+@find[aFileName;aOptions] -> [path]
+## aOptions.base — базовый путь от которого ищем шаблон
+  ^self.cleanMethodArgument[]
+  ^pfAssert:isTrue(def $aFileName){Не задано имя шаблона "$aFileName".}
+  $result[^if(def $aOptions.base && -f "$aOptions.base/$aFileName"){$aOptions.base/$aFileName}]
+  ^if(!def $result){
+    ^self.searchPath.foreach[_;v]{
+      $lFullName[$v.path/$aFileName]
+      ^if(-f $lFullName){
+        $result[$lFullName]
+        ^break[]
+      }
+    }
+  }
+
+@GET_DEFAULT[aFileName]
+  $result[^self.load[$aTemplateName]]
+
+@reset[aOptions]
+  $self.templates[^hash::create[]]
+  $result[]
+
+#---------------------------------------------------------------------------------------------------
+
+@CLASS
+pfTemplateParserWrapper
+
+## В класс «заворачиваем» тело шаблона
+
+@BASE
+pfClass
+
+@OPTIONS
+locals
+
+@__create__[aOptions]
 ## aOptions.template
 ## aOptions.file
-  ^if(!def $aOptions){$aOptions[^hash::create[]]}
-  $__TEMPLATE[$aOptions.template]
-  $__FILE[$aOptions.file]
-  $__GLOBAL[]
-  $__LOCAL[]
+  ^self.cleanMethodArgument[]
+  ^BASE:create[$aOptions]
 
-@GET_DEFAULT[aName]
-  $result[^if(^__LOCAL.contains[$aName]){$__LOCAL.[$aName]}{$__GLOBAL.[$aName]}]
+  $self.__TEMPLATE__[$aOptions.template]
+  $self.__FILE__[$aOptions.file]
+  $self.__LOCAL_CONTEXT__[]
 
-@GET___GLOBAL__[]
-  $result[$__GLOBAL]
+@GET_DEFAULT[aVarName]
+# Получает переменную из глобального контекста или из контекста шаблона.
+  $result[^if(def $self.__LOCAL_CONTEXT__ && ^self.__LOCAL_CONTEXT__.contains[$aVarName]){$self.__LOCAL_CONTEXT__.[$aVarName]}{$self.__TEMPLATE__.context.[$aVarName]}]
 
-@GET___LOCAL__[]
-  $result[$__LOCAL]
+@SET_DEFAULT[aVarName;aValue]
+# Предотвращаем запись локальных переменных шаблона в объект.
+# Если есть контекст, то записываем переменную в контекст.
+# Если контекста нет, то игнорируем переменную.
+  ^if($self.__LOCAL_CONTEXT__ is hash){
+    $self.__LOCAL_CONTEXT__.[$aVarName][$aValue]
+  }
 
 @GET_TEMPLATE[]
-  $result[$__template]
+  $result[$self.__TEMPLATE__]
 
-@__process__[aOptions]
-## aOptions.global
-## aOptions.local
-  ^if(!def $aOptions){$aOptions[^hash::create[]]}
-  $__GLOBAL[^if(def $aOptions.global){$aOptions.global}{^hash::create[]}]
-  $__LOCAL[^if(def $aOptions.local){$aOptions.local}{^hash::create[]}]
-  $result[^__main__[]]
-  $__GLOBAL[]
-  $__LOCAL[]
+@GET___GLOBAL__[]
+  $result[$self.__TEMPLATE__.context]
+
+@GET___LOCAL__[]
+  $result[$self.__LOCAL_CONTEXT__]
 
 @__main__[]
-  ^throw[template.empty;Не задано тело шаблона.]
+  ^throw[template.empty;Не задано тело шаблона. [$self.__FILE__]]
+
+@__render__[aOptions]
+## aOptions.context — переменные шаблона
+## aOptions.call[__main__] — имя «главной» функции шаблона
+  ^self.cleanMethodArgument[]
+  $lOldLocalContext[$self.__LOCAL_CONTEXT__]
+  $self.__LOCAL_CONTEXT__[^hash::create[$aOptions.context]]
+
+  $lMethod[^self.ifdef[$aOptions.call]{__main__}]
+  ^if(!($self.[$lMethod] is junction)){
+    ^throw[template.method.not.found;Метод json не найден в шаблоне $self.__FILE__]
+  }
+  $result[^self.[$lMethod][]]
+
+  $self.__LOCAL_CONTEXT__[$lOldLocalContext]
+
+@include[aTemplateName;aOptions]
+  $result[^self.__TEMPLATE__.render[$aTemplateName;$aOptions]]
+
+@import[aTemplateName;aOptions]
+## Динамически импортирует шаблон.
+## aOptions.forceLoad(false)
+  $result[]
+  $lTemp[^self.__TEMPLATE__.storage.load[$aTemplateName;
+    $.base[^file:dirname[$self.__FILE__]]
+    $.force(^aOptions.forceLoad.bool(false))
+  ]]
+  ^self.__TEMPLATE__.applyImports[$self;$lTemp.text;$lTemp.path]
 
 @compact[]
 ## Вызывает принудительную сборку мусора.
   $result[]
   ^pfRuntime:compact[]
-
-@include[aTemplateName;aOptions]
-  $result[^__TEMPLATE.render[$aTemplateName;$aOptions]]
-
-@import[aTemplateName][locals]
-  $result[]
-  $lTemplate[^__TEMPLATE.loadTemplate[$aTemplateName;^if(def $__FILE){$.base[^file:dirname[$__FILE]]}]]
-  $lEngine[^__TEMPLATE.findEngine[$aTemplateName]]
-  ^if(def $lEngine){
-    ^lEngine.applyImports[$lTemplate;$CLASS]
-  }
-  ^process[$CLASS]{^taint[as-is][$lTemplate.body]}[$.main[__main__] $.file[$lTemplate.path]]

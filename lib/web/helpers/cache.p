@@ -5,6 +5,9 @@ pfCache
 
 ## Универсальный класс кеширования.
 
+@OPTIONS
+locals
+
 @USE
 pf2/lib/common.p
 
@@ -14,18 +17,18 @@ pfClass
 @create[aOptions]
 ## Конструктор объекта
 ## aOptions.cacheDir[/../cache] - путь к каталогу с кэшем
-  ^cleanMethodArgument[]
-  $_emptyTableForHash[]
+  ^self.cleanMethodArgument[]
+  $self._emptyTableForHash[]
 
   ^if(def $aOptions.cacheDir){
-  	$_cacheDir[^aOptions.cacheDir.trim[end;/]]
+  	$self._cacheDir[^aOptions.cacheDir.trim[end;/]]
   }{
-  	 $_cacheDir[/../cache]
+  	 $self._cacheDir[/../cache]
    }
 
-@code[aKey;aTime;aCode;aErrorHandler][lCacheFileName;lStat;lTemp]
+@code[aKey;aTime;aCode;aErrorHandler]
 ## Выполняет кэширование кода. Аналог парсеровского ^cache
-  $lCacheFileName[$_cacheDir/^aKey.trim[both;/]]
+  $lCacheFileName[$self._cacheDir/^aKey.trim[both;/]]
   ^if(^aTime.int(-1) >= 0){
 #   если в $aTime число, то кешируем на $aTime-секунд
     $result[^cache[$lCacheFileName]($aTime){$aCode}{$aErrorHandler}]
@@ -40,23 +43,23 @@ pfClass
   ^pfAssert:isTrue(def $aKey)[Не задан ключ кеша.]
   ^try{
     $aKey[^aKey.trim[both;/]]
-    ^if(!^isKeyFound[$aKey] || ^isExpired[$aKey][$aTime]){
+    ^if(!^self.isKeyFound[$aKey] || ^self.isExpired[$aKey][$aTime]){
 #   если отсутствует кеш или истекло время кеширования,
 #   то запускаем код и сохраняем его в кэше
       $result[$aCode]
       ^if(^aTime.int(-1) > 0){
-          ^_save[$aType][$result][$aKey]
+          ^self._save[$aType][$result][$aKey]
       }{
-         ^deleteKey[$aKey]
+         ^self.deleteKey[$aKey]
        }
     }{
 #    иначе пытаемся взять данные из кэша
      ^try{
-       $result[^_load[$aType;$aKey]]
+       $result[^self._load[$aType;$aKey]]
      }{
 #     если есть проблемы с загрузкой, то выполняем код
- 	$exception.handled(true)
-	$result[$aCode]
+        $exception.handled(true)
+        $result[$aCode]
       }
      }
   }{
@@ -65,11 +68,11 @@ pfClass
 
 @isKeyFound[aKey]
 ## Возвращает true, если ключ есть в кэше
-  $result(-f "$_cacheDir/$aKey")
+  $result(-f "$self._cacheDir/$aKey")
 
-@isExpired[aKey;aTime][lStat;lNow;lDate]
+@isExpired[aKey;aTime]
 ## Проверяет устарел ли кеш
-	  $lStat[^file::stat[$_cacheDir/$aKey]]
+	  $lStat[^file::stat[$self._cacheDir/$aKey]]
 	  $lNow[^date::now[]]
 
 	  ^if(^aTime.int(-1) >= 0){
@@ -87,56 +90,56 @@ pfClass
 
 @deleteKey[aKey]
 ## Удаляет ключ из кэша
-  ^if(-f "$_cacheDir/$aKey"){
+  ^if(-f "$self._cacheDir/$aKey"){
     ^try{
-    	^file:delete[$_cacheDir/$aKey]
+    	^file:delete[$self._cacheDir/$aKey]
     }{
     	 $exception.handled(true)
      }
   }
 
 @GET__emptyTable[]
-  ^if(!def $_emptyTableForHash){
-    $_emptyTableForHash[^table::create{key	parent	value	isHash	uid}]
+  ^if(!def $self._emptyTableForHash){
+    $self._emptyTableForHash[^table::create{key	parent	value	isHash	uid}]
   }
-  $result[$_emptyTableForHash]
+  $result[$self._emptyTableForHash]
 
-@_save[aType;aValue;aKey][lValue]
+@_save[aType;aValue;aKey]
 ## Сохраняет переменную в файл на диске
 ## Важно: хэш может содержать только строки.
   ^switch[$aType]{
     ^case[string;int;double]{
-    		^aValue.save[$_cacheDir/$aKey]
+    		^aValue.save[$self._cacheDir/$aKey]
     }
     ^case[date]{
         $lValue[^aValue.sql-string[]]
-        ^lValue.save[$_cacheDir/$aKey]
+        ^lValue.save[$self._cacheDir/$aKey]
     }
     ^case[bool]{
         $lValue[^if($aValue){1}{0}]
-        ^lValue.save[$_cacheDir/$aKey]
+        ^lValue.save[$self._cacheDir/$aKey]
     }
     ^case[table]{
-    	  ^aValue.save[$_cacheDir/$aKey;$.encloser["]]
+    	  ^aValue.save[$self._cacheDir/$aKey;$.encloser["]]
     }
     ^case[hash]{
-        $aValue[^_hash2table[$aValue]]
-    	  ^aValue.save[$_cacheDir/$aKey]
+        $aValue[^self._hash2table[$aValue]]
+    	  ^aValue.save[$self._cacheDir/$aKey]
     }
     ^case[file]{
-    	  ^aValue.save[binary;$_cacheDir/$aKey]
+    	  ^aValue.save[binary;$self._cacheDir/$aKey]
     }
     ^case[xdoc]{
-    	  ^aValue.save[$_cacheDir/$aKey]
+    	  ^aValue.save[$self._cacheDir/$aKey]
     }
     ^case[DEFAULT]{^throw[pfCache.data.unknown.type;Unknown data type "$aType".]}
   }
 
-@_load[aType;aKey][lCacheFileName]
+@_load[aType;aKey]
 ## Возвращает переменную для ключа.
 ## Если не указан тип или тип нам не известен, то возвращаем строку.
 ## Важно: таблицы могут быть только именованные.
-  $lCacheFileName[$_cacheDir/$aKey]
+  $lCacheFileName[$self._cacheDir/$aKey]
   ^switch[$aType]{
     ^case[string;DEFAULT]{
     	$result[^file::load[text;$lCacheFileName]]
@@ -162,8 +165,8 @@ pfClass
     	$result[^table::load[$lCacheFileName;$.encloser["]]]
     }
     ^case[hash]{
-    	$result[^_load[table;$aKey]]
-      $result[^_table2hash[$result]]
+    	$result[^self._load[table;$aKey]]
+      $result[^self._table2hash[$result]]
     }
     ^case[file]{
       $result[^file::load[binary;$lCacheFileName]]
@@ -176,7 +179,7 @@ pfClass
     }
   }
 
-@_hash2table[aHash;aParent][lUID;k;v]
+@_hash2table[aHash;aParent]
 ## Преобразует хэш строк в таблицу
 ## Параметр aParent передавать не нужно
   $result[^table::create[$_emptyTable]]
@@ -185,13 +188,13 @@ pfClass
  	^if(!def $aParent){$aParent[NULL]}
   	^if($aHash.$k is hash){
   		^result.append{$k	$aParent		1	$lUID}
-  		^result.join[^_hash2table[$aHash.$k;$lUID]]
+  		^result.join[^self._hash2table[$aHash.$k;$lUID]]
   	}{
   		 ^result.append{$k	$aParent	^taint[$v]	0	$lUID}
   	 }
   }
 
-@_table2hash[aTable;aTree;aParent][lLevel]
+@_table2hash[aTable;aTree;aParent]
 ## Преобразует таблицу, сформированную методом _hash2table, обратно в хэш.
   ^if(!def $aTree){
     $aTree[^aTable.hash[parent][$.distinct[tables]]]
@@ -201,7 +204,7 @@ pfClass
   $lLevel[$aTree.[$aParent]]
   ^lLevel.menu{
     ^if($lLevel.isHash){
-    	$result.[$lLevel.key][^_table2hash[;$aTree;$lLevel.uid]]
+    	$result.[$lLevel.key][^self._table2hash[;$aTree;$lLevel.uid]]
     }{
     	 $result.[$lLevel.key][$lLevel.value]
      }

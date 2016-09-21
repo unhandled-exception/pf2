@@ -1,0 +1,3 @@
+@main[]
+  $result[Mount2 about page. ClientID — ^ifdef[$REQUEST.clientID]{unknown}. Var — ^ifdef[$var]{unknown}. Filter — ^ifdef[$REQUEST.filter]{unknown}. $CONTROLLER.templatePrefix]
+

@@ -1,0 +1,4 @@
+#@import ./html.pt
+
+@print_title[aTitle]
+  $result[<title>$aTitle</title>]

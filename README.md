@@ -5,9 +5,9 @@ PF2 — веб-фреймворк для Parser 3
 
 Разработка в бранче develop и ветках feature/name. Релиз в default. На время разработки первой версии головной бранч на Битбакете — develop.
 
-© Олег Волчков, [oleg@volchkov.net](mailto:oleg@volchkov.net)
-[http://unhandled-exception.ru](http:://unhandled-exception.ru)
-
+Авторы:
+* Олег Волчков ([oleg@volchkov.net](mailto:oleg@volchkov.net), [http://unhandled-exception.ru](unhandled-exception.ru))
+* Алексей Марьин ([http://groundzero.ru](groundzero.ru))
 
 ## Что меняем при переходе с PF1 на PF2
 
@@ -15,7 +15,7 @@ PF2 — веб-фреймворк для Parser 3
 
 [Концепция и стили кодирования](docs/concepts.md)
 
-[Список классов в модулях](docs/classes.md)
+[Список классов в модулях](classes.md)
 
 ### Базовые принципы и идеи
 * Минимизируем число файловых операций. Объединяем классы в модули. Модуль — файл с несколькими классами, которые реализуют какой-то законченный функционал. В отдельных файлах оставляем API-классы и классы, которые используются редко.
@@ -48,3 +48,11 @@ PF2 — веб-фреймворк для Parser 3
 * io/pfCurlFile.p [Возможно, что его и стоит оставить как пару к pfCFile.]
 * pf/sql/generics. pfSQLSettings переводим на ORM.
 * Пишем документацию. Markdown. :)
+
+### Новый способ проброса экшна в контролеры
+
+Настройка mod_rewrite:
+
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule ^ _ind.html [L]
+

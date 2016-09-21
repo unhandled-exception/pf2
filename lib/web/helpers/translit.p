@@ -3,6 +3,9 @@
 @CLASS
 pfURLTranslit
 
+@OPTIONS
+locals
+
 @USE
 pf2/lib/common.p
 
@@ -17,16 +20,16 @@ pfClass
 
 @create[]
   ^BASE:create[]
-  ^_init[]
+  ^self._init[]
 
 @auto[]
-  ^_init[]
+  ^self._init[]
 
-@toURL[aString;aOptions][lSlash]
+@toURL[aString;aOptions]
 ## Преобразовать строку в "красивый читаемый URL".
-## aOptions.allowSlashes(0) - игнорировать ли символ "/", пропуская его неисправленным,
+## aOptions.allowSlashes(0) — игнорировать ли символ "/", пропуская его неисправленным,
 ##                            либо удалять его из строки
-  ^cleanMethodArgument[]
+  ^self.cleanMethodArgument[]
   $lSlash[^if(^aOptions.allowSlashes.int(0)){/}]
 
   $result[^aString.trim[both]]
@@ -36,33 +39,33 @@ pfClass
 
   $result[^result.lower[]]
 
-  $result[^result.match[(?:ь|ъ)([$_vowel])][g]{j$match.1}]
+  $result[^result.match[(?:ь|ъ)([$self._vowel])][g]{j$match.1}]
   $result[^result.match[(?:ь|ъ)][g][]]
 
-  $result[^result.replace[$_letters]]
+  $result[^result.replace[$self._letters]]
   $result[^result.match[j{2,}][g][j]]
 
   $result[^result.match[[^^${lSlash}0-9a-z_\-]+][g][]]
 
-@toSupertag[aString;aOptions][lSlash]
-## Преобразовать строку в "супертаг" -- короткий простой
+@toSupertag[aString;aOptions]
+## Преобразовать строку в "супертаг" — короткий простой
 ## идентификатор, состоящий из латинских букв и цифр.
-## aOptions.allowSlashes(0) - игнорировать ли символ "/", пропуская его неисправленным,
+## aOptions.allowSlashes(0) — игнорировать ли символ "/", пропуская его неисправленным,
 ##                            либо удалять его из строки
-  ^cleanMethodArgument[]
+  ^self.cleanMethodArgument[]
   $lSlash[^if(^aOptions.allowSlashes.int(0)){/}]
 
-  $result[^toURL[$aString;$aOptions]]
+  $result[^self.toURL[$aString;$aOptions]]
   $result[^result.match[[^^${lSlash}0-9a-zA-Z\-]+][g][]]
   $result[^result.match[[\-_]+][g]{-}]
   $result[^result.match[-+^$][g][-]]
 
-@toWiki[aString;aOptions][lStrings;lSlash]
+@toWiki[aString;aOptions]
 ## Преобразовать произвольную строку в вики-адрес
 ## например: "Привет мир" => "ПриветМир"
-## aOptions.allowSlashes(0) - игнорировать ли символ "/", пропуская его неисправленным,
+## aOptions.allowSlashes(0) — игнорировать ли символ "/", пропуская его неисправленным,
 ##                            либо удалять его из строки
-  ^cleanMethodArgument[]
+  ^self.cleanMethodArgument[]
   $lSlash[^if(^aOptions.allowSlashes.int(0)){/}]
 
   $result[^aString.match[[^^\- 0-9a-zA-Zа-яА-ЯёЁ${lSlash}]+][g][ ]]
@@ -81,40 +84,40 @@ pfClass
 
 @encode[aString;aOptions]
 ## Транслитерировать текст
-## aOptions.allowSlashes(0) - игнорировать ли символ "/", пропуская его неисправленным,
+## aOptions.allowSlashes(0) — игнорировать ли символ "/", пропуская его неисправленным,
 ##                            либо удалять его из строки
-  $result[^bidi[$aString;encode;$aOptions]]
+  $result[^self.bidi[$aString;encode;$aOptions]]
 
 @decode[aString;aOptions]
 ## Де транслитерировать текст :)
-## aOptions.allowSlashes(0) - игнорировать ли символ "/", пропуская его неисправленным,
+## aOptions.allowSlashes(0) — игнорировать ли символ "/", пропуская его неисправленным,
 ##                            либо удалять его из строки
-  $result[^bidi[$aString;decode;$aOptions]]
+  $result[^self.bidi[$aString;decode;$aOptions]]
 
 
-@bidi[aString;aDirection;aOptions][lSlash]
+@bidi[aString;aDirection;aOptions]
 ## преобразовать строку в "формально правильный URL"
 ## с возможностью восстановления.
 ## Другое значение $aDirection[encode|decode] позволяет восстановить
 ## строку обратно с незначительными потерями
-## aOptions.allowSlashes(0) - игнорировать ли символ "/", пропуская его неисправленным,
+## aOptions.allowSlashes(0) — игнорировать ли символ "/", пропуская его неисправленным,
 ##                            либо удалять его из строки
-  ^cleanMethodArgument[]
+  ^self.cleanMethodArgument[]
   $lSlash[^if(^aOptions.allowSlashes.int(0)){/}]
 
   ^if($aDirection eq "encode"){
     $result[^aString.match[[^^\- \'_0-9a-zA-Zа-яА-ЯёЁ${lSlash}]][g][]]
-    $result[^result.match[([а-яА-ЯёЁ ]+)][g]{+^match.1.replace[$_tran]+}]
+    $result[^result.match[([а-яА-ЯёЁ ]+)][g]{+^match.1.replace[$self._tran]+}]
   }{
      $result[$aString]
-     $result[^result.match[\+(.*?)\+][g]{^match.1.replace[$_detran]}]
+     $result[^result.match[\+(.*?)\+][g]{^match.1.replace[$self._detran]}]
      ^if(!def $lSlash){^result.replace[^table::create[nameless]{/	}]}
 	 }
 
 @_init[]
 ## Инициализируем необходимые переменные
 
-  $_letters[^table::create{from	to
+  $self._letters[^table::create{from	to
 а	a
 б	b
 в	v
@@ -147,9 +150,9 @@ pfClass
 ю	ju
 я	ja}]
 
-  $_vowel[аеёиоуыэюя]
+  $self._vowel[аеёиоуыэюя]
 
-  $_tran[^table::create{from	to
+  $self._tran[^table::create{from	to
 А	A
 Б	B
 В	V
@@ -219,7 +222,7 @@ pfClass
  	__
 _	__}]
 
-  $_detran[^table::create{from	to
+  $self._detran[^table::create{from	to
 SHH	Щ
 JO	Ё
 ZH	Ж

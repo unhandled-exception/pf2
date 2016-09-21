@@ -66,6 +66,9 @@ Finish tests.^#0A
 @CLASS
 Core
 
+@OPTIONS
+locals
+
 @BASE
 pfModelModule
 
@@ -73,12 +76,15 @@ pfModelModule
   ^BASE:create[$aOptions]
   $coreVar[core var value]
 
-  ^assignModule[test1;ModelModule;$.var1[value1]]
-  ^assignModule[users;usersModel]
+  ^self.assignModule[test1;ModelModule;$.var1[value1]]
+  ^self.assignModule[users;usersModel]
 
 
 @CLASS
 ModelModule
+
+@OPTIONS
+locals
 
 @BASE
 pfModelModule
@@ -88,12 +94,14 @@ pfModelModule
   $_var1[$aOptions]
 
 @print[]
-  $result[This is a $CLASS_NAME class instance. Core var: $core.coreVar]
-
+  $result[This is a $self.CLASS_NAME class instance. Core var: $core.coreVar]
 
 
 @CLASS
 usersModel
+
+@OPTIONS
+locals
 
 @BASE
 pfModelTable
@@ -104,7 +112,7 @@ pfModelTable
     $.tableAlias[u]
   ]
 
-  ^addFields[
+  ^self.addFields[
     $.id[$.processor[uint] $.primary(true)]
     $.name[]
     $.uuid[]

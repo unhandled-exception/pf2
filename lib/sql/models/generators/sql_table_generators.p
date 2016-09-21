@@ -3,12 +3,14 @@
 @USE
 pf2/lib/common.p
 
-
 @CLASS
 pfSQLModelGenerator
 
 ## Базовый предок генераторов. Для каждого сервера надо написать наследника,
 ## реализующего методы _hasTable и _getFields.
+
+@OPTIONS
+locals
 
 @BASE
 pfClass
@@ -17,22 +19,22 @@ pfClass
 ## aOptions.sql — объект соединения с БД
 ## aOptions.schema[] — схема в БД
 ## aOptions.classPrefix[] — префикс класса
-  ^cleanMethodArgument[]
+  ^self.cleanMethodArgument[]
   ^pfAssert:isTrue(def $aOptions.sql)[Не задан объект для соединения к СУБД.]
   ^BASE:create[]
 
-  $_sql[$aOptions.sql]
-  ^defReadProperty[CSQL;_sql]
+  $self._sql[$aOptions.sql]
+  ^self.defReadProperty[CSQL;_sql]
 
-  $_schema[$aOptions.schema]
-  $_tableName[$aTableName]
-  $_classPrefix[$aOptions.classPrefix]
+  $self._schema[$aOptions.schema]
+  $self._tableName[$aTableName]
+  $self._classPrefix[$aOptions.classPrefix]
 
-  ^if(^_hasTable[]){
+  ^if(^self._hasTable[]){
     ^throw[table.not.found]
   }
 
-  $_fields[^_getFields[]]
+  $self._fields[^self._getFields[]]
 
 @_hasTable[]
   ^throw[abstract.method]
@@ -47,13 +49,13 @@ pfClass
   $result[^result.match[Ip^$][][IP]]
 
 @generate[aOptions]
-  ^cleanMethodArgument[]
+  ^self.cleanMethodArgument[]
   $result[
   ^@USE
   pf2/lib/sql/models/structs.p
 
   ^@CLASS
-  ^_makeClassName[$_tableName]
+  ^self._makeClassName[$self._tableName]
 
   ^@BASE
   pfModelTable
@@ -63,32 +65,32 @@ pfClass
 
   ^@create^[aOptions^]
   ## aOptions.tableName
-    ^^BASE:create^[^^hash::create^[^$aOptions^]^if(def $_schema){^#0A      ^$.schema[$_schema]}
-      ^$.tableName[^^ifdef[^$aOptions.tableName]{$_tableName}]
-  ^if(def $_primary){#}    ^$.allAsTable(true)
+    ^^BASE:create^[^^hash::create^[^$aOptions^]^if(def $self._schema){^#0A      ^$.schema[$self._schema]}
+      ^$.tableName[^^ifdef[^$aOptions.tableName]{$self._tableName}]
+  ^if(def $self._primary){#}    ^$.allAsTable(true)
     ^]
 
-  ^_classBody[]
+  ^self._classBody[]
   ]
   $result[^result.match[^^[ \t]{2}][gmx][]]
   $result[^result.match[(^^\s*^$){3,}][gmx][^#0A]]
 
-@_makeClassName[aTableName][locals]
+@_makeClassName[aTableName]
   $lParts[^aTableName.split[_;lv]]
-  $result[${_classPrefix}^lParts.foreach[_;v]{^pfString:changeCase[$v.piece;first-upper]}]
+  $result[${self._classPrefix}^lParts.foreach[_;v]{^pfString:changeCase[$v.piece;first-upper]}]
 
-@_classBody[][locals]
+@_classBody[]
 $result[
     ^^self.addFields^[
-      ^_fields.foreach[k;v]{^$.$k^[^v.foreach[n;m]{^$.$n^if($m is bool){(^if($m){true}{false})}{^if($m is double){^($m^)}{^[$m^]}}}[ ]^]}[^#0A      ]
+      ^self._fields.foreach[k;v]{^$.$k^[^v.foreach[n;m]{^$.$n^if($m is bool){(^if($m){true}{false})}{^if($m is double){^($m^)}{^[$m^]}}}[ ]^]}[^#0A      ]
     ^]
 
-  ^if(def $_primary){
-    ^$self._defaultOrderBy^[^$.${_primary}[asc]]
+  ^if(def $self._primary){
+    ^$self._defaultOrderBy^[^$.${self._primary}[asc]]
   }
 
-  ^if(^_fields.contains[isActive] && def $_primary){
-  $lArgument[a^pfString:changeCase[$_primary;first-upper]]
+  ^if(^self._fields.contains[isActive] && def $self._primary){
+  $lArgument[a^pfString:changeCase[$self._primary;first-upper]]
   ^@delete^[$lArgument^]
     ^$result^[^^self.modify^[^$$lArgument^;^$.isActive(false)^]^]
 
@@ -104,41 +106,44 @@ pfMySQLTableModelGenerator
 
 ## Генерирует текст класса модели по DDL MySQL.
 
+@OPTIONS
+locals
+
 @BASE
 pfSQLModelGenerator
 
 @create[aTableName;aOptions]
-  ^cleanMethodArgument[]
+  ^self.cleanMethodArgument[]
   ^BASE:create[$aTableName;$aOptions]
   ^pfAssert:isTrue($CSQL.serverType eq "mysql")[Класс умеет получать описания таблиц только из MySQL.]
 
 @_hasTable[]
   $result(
-    !def $_tableName
-    || !^CSQL.table{show tables ^if(def $_schema){from `^taint[$_schema]`} like "^taint[$_tableName]"}
+    !def $self._tableName
+    || !^CSQL.table{show tables ^if(def $self._schema){from `^taint[$self._schema]`} like "^taint[$self._tableName]"}
   )
 
-@_getFields[][locals]
+@_getFields[]
   $result[^hash::create[]]
-  $lDDL[^CSQL.table{describe ^if(def $_schema){`$_schema`.}`$_tableName`}]
+  $lDDL[^CSQL.table{describe ^if(def $self._schema){`$self._schema`.}`$self._tableName`}]
   $lHasPrimary(^lDDL.select($lDDL.Key eq "PRI") == 1)
   $self._primary[]
 
   ^lDDL.menu{
-    $lName[^_makeName[$lDDL.Field]]
+    $lName[^self._makeName[$lDDL.Field]]
     $lData[^hash::create[]]
 
     ^if($lDDL.Field ne $lName){$lData.dbField[$lDDL.Field]}
 
-    $lType[^_parseType[$lDDL.Type]]
+    $lType[^self._parseType[$lDDL.Type]]
     ^switch[^lType.type.lower[]]{
       ^case[int;integer;smallint;mediumint]{
         $lData.processor[^if($lType.unsigned){uint}{int}]
-        ^unsafe{$lData.default(^lDDL.Default.int[])}
+        ^self.unsafe{$lData.default(^lDDL.Default.int[])}
       }
       ^case[tinyint]{
         $lData.processor[^if($lType.unsigned){uint}{int}]
-        ^unsafe{$lData.default(^lDDL.Default.int[])}
+        ^self.unsafe{$lData.default(^lDDL.Default.int[])}
         ^if(^lType.format.int(0) == 1
             || ^lDDL.Field.pos[is_] == 0){
           $lData.processor[bool]
@@ -150,7 +155,7 @@ pfSQLModelGenerator
         ^if(def $lType.format){
           $lData.format[^lType.format.match[^^(\d+)\,(\d+)^$][]{%${match.1}.${match.2}f}]
         }
-        ^unsafe{$lData.default(^lDDL.Default.double[])}
+        ^self.unsafe{$lData.default(^lDDL.Default.double[])}
       }
       ^case[date]{$lData.processor[date]}
       ^case[datetime]{$lData.processor[datetime]}
@@ -214,34 +219,37 @@ pfPostgresTableModelGenerator
 
 ## Генерирует текст класса модели по DDL Постгреса.
 
+@OPTIONS
+locals
+
 @BASE
 pfSQLModelGenerator
 
 @create[aTableName;aOptions]
-  ^cleanMethodArgument[]
+  ^self.cleanMethodArgument[]
   ^BASE:create[$aTableName;$aOptions]
   ^pfAssert:isTrue($CSQL.serverType eq "pgsql")[Класс умеет получать описания таблиц только из Postgres.]
 
 @_hasTable[]
   $result(
-    !def $_tableName
+    !def $self._tableName
     || !^CSQL.int{
           select count(*)
             from information_schema.tables
-           where table_schema = '^taint[^ifdef[$_schema]{public}]'
-                 and table_name = '^taint[$_tableName]'
+           where table_schema = '^taint[^ifdef[$self._schema]{public}]'
+                 and table_name = '^taint[$self._tableName]'
        }
   )
 
-@_getFields[][locals]
+@_getFields[]
   $result[^hash::create[]]
   $lDDL[^CSQL.table{
       select cols.*,
              (case when i.column_name is not null then 'PRI' end) as key
         from information_schema.columns as cols
    left join information_schema.key_column_usage as i using (table_schema, table_name, column_name)
-       where cols.table_schema = '^taint[^ifdef[$_schema]{public}]'
-             and cols.table_name = '^taint[$_tableName]'
+       where cols.table_schema = '^taint[^ifdef[$self._schema]{public}]'
+             and cols.table_name = '^taint[$self._tableName]'
     order by cols.ordinal_position asc
   }]
 
@@ -249,23 +257,23 @@ pfSQLModelGenerator
   $self._primary[]
 
   ^lDDL.menu{
-    $lName[^_makeName[$lDDL.column_name]]
+    $lName[^self._makeName[$lDDL.column_name]]
     $lData[^hash::create[]]
 
     ^if($lDDL.column_name ne $lName){$lData.dbField[$lDDL.column_name]}
 
-    $lType[^_parseType[$lDDL.fields]]
+    $lType[^self._parseType[$lDDL.fields]]
     ^switch[^lType.type.lower[]]{
       ^case[int;integer;smallint]{
         $lData.processor[int]
-        ^unsafe{$lData.default(^lType.default.int[])}
+        ^self.unsafe{$lData.default(^lType.default.int[])}
       }
       ^case[float;double;decimal;numeric]{
         $lData.processor[double]
         ^if(def $lType.numericScale){
           $lData.format[%.${lType.numericScale}f]
         }
-        ^unsafe{$lData.default(^lDDL.default.double[])}
+        ^self.unsafe{$lData.default(^lDDL.default.double[])}
       }
       ^case[date]{$lData.processor[date]}
       ^case[timestamp]{$lData.processor[datetime]}
