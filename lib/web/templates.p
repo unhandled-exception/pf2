@@ -309,7 +309,7 @@ locals
 
   $lMethod[^self.ifdef[$aOptions.call]{__main__}]
   ^if(!($self.[$lMethod] is junction)){
-    ^throw[template.method.not.found;Метод json не найден в шаблоне $self.__FILE__]
+    ^throw[template.method.not.found;Метод "${lMethod}" не найден в шаблоне $self.__FILE__]
   }
   $result[^self.[$lMethod][]]
 
