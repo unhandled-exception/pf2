@@ -552,17 +552,24 @@ locals
     }
   }(^self._reverseIndex.contains[$aAction]){
     $lRoutes[$self._reverseIndex.[$aAction]]
-    ^lRoutes.foreach[k;it]{
-      $lPath[^self.applyPath[$it.pattern;$aArgs]]
-#     Проверяем соответствует ли полученный путь шаблоу (с ограничениями «where»)
-      ^if(^lPath.match[$it.regexp][n]){
-#       Добавляем оставшиеся параметры из aArgs или aOptions.form в result.args
-        $result.path[$lPath]
-        $result.args[^if($lOnlyPatternsVar){^hash::create[$aOptions.form]}{$aArgs}]
-        ^result.args.sub[$it.vars]
-        ^break[]
-      }
+    ^lRoutes.foreach[;lRoute]{
+      $result[^self.matchRoute[$lRoute;$aArgs;$aOptions]]
     }
+  }
+
+@matchRoute[aRoute;aArgs;aOptions]
+  $result[^hash::create[]]
+
+  $lOnlyPatternsVar(^aOptions.onlyPatternVars.bool(false))
+
+  $lPath[^self.applyPath[$aRoute.pattern;$aArgs]]
+# Проверяем соответствует ли полученный путь шаблоу (с ограничениями «where»)
+  ^if(^lPath.match[$aRoute.regexp][n]){
+#   Добавляем оставшиеся параметры из aArgs или aOptions.form в result.args
+    $result.path[$lPath]
+    $result.args[^if($lOnlyPatternsVar){^hash::create[$aOptions.form]}{$aArgs}]
+    ^result.args.sub[$aRoute.vars]
+    ^break[]
   }
 
 @compilePattern[aRoute;aOptions]
