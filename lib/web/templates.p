@@ -315,15 +315,27 @@ locals
 @GET___LOCAL__[]
   $result[$self.__LOCAL_CONTEXT__]
 
+@__init__[]
+## Инициализатор шаблона. Вызываем в __render__ перед __main__
+  $result[]
+
 @__main__[]
   ^throw[template.empty;Не задано тело шаблона. [$self.__FILE__]]
 
 @__render__[aOptions]
 ## aOptions.context — переменные шаблона
 ## aOptions.call[__main__] — имя «главной» функции шаблона
+## aOptions.init[__init__] — имя инициализатора шаблона
   ^self.cleanMethodArgument[]
+  $result[]
   $lOldLocalContext[$self.__LOCAL_CONTEXT__]
   $self.__LOCAL_CONTEXT__[^hash::create[$aOptions.context]]
+
+  $lConstructor[^self.ifdef[$aOptions.init]{__init__}]
+  ^if(!($self.[$lConstructor] is junction)){
+    ^throw[template.method.not.found;Инициализатор "${lConstructor}" не найден в шаблоне $self.__FILE__]
+  }
+  ^self.[$lConstructor][]
 
   $lMethod[^self.ifdef[$aOptions.call]{__main__}]
   ^if(!($self.[$lMethod] is junction)){
