@@ -7,7 +7,11 @@ pf2/lib/web/templates.p
   Templates tests...
 
   $template[^pfTemplate::create[
-    $.searchPath[./assets/templates/]
+    $.searchPath[^table::create{path
+./assets/templates/nop
+./assets/templates/nop2
+./assets/templates
+}]
   ]]
   $lTemp[^template.getTemplate[index.pt]]
 

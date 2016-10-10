@@ -62,8 +62,8 @@ pfClass
   }
 
 @getTemplate[aTemplateName;aOptions] -> [object]
-## aTemplateName — имя шаблона.
-## aOptions.base — базовый путь от которого ищем шаблон
+## aTemplateName — имя шаблона
+## aOptions.base — базовый путь, от которого ищем шаблон
 ## aOptions.force(false)
 ## aOptions.forceLoad(false)
   ^self.cleanMethodArgument[]
@@ -89,7 +89,7 @@ pfClass
 
 @render[aTemplateName;aOptions]
 ## Рендерит шаблон
-## aTemplateName[/path/to/template.pt@__main__] — имя шаблона и функция, которой передаем управление.
+## aTemplateName[/path/to/template.pt@__main__] — имя шаблона и функция, которой передаем управление
 ## aOptions.context
 ## aOptions.force(false)
   ^self.cleanMethodArgument[]
@@ -195,7 +195,7 @@ pfClass
   $self.searchPath[^table::create{path}]
   ^if(def $aOptions.searchPath){
     ^switch[$aOptions.searchPath.CLASS_NAME]{
-      ^case[table]{^self.searchPath.append[$aOptions.searchPath]}
+      ^case[table]{^self.searchPath.join[$aOptions.searchPath]}
       ^case[string]{^self.searchPath.append{$aOptions.searchPath}}
     }
   }{
@@ -216,33 +216,51 @@ pfClass
   ^self.cleanMethodArgument[]
   $lForce(^aOptions.force.bool(false))
   $result[^hash::create[]]
-  $lFullName[^self.find[$aFileName;$.base[$aOptions.base]]]
-  ^if(!def $lFullName){
-    ^throw[template.not.found;Не найден шаблон "$aFileName".]
+
+  $lFound[^self.find[$aFileName;$.base[$aOptions.base]]]
+  $lFullPath[$lFound.fullPath]
+  ^if(!def $lFullPath){
+    ^if($lFound.searchedPath){
+      $lComment[Пути:^#0A^lFound.searchedPath.foreach[_;v]{— $v}[^#0A]
+      ]
+    }
+    ^throw[template.not.found;Не найден шаблон "${aFileName}".;$lComment]
   }
-  ^if($lForce || !^self.templates.contains[$lFullName]){
-    $lFile[^file::load[text;$lFullName]]
+
+  ^if($lForce || !^self.templates.contains[$lFullPath]){
+    $lFile[^file::load[text;$lFullPath]]
     $result.text[$lFile.text]
-    $result.path[$lFullName]
+    $result.path[$lFullPath]
     ^if(!$lForce){
-      $self.templates.[$lFullName][$result]
+      $self.templates.[$lFullPath][$result]
     }
   }{
-     $result[$self.templates.[$lFullName]]
+     $result[$self.templates.[$lFullPath]]
    }
 
-@find[aFileName;aOptions] -> [path]
+@find[aFileName;aOptions] -> [$.fullPath $.searchedPath[hash<$.uid_key[full/path.to.pt] ...>]]
 ## aOptions.base — базовый путь от которого ищем шаблон
   ^self.cleanMethodArgument[]
-  ^pfAssert:isTrue(def $aFileName){Не задано имя шаблона "$aFileName".}
-  $result[^if(def $aOptions.base && -f "$aOptions.base/$aFileName"){$aOptions.base/$aFileName}]
-  ^if(!def $result){
+  ^pfAssert:isTrue(def $aFileName){Не задано имя шаблона.}
+  $result[$.fullPath[] $.searchedPath[^hash::create[]]]
+
+  ^if(def $aOptions.base){
+    $lFullPath[$aOptions.base/$aFileName]
+    ^if(-f $lFullPath){
+      $result.fullPath[$lFullPath]
+    }{
+       $result.searchedPath.[^math:uuid[]][$lFullPath]
+    }
+  }
+
+  ^if(!def $result.fullPath){
     ^self.searchPath.foreach[_;v]{
-      $lFullName[$v.path/$aFileName]
-      ^if(-f $lFullName){
-        $result[$lFullName]
+      $lFullPath[$v.path/$aFileName]
+      ^if(-f $lFullPath){
+        $result.fullPath[$lFullPath]
         ^break[]
       }
+      $result.searchedPath.[^math:uuid[]][$lFullPath]
     }
   }
 
