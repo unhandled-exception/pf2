@@ -479,20 +479,27 @@ locals
   ^if(!def $lRoute.pattern){$self.hasRootRoute(true)}
 
 # Добавляем маршрут в обратный индекс
-  $self._reverseIndex.[$lRoute.routeTo][^self.ifcontains[$self._reverseIndex;$lRoute.routeTo]{^hash::create[]}]
-  $self._reverseIndex.[$lRoute.routeTo].[^math:uid64[]][$lRoute]
+  ^if($lRouteTo.appendToReverseIndex){
+    $self._reverseIndex.[$lRoute.routeTo][^self.ifcontains[$self._reverseIndex;$lRoute.routeTo]{^hash::create[]}]
+    $self._reverseIndex.[$lRoute.routeTo].[^math:uid64[]][$lRoute]
+  }
 
   ^if($lRoute.routeTo ne $lRoute.as){
     $self._reverseIndex.[$lRoute.as][^self.ifcontains[$self._reverseIndex;$lRoute.as]{^hash::create[]}]
     $self._reverseIndex.[$lRoute.as].[^math:uid64[]][$lRoute]
   }
 
-@_makeRouteTo[aRouteTo] -> [$.routeTo[] $.processor[]]
-  $result[$.routeTo[]]
+@_makeRouteTo[aRouteTo] -> [$.routeTo[] $.processor[] $.appendToReverseIndex(true)]
+  $result[
+    $.routeTo[]
+    $.appendToReverseIndex(true)
+  ]
   ^if($aRouteTo is pfRouterProcessor){
     $result.processor[$aRouteTo]
+    $result.appendToReverseIndex(false)
   }($aRouteTo is hash){
     $result.processor[^self.createProcessor[^aRouteTo.at[first;key];^aRouteTo.at[first;value]]]
+    $result.appendToReverseIndex(false)
   }{
     $lParsedRouteTo[^aRouteTo.match[$self._pfRouterProcessorRegexp]]
     $result.routeTo[$lParsedRouteTo.2]
@@ -552,7 +559,7 @@ locals
     }
   }(^self._reverseIndex.contains[$aAction]){
     $lRoutes[$self._reverseIndex.[$aAction]]
-    ^lRoutes.foreach[;lRoute]{
+    ^lRoutes.foreach[_;lRoute]{
       $result[^self.matchRoute[$lRoute;$aArgs;$aOptions]]
     }
   }
