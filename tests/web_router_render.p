@@ -13,7 +13,7 @@ pf2/lib/web/controllers.p
   linkTo fake/bot: ^c.linkTo[fake/bot]
   render /bot/: ^c.run[^pfRequest::create[$.URI[bot]];$.returnBody(true)]
   render /fake/bot/: ^c.run[^pfRequest::create[$.URI[fake/bot]];$.returnBody(true)]
-#  render /: ^c.run[^pfRequest::create[$.URI[/]];$.returnBody(true)]
+  render /: ^c.run[^pfRequest::create[$.URI[/]];$.returnBody(true)]
 
   Finish tests.^#0A
 

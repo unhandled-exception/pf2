@@ -378,15 +378,12 @@ pfClass
     $self._templateVars.[$k][$v]
   }
 
-#@onINDEX[aRequest] -> [response] или ^self.router.root[$index]
-#@onAction[aRequest] -> [response] или ^self.router.assign[action;$actionHandler;$.strict(true)]
+#@onINDEX[aRequest] -> [response]
+#@onAction[aRequest] -> [response]
 #@onNOTFOUND[aRequest] -> [response]
 
 #@postDEFAULT[aResponse] -> [response]
 #@postHTML[aResponse] -> [response]
-
-@onINDEX[aRequest]
-  ^throw[${self._exceptionPrefix}.index.not.implemented;An onINDEX method is not implemented in the $self.CLASS_NAME class.]
 
 #--------------------------------------------------------------------------------------------------
 
