@@ -850,7 +850,6 @@ locals
   $self.ACTION[^self.ifcontains[$aOptions;ACTION]{^self.PATH.trim[/]}]
 
   ^if(^aOptions.useXForwarded.bool(false)){
-    ^pfAssert:fail[stop]
      $self.HOST[^self.ifdef[$aOptions.HOST]{^self.header[X-Forwarded-Host]{$self.ENV.SERVER_NAME}}]
      $self.PORT[^self.ifdef[$aOptions.PORT]{^self.header[X-Forwarded-Port]{$self.ENV.SERVER_PORT}}]
   }{
@@ -858,9 +857,9 @@ locals
      $self.PORT[^self.ifdef[$aOptions.PORT]{^self.ENV.SERVER_PORT.int(80)}]
    }
 
+  $self.isSECURE(^self.ifcontains[$aOptions;isSECURE](^self.ENV.HTTPS.lower[] eq "on" || $self.PORT eq "443"))
   $self.HOST[$self.HOST^if($self.PORT ne "80" && ($self.isSECURE && $self.PORT ne "443")){:$self.PORT}]
 
-  $self.isSECURE(^self.ifcontains[$aOptions;isSECURE](^self.ENV.HTTPS.lower[] eq "on" || $self.PORT eq "443"))
   $self.SCHEME[http^if($self.isSECURE){s}]
 
 # Проверяет является ли Referer локальным.
