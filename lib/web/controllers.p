@@ -851,7 +851,7 @@ locals
 
   ^if(^aOptions.useXForwarded.bool(false)){
      $self.HOST[^self.ifdef[$aOptions.HOST]{^self.header[X-Forwarded-Host]{$self.ENV.SERVER_NAME}}]
-     $self.PORT[^self.ifdef[$aOptions.PORT]{^self.header[X-Forwarded-Port]{$self.ENV.SERVER_PORT}}]
+     $self.PORT[^self.ifdef[$aOptions.PORT]{^self.header[X-Forwarded-Port]{^self.ENV.SERVER_PORT.int(80)}}]
   }{
      $self.HOST[^self.ifdef[$aOptions.HOST]{^self.header[Host]{$self.ENV.SERVER_NAME}}]
      $self.PORT[^self.ifdef[$aOptions.PORT]{^self.ENV.SERVER_PORT.int(80)}]
