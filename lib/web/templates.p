@@ -296,15 +296,22 @@ locals
 
 @GET_DEFAULT[aVarName]
 # Получает переменную из глобального контекста или из контекста шаблона.
-  $result[^if(def $self.__LOCAL_CONTEXT__ && ^self.__LOCAL_CONTEXT__.contains[$aVarName]){$self.__LOCAL_CONTEXT__.[$aVarName]}{$self.__TEMPLATE__.context.[$aVarName]}]
+  $result[^if(def $self.__LOCAL_CONTEXT__ && ^self.__LOCAL_CONTEXT__.contains[$aVarName]){$self.__LOCAL_CONTEXT__}{$self.__TEMPLATE__.context}]
+  ^switch[$result.[$aVarName].CLASS_NAME]{
+    ^case[int;double;bool]{$result($result.[$aVarName])}
+    ^case[DEFAULT]{$result[$result.[$aVarName]]}
+  }
 
 @SET_DEFAULT[aVarName;aValue]
 # Предотвращаем запись локальных переменных шаблона в объект.
-# Если есть контекст, то записываем переменную в контекст.
-# Если контекста нет, то игнорируем переменную.
-  ^if($self.__LOCAL_CONTEXT__ is hash){
-    $self.__LOCAL_CONTEXT__.[$aVarName][$aValue]
-  }
+# Если есть контекст, записываем переменную в контекст.
+# Если контекста нет, игнорируем переменную.
+  $result[^if($self.__LOCAL_CONTEXT__ is hash){
+    ^switch[$aValue.CLASS_NAME]{
+      ^case[int;double;bool]{$self.__LOCAL_CONTEXT__.[$aVarName]($aValue)}
+      ^case[DEFAULT]{$self.__LOCAL_CONTEXT__.[$aVarName][$aValue]}
+    }
+  }]
 
 @GET_TEMPLATE[]
   $result[$self.__TEMPLATE__]
