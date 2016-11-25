@@ -77,11 +77,22 @@ locals
   $result[^try{$aCode}{$exception.handled(true)$aCatchCode}]
 
 @ifdef[aValue;aDefaultValue]
-## Возвращает значение aValue, если переменная определена или возвращает aDefaultValue.
+## Возвращает значение aValue, если переменная определена (def) или возвращает aDefaultValue.
 ## Лучше передавать значение по-умолчанию как код:
 ## ^ifdef[value]{default}
 ## ^ifdef[value](expression)
   $result[^if(def $aValue){$aValue}{$aDefaultValue}]
+
+@firstdef[*aArgs]
+## Возвращает первый попавшийся определенный (def) аргумент.
+## Аналог coalesce из sql.
+  $result[$__VOID__]
+  ^aArgs.foreach[_;v]{
+    ^if(def $v){
+      $result[$v]
+      ^break[]
+    }
+  }
 
 @ifcontains[aObject;aName;aDefaultValue]
 ## Возвращает значение поля aObject.[aName], если поле в объекте есть или aDefaultValue если нет.
