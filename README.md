@@ -9,6 +9,10 @@ PF2 — веб-фреймворк для Parser 3
 * Олег Волчков ([oleg@volchkov.net](mailto:oleg@volchkov.net), [http://unhandled-exception.ru](unhandled-exception.ru))
 * Алексей Марьин ([http://groundzero.ru](groundzero.ru))
 
+## Установка
+
+git clone https://github.com/unhandled-exception/pf2.git
+
 ## Что меняем при переходе с PF1 на PF2
 
 Делаем фреймворк вместо библиотеки. Стараемся сохранить слабую связь классов, чтобы их можно было использовать не загружая в память программы всю библиотеку.
