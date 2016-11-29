@@ -3,15 +3,15 @@ PF2 — веб-фреймворк для Parser 3
 
 Новая версия [библиотеки PF](https://bitbucket.org/ovolchkov/parser3-pf).
 
-Разработка в бранче develop и ветках feature/name. Релиз в default. На время разработки первой версии головной бранч на Битбакете — develop.
+Релиз в ветке master. Разработка в бранче develop и ветках feature/name.
 
 Авторы:
-* Олег Волчков ([oleg@volchkov.net](mailto:oleg@volchkov.net), [http://unhandled-exception.ru](unhandled-exception.ru))
-* Алексей Марьин ([http://groundzero.ru](groundzero.ru))
+* Олег Волчков ([oleg@volchkov.net](mailto:oleg@volchkov.net), [unhandled-exception.ru](http://unhandled-exception.ru))
+* Алексей Марьин ([groundzero.ru](http://groundzero.ru))
 
 ## Установка
 
-git clone https://github.com/unhandled-exception/pf2.git
+`git clone https://github.com/unhandled-exception/pf2.git`
 
 ## Что меняем при переходе с PF1 на PF2
 
