@@ -225,6 +225,81 @@ pfClass
 #--------------------------------------------------------------------------------------------------
 
 @CLASS
+pfTableFormGeneratorBootstrap4Widgets
+
+## Bootstrap 4
+
+@OPTIONS
+locals
+
+@BASE
+pfClass
+
+@create[aOptions]
+  ^BASE:create[]
+
+@formWidget[aBlock]
+  $result[<form action="" method="post" class="form-horizontal form-default">
+    $aBlock
+  </form>]
+
+@inputWidget[aField;aType;aOptions]
+  $result[
+    <div class="form-group row">
+      <label for="f-$aField.name" class="col-sm-3 col-form-label">$aField.label</label>
+      <div class="col-sm-9">
+        <input type="^if(def $aType){$aType}{text}" name="$aField.name" id="f-$aField.name" value="^$${aOptions.argName}.$aField.name" class="form-control" placeholder="" />
+      </div>
+    </div>]
+
+@textareaWidget[aField;aOptions]
+  $result[
+    <div class="form-group row">
+      <label for="f-$aField.name" class="col-sm-3 col-form-label">$aField.label</label>
+      <div class="col-sm-9">
+        <textarea name="$aField.name" id="f-$aField.name" class="form-control" rows="7" placeholder="" />^$${aOptions.argName}.$aField.name</textarea>
+      </div>
+    </div>]
+
+@checkboxWidget[aField;aType;aOptions]
+  $lVarName[^$${aOptions.argName}.$aField.name]
+  $aType[^if(def $aType){$aType}{checkbox}]
+  $result[
+    <div class="form-group row">
+      <div class="col-sm-offset-3 col-sm-9">
+      <label><input type="$aType" name="$aField.name" id="f-${aField.name}1" value="1" ^^if($lVarName){checked="true"} class="form-check-input" /> $aField.label</label>
+      </div>
+    </div>]
+
+@selectWidget[aField;aOptions]
+  $result[
+    <div class="form-group row">
+      <label for="f-$aField.name" class="col-sm-3 col-form-label">$aField.label</label>
+      <div class="col-sm-9">
+        <select name="$aField.name" id="f-$aField.name" class="form-control" placeholder="">
+          <option value=""></option>
+^#          <option value="" ^^if(^$${aOptions.argName}.$aField.name eq ""){selected="true"}></option>
+        </select>
+      </div>
+    </div>]
+
+@hiddenWidget[aField;aOptions]
+  $result[    <input type="hidden" name="$aField.name" value="^$${aOptions.argName}.$aField.name" />]
+
+@submitWidget[aOptions]
+  ^self.cleanMethodArgument[]
+  $result[^^antiFlood.field^[^]
+    <div class="form-group row">
+      <div class="offset-sm-3 col-sm-9">
+        <input type="submit" id="f-sub" value="Сохранить" class="btn btn-primary" />
+        или <a href="^^linkTo^[/^]" class="action">Ничего не менять</a>
+      </div>
+    </div>
+  ]
+
+#--------------------------------------------------------------------------------------------------
+
+@CLASS
 pfTableFormGeneratorSemanticUIWidgets
 
 ## SemanticUI — http://semantic-ui.com/
