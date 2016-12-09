@@ -30,6 +30,7 @@ locals
 ## aOptions.secretKey — ключ для подписи и шифрования.
 ## aOptions.cryptKey[aOptions.secretKey] — ключ шифрования. Если не задан, то используем secretKey.
 ## aOptions.serializer[hex] — алгоритм сериализации зашифрованного текста (hex|base64)
+## aOptions.hashAlgorythm[sha256] — алогритм хеширования по-умолчанию
   ^self.cleanMethodArgument[]
   ^BASE:create[]
 
@@ -64,14 +65,21 @@ locals
   ]
 
   $self._serializer[^self.ifdef[$aOptions.serializer]{hex}]
-  $self._hashAlgorythm[sha256]
+  $self._hashAlgorythm[^self.ifdef[$aOptions.hashAlgorythm]{sha256}]
 
   ^pfAssert:isTrue(^self._sqlFunctions.contains[$self.CSQL.serverType]){Неизвестный тип sql-сервера — "${self.CSQL.serverType}". Класс $self.CLASS_NAME поддерживает шифрование через серверы ^self._sqlFunctions.foreach[k;]{"$k"}[, ]}
 
   $self._pattern[^regex::create[\{(.+?)\}][g]]
 
+@GET_secretKey[]
+  $result[$self._secretKey]
+
+@GET_cryptKey[]
+  $result[$self._cryptKey]
+
 @encrypt[aString;aOptions]
 ## Шифрует и сериализует строку.
+## aOptions.cryptKey[default crypt key]
 ## aOptions.serializer[default algorythm]
 ## aOptions.log — запись в sql-лог.
   ^self.cleanMethodArgument[]
@@ -82,7 +90,7 @@ locals
     select
       ^self._applyPattern[$lSeralizer;
         $.data[$aString]
-        $.key[$self._cryptKey]
+        $.key[^self.ifdef[$aOptions.cryptKey]{$self._cryptKey}]
       ]
   }[][
     $.force(true)
@@ -91,7 +99,8 @@ locals
 
 @decrypt[aString;aOptions]
 ## Расшифровывает строку, закодированную методом encrypt.
-## aOptions.serializer[default algorythm]
+## aOptions.cryptKey[_cryptKey]
+## aOptions.cryptKey[default crypt key]
 ## aOptions.log — запись в sql-лог.
   ^self.cleanMethodArgument[]
   $lFuncs[$self._sqlFunctions.[$self.CSQL.serverType]]
@@ -101,7 +110,7 @@ locals
     select
       ^self._applyPattern[$lSeralizer;
         $.data[$aString]
-        $.key[$self._cryptKey]
+        $.key[^self.ifdef[$aOptions.cryptKey]{$self._cryptKey}]
       ]
   }[][
     $.force(true)
