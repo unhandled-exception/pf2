@@ -856,7 +856,7 @@ pfClass
       ^case[null]{^if(def $aValue){'^taint[$aValue]'}{null}}
       ^case[int_null]{^if(def $aValue){$lVal($aValue)^lVal.format[%d]}{null}}
       ^case[uint_null]{^if(def $aValue){$lVal($aValue)^lVal.format[%u]}{null}}
-      ^case[uid;auto_uid]{'^taint[^if(def $aValue){$aValue}{^math:uuid[]}']}
+      ^case[uid;auto_uid;uuid;uuid_auto]{'^taint[^if(def $aValue){$aValue}{$lUUID[^math:uuid[]]^lUUID.lower[]}]'}
       ^case[inet_ip]{^self.unsafe{^inet:aton[$aValue]}{null}}
       ^case[first_upper]{'^taint[^if(def $aValue){^aValue.match[$self._PFSQLBUILDER_PROCESSOR_FIRST_UPPER][]{^match.1.upper[]$match.2}}(def $aField.default){$aField.default}]'}
       ^case[hash_md5]{'^taint[^if(def $aValue){^math:md5[$aValue]}]'}
