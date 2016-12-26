@@ -36,7 +36,7 @@ Console:
      manage.p gen form
 
 Auth:
-  ☐ Перенести метод digest из pf-secrets-app@CoreSecurity, добавить параметры secretKey и disableHMAC.
+  ✔ Перенести метод digest из pf-secrets-app@CoreSecurity, добавить параметры secretKey и disableHMAC. @done (16-12-26 15:23)
     В psSQLSecurity есть метод digest описан как hmac-digest, но хеширует без hmac.
   ☐ В auth.p@pfUserRolesAuth добавить время жизни куки в токен и проверять при авторизации
   ☐ Сделать дефолтную генерацию secureToken в модели pfUserModel. Посолить токен текущим временем.

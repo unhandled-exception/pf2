@@ -1,5 +1,10 @@
 # PF2 Library
 
+@USE
+pf2/lib/common.p
+pf2/lib/sql/connection.p
+
+
 @CLASS
 pfSQLSecurityCrypt
 
@@ -7,17 +12,15 @@ pfSQLSecurityCrypt
 ## Вызывает функции шифрования через sql-серверы.
 ## Сервер должен пожжерживать функции шифрования и сераилизации в текстовый формат.
 
+## Поддерживает шифрование через MySQL и Postgres.
+
 ## MySQL:
-## Шифрование — aes_encrypt/aes_decrypt. Сериализация — hex/base64.
 ## Сериализация токенов в base64 доступна начиная с MySQL 5.6.10 и MariaDB 10.0.5.
+## Для младших версий включите $.serializer[hex]
 
 ## Ключи лучше не вбивать с клавиатуры, а сгенерировать с помощью системного генератора случайных чисел:
 ## В unix/linux ключи можно сгенерировать через urandom:
 ## > python3 -c "import os, base64; print(base64.b64encode(os.urandom(24)))"
-
-@USE
-pf2/lib/common.p
-pf2/lib/sql/connection.p
 
 @BASE
 pfClass
@@ -29,7 +32,7 @@ locals
 ## aOptions.sql — объект для соединениея с БД.
 ## aOptions.secretKey — ключ для подписи и шифрования.
 ## aOptions.cryptKey[aOptions.secretKey] — ключ шифрования. Если не задан, то используем secretKey.
-## aOptions.serializer[hex] — алгоритм сериализации зашифрованного текста (hex|base64)
+## aOptions.serializer[base64] — алгоритм сериализации зашифрованного текста (hex|base64)
 ## aOptions.hashAlgorythm[sha256] — алогритм хеширования по-умолчанию
   ^self.cleanMethodArgument[]
   ^BASE:create[]
@@ -166,9 +169,14 @@ locals
    }
 
 @digest[aString;aOptions]
-## Возвращает hmac-хеш строки.
-## aOptions.format[base64|hex] — формат дайджеста. По-умолчанию base64.
-  $result[^math:digest[$self._hashAlgorythm;$aString;$.format[^self.ifdef[$aOptions.format]{base64}]]]
+## Возвращает криптографический хеш строки
+## aOptions.format[self._serializer] — формат дайджеста (hex|base64).
+## aOptions.algorythm[self._hashAlgorythm] — алгоритм хешировани (sha256|sha512|...)
+## aOptions.hmac[self._secretKey] — hmac-строка
+  $result[^math:digest[^self.ifdef[$aOptions.algorythm]{$self._hashAlgorythm};$aString;
+    $.format[^self.ifdef[$aOptions.format]{$self._serializer}]
+    $.hmac[^self.ifdef[$aOptions.hmac]{$self._secretKey}]
+  ]]
 
 #----- Private -----
 
