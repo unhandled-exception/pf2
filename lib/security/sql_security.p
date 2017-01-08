@@ -151,7 +151,7 @@ locals
   }
   $result[^self.encrypt[$result;$.serializer[$aOptions.serializer] $.log[$aOptions.log]]]
 
-@parseAndValidateToken[aToken;aOptions] -> [hash] <invalid.token>
+@parseAndValidateToken[aToken;aOptions] -> [hash] <security.invalid.token>
 ## Расшифровывает и валидирует токен, сформированный функцией makeToken.
 ## Возвращает хеш с данными токена или выбрасывает исключение.
 ## aOptions.skipSign(false) — не провирять подпись
