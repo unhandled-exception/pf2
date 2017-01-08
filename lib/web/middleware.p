@@ -164,7 +164,7 @@ pfMiddleware
   $self._enableHighlightJS(^aOptions.enableHighlightJS.bool(false))
   $self._hideQueryLog(^aOptions.hideQueryLog.bool(false))
 
-  $self._highlightJSVersion[9.6.0]
+  $self._highlightJSVersion[9.9.0]
 
 @processResponse[aAction;aRequest;aResponse;aController;aProcessOptions] -> [response]
   $result[$aResponse]
