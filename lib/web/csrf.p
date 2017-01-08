@@ -38,7 +38,7 @@ pfMiddleware
 ## aOptions.cookieName[csrftoken] — имя csrf-куки
 ## aOptions.cookiePath[/] — путь csrf-куки
 ## aOptions.cookieSecure(false) —  ставим куку только на https
-## aOptions.formName[csrf_form_token] — имя поля формы с токеном
+## aOptions.formFieldName[csrf_form_token] — имя поля формы с токеном
 ## aOptions.headerName[X-CSRFToken] — http-заголовок с токеном
 ## aOptions.pathExempt[hash<$.name[regexp]>] — хеш с регулярными выражениями для путей в урлах, которые не надо обрабатывать в мидлваре.
 ## aOptions.requestVarName[CSRF] — имя переменной в запросе со ссылкой на мидлваре.
@@ -55,7 +55,7 @@ pfMiddleware
   $self._cookiePath[^self.ifdef[$aOptions.cookiePath]{/}]
   $self._cookieSecure[^aOptions.cookieSecure.bool(false)]
 
-  $self._formName[^self.ifdef[$aOptions.formName]{csrf_form_token}]
+  $self._formFieldName[^self.ifdef[$aOptions.formFieldName]{csrf_form_token}]
   $self._headerName[^self.ifdef[$aOptions.headerName]{X-CSRFToken}]
 
   $self._pathExempt[^hash::create[$aOptions.pathExempt]]
@@ -79,6 +79,7 @@ pfMiddleware
       }
       $lData[^self._cryptoProvider.parseAndValidateToken[$lToken;
         $.serializer[$self._tokenSerializer]
+        $.log[-- Parse a csrf-token.]
       ]]
       $self._tokenSecret[$lData.secret]
     }{
@@ -92,18 +93,20 @@ pfMiddleware
   }
   $result[$self._tokenSecret]
 
-@makeToken[] -> [a token string]
+@makeToken[aOptions] -> [a token string]
+## aOptions.log
   $result[^self._cryptoProvider.makeToken[
     $.secret[^self.ifdef[$self._tokenSecret]{^self._makeNewSecret[]}]
     $.salt[^math:uid64[]]
   ][
     $.serializer[$self._tokenSerializer]
+    $.log[^self.ifdef[$aOptions.log]{-- Make a csrf token.}]
   ]]
 
 @processRequest[aAction;aRequest;aController;aProcessOptions] -> []
   $result[]
   $lSecret[^self._getSecretFromRequest[$aRequest]]
-  $aRequest.assign[$.[$self._requestVarName][$self]]
+  ^aRequest.assign[$.[$self._requestVarName][$self]]
 #   ^pfAssert:fail[$self._tokenSecret]
 
 @processResponse[aAction;aRequest;aResponse;aController;aProcessOptions] -> [response]
@@ -118,3 +121,6 @@ pfMiddleware
     $.httponly($self._cookieHTTPOnly)
     $.secure($self._cookieSecure)
   ]
+
+@tokenField[]
+  $result[<input type="hidden" name="$self._formFieldName" value="^taint[html][^self.makeToken[$.log[-- Make a form csrf token.]]]" />]
