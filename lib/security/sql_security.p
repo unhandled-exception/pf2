@@ -159,6 +159,9 @@ locals
 ## aOptions.log — запись в sql-лог.
   ^self.cleanMethodArgument[]
   ^try{
+    ^if(!def $aToken){
+      ^throw[security.invalid.token;;Пустой токен.]
+    }
     $result[^self.decrypt[$aToken;$.serializer[$aOptions.serializer] $.log[$aOptions.log]]]
     ^if(!^aOptions.skipSign.bool(false)){
       $result[^self.validateSignatureAndReturnString[$result]]

@@ -225,6 +225,9 @@ pfClass
         $.isAnonymous(false)
         $.isAuthenticated(true)
       ]]
+      ^aRequest.assign[
+        $.csrfCookieNeedsReset(true)
+      ]
       $result(true)
     }
   }
@@ -235,6 +238,9 @@ pfClass
   ^self._currentUser.add[^self._makeUser[
     $.isActive(false)
   ]]
+  ^aRequest.assign[
+    $.csrfCookieNeedsReset(true)
+  ]
 
 @can[aPermission;*aCode] -> [bool | *aCode result]
 ## Варианта вызова метода:

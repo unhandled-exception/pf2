@@ -5,14 +5,12 @@ pf2/lib/web/controllers.p
 
 # — Ставим сессионную куку csrftoken с постоянным секретом и переменной солью.
 #   Обновлять куку безопано — секрет берем из куки и обновляем только соль.
-# — Куку можност авить http-only, если нет Аякс запросов.
+# — Куку можно ставить http-only, если нет Аякс запросов.
 # — В форму добавляем скрытое поле csrftoken с токеном.
 # — Если нам пришел запрос с небезопасным методом, то сравниваем секреты в куке и токене. Безопасным методами считаем GET, HEAD, OPTIONS или TRACE.
 # — Если запрос пришел Аяксом и в форме нет инпута, то проверям заголовко X-CSRFToken.
-
 # — При логине обновляем секрет в токене.
 #   if not getattr(request, 'csrf_cookie_needs_reset', False):
-
 # — Сделать исключения для урлов.
 #   Пример: aOptions.sslRedirectExempt[hash<$.name[regexp]>] — хеш с регулярными выражениями для путей в урлах, которые не надо редиректить. Решудяркой может быть строка или объект regex. По-умолчанию регулярки case-insensiteve, если надо иное, то явно создаем regex-объект.
 
@@ -151,7 +149,9 @@ pfMiddleware
           $.serializer[$self._tokenSerializer]
           $.log[-- Parse a request csrf token.]
         ]]
-        ^if($lFormTokenData.secret ne $self._requestToken.secret){
+        ^if(!def $self._requestToken.secret
+            || $lFormTokenData.secret ne $self._requestToken.secret
+        ){
           ^throw[security.invalid.token]
         }
         $self._formToken[$lFormTokenData]
@@ -166,7 +166,12 @@ pfMiddleware
   }
 
 @processResponse[aAction;aRequest;aResponse;aController;aProcessOptions] -> [response]
+## aResponse.csrfCookieNeedsReset(false) — обновить серкрет в куке
   $result[$aResponse]
+  ^if(^aRequest.csrfCookieNeedsReset.bool(false)){
+#   Если нам дали команду обновить куку, то обновляем секрет
+    ^_makeNewSecret[]
+  }
   $aResponse.cookie.[$self._cookieName][
     $.value[^self.makeToken[$.log[-- Make a cookie csrf token.]]]
     $.expires($self._cookieAge)
