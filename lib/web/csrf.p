@@ -66,6 +66,8 @@ pfMiddleware
   $self._tokenSerializer[base64]
 
   $self._requestToken[]
+  $self._formToken[]
+  $self.isValidRequest(true)
 
   $self._safeHTTPMethods[
     $._default(false)
@@ -88,13 +90,9 @@ pfMiddleware
   ^if(!def $self._tokenSecret){
     ^try{
       $lToken[$aRequest.cookie.[$self._cookieName]]
-      ^if(!def $lToken){
-#       Если нам не прислали куку, то смотрим http-заголовок
-        $lToken[$aRequest.headers.[$self._headerName]]
-      }
       $lData[^self._cryptoProvider.parseAndValidateToken[$lToken;
         $.serializer[$self._tokenSerializer]
-        $.log[-- Parse a csrf-token.]
+        $.log[-- Parse a cookie csrf token.]
       ]]
       $self._requestToken[$lData]
       $self._tokenSecret[$lData.secret]
@@ -139,17 +137,28 @@ pfMiddleware
   ){
 #   Проверяем токен
     ^if(!def $result && !def $self._requestToken){
+      $self.isValidRequest(false)
       $result[^pfResponse::create[$self.REASON_NO_CSRF_COOKIE;$.status[403]]]
     }
     ^if(!def $result){
       ^try{
-        $lFormTokenData[^self._cryptoProvider.parseAndValidateToken[$aRequest.form.[$self._formFieldName];
+        $lFormToken[$aRequest.form.[$self._formFieldName]]
+        ^if(!def $lFormToken){
+#         Если нам не прислали токен в форме, то смотрим http-заголовок
+          $lFormToken[$aRequest.headers.[$self._headerName]]
+        }
+        $lFormTokenData[^self._cryptoProvider.parseAndValidateToken[$lFormToken;
           $.serializer[$self._tokenSerializer]
-          $.log[-- Parse a csrf-token.]
+          $.log[-- Parse a request csrf token.]
         ]]
+        ^if($lFormTokenData.secret ne $self._requestToken.secret){
+          ^throw[security.invalid.token]
+        }
+        $self._formToken[$lFormTokenData]
       }{
         ^if($exception.type eq "security.invalid.token"){
           $exception.handled(true)
+          $self.isValidRequest(false)
           $result[^pfResponse::create[$self.REASON_BAD_TOKEN;$.status[403]]]
         }
       }
@@ -159,7 +168,7 @@ pfMiddleware
 @processResponse[aAction;aRequest;aResponse;aController;aProcessOptions] -> [response]
   $result[$aResponse]
   $aResponse.cookie.[$self._cookieName][
-    $.value[^self.makeToken[]]
+    $.value[^self.makeToken[$.log[-- Make a cookie csrf token.]]]
     $.expires($self._cookieAge)
     ^if(def $self._cookieDomain){
       $.domain[$self._cookieDomain]
