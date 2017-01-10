@@ -109,6 +109,16 @@ pfMiddleware
   }
   $result[$self._tokenSecret]
 
+@_hasExempt[aRequest]
+  $result(false)
+  $lURI[]
+  ^self._pathExempt.foreach[_;v]{
+    ^if(^aRequest.PATH.match[$v][]){
+      $result(true)
+      ^break[]
+    }
+  }
+
 @makeToken[aOptions] -> [a token string]
 ## aOptions.log
   $result[^self._cryptoProvider.makeToken[
@@ -124,7 +134,9 @@ pfMiddleware
   $lSecret[^self._getSecretFromRequest[$aRequest]]
   ^aRequest.assign[$.[$self._requestVarName][$self]]
 
-  ^if(!$self._safeHTTPMethods.[^aRequest.method.lower[]]){
+  ^if(!$self._safeHTTPMethods.[^aRequest.method.lower[]]
+    && !^self._hasExempt[$aRequest]
+  ){
 #   Проверяем токен
     ^if(!def $result && !def $self._requestToken){
       $result[^pfResponse::create[$self.REASON_NO_CSRF_COOKIE;$.status[403]]]
