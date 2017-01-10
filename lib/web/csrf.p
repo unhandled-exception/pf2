@@ -65,6 +65,21 @@ pfMiddleware
   $self._tokenSecret[]
   $self._tokenSerializer[base64]
 
+  $self._requestToken[]
+
+  $self._safeHTTPMethods[
+    $._default(false)
+    $.get(true)
+    $.head(true)
+    $.options(true)
+    $.trace(true)
+  ]
+  $self.REASON_NO_CSRF_COOKIE[CSRF cookie not set.]
+  $self.REASON_BAD_TOKEN[CSRF token missing or incorrect.]
+
+@GET_tokenSecret[]
+  $result[$self.tokenSecret]
+
 @_makeNewSecret[] -> [a secret string]
   $self._tokenSecret[^math:uuid[]]
   $result[$self._tokenSecret]
@@ -81,6 +96,7 @@ pfMiddleware
         $.serializer[$self._tokenSerializer]
         $.log[-- Parse a csrf-token.]
       ]]
+      $self._requestToken[$lData]
       $self._tokenSecret[$lData.secret]
     }{
       ^if($exception.type eq "security.invalid.token"){
@@ -107,7 +123,26 @@ pfMiddleware
   $result[]
   $lSecret[^self._getSecretFromRequest[$aRequest]]
   ^aRequest.assign[$.[$self._requestVarName][$self]]
-#   ^pfAssert:fail[$self._tokenSecret]
+
+  ^if(!$self._safeHTTPMethods.[^aRequest.method.lower[]]){
+#   Проверяем токен
+    ^if(!def $result && !def $self._requestToken){
+      $result[^pfResponse::create[$self.REASON_NO_CSRF_COOKIE;$.status[403]]]
+    }
+    ^if(!def $result){
+      ^try{
+        $lFormTokenData[^self._cryptoProvider.parseAndValidateToken[$aRequest.form.[$self._formFieldName];
+          $.serializer[$self._tokenSerializer]
+          $.log[-- Parse a csrf-token.]
+        ]]
+      }{
+        ^if($exception.type eq "security.invalid.token"){
+          $exception.handled(true)
+          $result[^pfResponse::create[$self.REASON_BAD_TOKEN;$.status[403]]]
+        }
+      }
+    }
+  }
 
 @processResponse[aAction;aRequest;aResponse;aController;aProcessOptions] -> [response]
   $result[$aResponse]
