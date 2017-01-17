@@ -1070,7 +1070,7 @@ pfClass
   ^if(!$lHasContentTypeHeader){
     ^if(def $self.charset){$response:charset[$self.charset]}
     $response:content-type[
-      $.value[^self.ifdef[$self.contentType]{text/html}]
+      $.value[$self.contentType]
       $.charset[$response:charset]
     ]
   }
