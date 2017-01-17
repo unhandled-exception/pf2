@@ -992,35 +992,15 @@ pfClass
     }
   }
 
-  $self._body[$aBody]
-  $self._download[$aOptions.download]
-
-  $self._type[^self.ifdef[$aOptions.type]{html}]
-
-  $self.contentType[^self.ifdef[$aOptions.contentType]]
+  $self.body[$aBody]
+  $self.download[$aOptions.download]
+  $self.type[^self.ifdef[$aOptions.type]{html}]
   $self.status(^self.ifdef[$aOptions.status]{200})
+  $self.contentType[^self.ifdef[$aOptions.contentType]{text/html}]
   $self.charset[^self.ifdef[$aOptions.charset]{$response:charset}]
 
-  $self.headers[^hash::create[$aOptions.headers]]
-  $self.cookie[^hash::create[$aOptions.cookie]]
-
-@GET_type[]
-  $result[$self._type]
-
-@SET_type[aType]
-  $self._type[$aType]
-
-@GET_body[]
-  $result[$self._body]
-
-@SET_body[aBody]
-  $self._body[$aBody]
-
-@GET_download[]
-  $result[$self._download]
-
-@SET_download[aDownload]
-  $self._download[$aDownload]
+  $self.headers[^hash::create[$self.headers]]
+  $self.cookie[^hash::create[$self.cookie]]
 
 @hasHeader[aName] -> [bool]
 ## Проверяет установлен ли заголовок.
