@@ -999,8 +999,8 @@ pfClass
   $self.contentType[^self.ifdef[$aOptions.contentType]{text/html}]
   $self.charset[^self.ifdef[$aOptions.charset]{$response:charset}]
 
-  $self.headers[^hash::create[$self.headers]]
-  $self.cookie[^hash::create[$self.cookie]]
+  $self.headers[^hash::create[$aOptions.headers]]
+  $self.cookie[^hash::create[$aOptions.cookie]]
 
 @hasHeader[aName] -> [bool]
 ## Проверяет установлен ли заголовок.
