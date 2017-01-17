@@ -162,7 +162,7 @@ pfClass
 
   ^self.MIDDLEWARES.foreach[_;lMiddleware]{
     $result[^lMiddleware.processRequest[$aAction;$aRequest;$self;$aOptions]]
-    ^if(def $result){$lStop(true)^break[]}
+    ^if(def $result){^break[]}
   }
 
   ^if(!def $result){
