@@ -5,7 +5,7 @@
 Features:
   ✔ Добавить параметр cryptKey в pfSQLSecurity.encode/decode @done (16-12-09 12:08)
   ☐ Убрать в antiflood sql-команды с данными из лога?
-  ☐ В генератор форм учитывать поле formField из поля модели
+  ☐ В генераторе форм учитывать поле formField из поля модели
   ☐ Процессор static в роутере. Полезно, если статику хотим закрыть авторизацией
      router.Static("/assets", "./assets")
      router.StaticFS("/more_static", http.Dir("my_file_system"))

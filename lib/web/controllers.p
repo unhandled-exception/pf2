@@ -993,7 +993,7 @@ pfClass
   }
 
   $self._body[$aBody]
-  $self._download[]
+  $self._download[$aOptions.download]
 
   $self._type[^self.ifdef[$aOptions.type]{html}]
 
