@@ -558,6 +558,7 @@ locals
     $lRoutes[$self._reverseIndex.[$aAction]]
     ^lRoutes.foreach[_;lRoute]{
       $result[^self.matchRoute[$lRoute;$aArgs;$aOptions]]
+      ^if($result){^break[]}
     }
   }
 
@@ -573,7 +574,6 @@ locals
     $result.path[$lPath]
     $result.args[^if($lOnlyPatternsVar){^hash::create[$aOptions.form]}{$aArgs}]
     ^result.args.sub[$aRoute.vars]
-    ^break[]
   }
 
 @compilePattern[aRoute;aOptions]
@@ -1070,7 +1070,7 @@ pfClass
   ^if(!$lHasContentTypeHeader){
     ^if(def $self.charset){$response:charset[$self.charset]}
     $response:content-type[
-      $.value[^self.ifdef[$self.contentType]{text/html}]
+      $.value[$self.contentType]
       $.charset[$response:charset]
     ]
   }
