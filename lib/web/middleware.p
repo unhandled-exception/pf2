@@ -210,8 +210,8 @@ pfMiddleware
 
   ^if(!$self._hideQueryLog){
     <ol style="sql-queries">
-       ^aStat.queries.foreach[_;it]{
-         <li style="margin-bottom: 0.5em^; ^if(def $it.exception){color: #94333C}">
+       ^aStat.queries.foreach[number;it]{
+         <li value="$number" style="margin-bottom: 0.5em^; ^if(def $it.exception){color: #94333C}">
            (^it.time.format[%.6f] sec, $it.results rec, $it.memory KB, $it.type)
            ^if(def $it.exception){<span>[^taint[$it.exception.type — $it.exception.comment]]</span>}
            <pre class="sql-log-query"><code class="sql">^it.query.trim[both]
