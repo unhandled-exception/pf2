@@ -671,6 +671,11 @@ pfRouterProcessor
 @OPTIONS
 locals
 
+@auto[]
+  $self.__pfRouterDefaultProcessor__[
+    $.httpMethods[^regex::create[\p{Ll}(GET|HEAD|TRACE|OPTIONS|POST|PUT|DELETE|PATCH|CONNECT)^$]]
+  ]
+
 @create[aRouter;aProcessorData;aOptions]
   ^BASE:create[$aRouter;$aProcessorData;$aOptions]
 
@@ -746,8 +751,19 @@ locals
 ## Ищет и возвращает имя функции-обработчика для экшна.
   $result[^self.makeActionName[$aAction]]
 
-# Ищем onActionHTTPMETHOD-обработчик
   $lMethod[^aRequest.method.upper[]]
+  ^if(def $result){
+# Проверяем, что нам не пытаются передать в коце экшна имя http-метода action/p/o/s/t.
+# Если пытаются и у нас есть метод onActionPOST, то такой экшн не обрабатываем.
+    $lActionMethod[^result.match[$self.__pfRouterDefaultProcessor__.httpMethods]]
+    ^if(def $lActionMethod.1
+        && $self.controller.[$result] is junction
+    ){
+      $result[]
+    }
+  }
+
+# Ищем onActionHTTPMETHOD-обработчик
   ^if(def $result && $self.controller.[${result}$lMethod] is junction){
     $result[${result}$lMethod]
   }

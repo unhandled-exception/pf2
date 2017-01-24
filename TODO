@@ -25,6 +25,12 @@ SQL:
   ☐ Парсинг строки подключения перенести в pfConnection
      Cделать в pfConnection поля host, user и т.д.
 
+Controllers:
+
+
+Middleware:
+  ✔ Написать csrf-мидлваре. @done (17-01-24 13:39)
+
 Generators:
   ☐ Рефакторинг manage.p generate form.
     ☐ Вынести виджеты в отдельные пакеты.
