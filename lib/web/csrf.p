@@ -121,6 +121,7 @@ pfMiddleware
   $result[^self._cryptoProvider.makeToken[
     $.secret[^self.ifdef[$self._tokenSecret]{^self._makeNewSecret[]}]
     $.salt[^math:uid64[]]
+    $.ts[^_now.iso-string[]]
   ][
     $.serializer[$self._tokenSerializer]
     $.log[^self.ifdef[$aOptions.log]{-- Make a csrf token.}]
