@@ -162,7 +162,7 @@ pfClass
 
   ^self.MIDDLEWARES.foreach[_;lMiddleware]{
     $result[^lMiddleware.processRequest[$aAction;$aRequest;$self;$aOptions]]
-    ^if(def $result){$lStop(true)^break[]}
+    ^if(def $result){^break[]}
   }
 
   ^if(!def $result){
@@ -558,6 +558,7 @@ locals
     $lRoutes[$self._reverseIndex.[$aAction]]
     ^lRoutes.foreach[_;lRoute]{
       $result[^self.matchRoute[$lRoute;$aArgs;$aOptions]]
+      ^if($result){^break[]}
     }
   }
 
@@ -573,7 +574,6 @@ locals
     $result.path[$lPath]
     $result.args[^if($lOnlyPatternsVar){^hash::create[$aOptions.form]}{$aArgs}]
     ^result.args.sub[$aRoute.vars]
-    ^break[]
   }
 
 @compilePattern[aRoute;aOptions]
@@ -671,6 +671,11 @@ pfRouterProcessor
 @OPTIONS
 locals
 
+@auto[]
+  $self.__pfRouterDefaultProcessor__[
+    $.httpMethods[^regex::create[\p{Ll}(GET|HEAD|TRACE|OPTIONS|POST|PUT|DELETE|PATCH|CONNECT)^$]]
+  ]
+
 @create[aRouter;aProcessorData;aOptions]
   ^BASE:create[$aRouter;$aProcessorData;$aOptions]
 
@@ -746,8 +751,19 @@ locals
 ## Ищет и возвращает имя функции-обработчика для экшна.
   $result[^self.makeActionName[$aAction]]
 
-# Ищем onActionHTTPMETHOD-обработчик
   $lMethod[^aRequest.method.upper[]]
+  ^if(def $result){
+# Проверяем, что нам не пытаются передать в коце экшна имя http-метода action/p/o/s/t.
+# Если пытаются и у нас есть метод onActionPOST, то такой экшн не обрабатываем.
+    $lActionMethod[^result.match[$self.__pfRouterDefaultProcessor__.httpMethods]]
+    ^if(def $lActionMethod.1
+        && $self.controller.[$result] is junction
+    ){
+      $result[]
+    }
+  }
+
+# Ищем onActionHTTPMETHOD-обработчик
   ^if(def $result && $self.controller.[${result}$lMethod] is junction){
     $result[${result}$lMethod]
   }
@@ -992,35 +1008,15 @@ pfClass
     }
   }
 
-  $self._body[$aBody]
-  $self._download[]
-
-  $self._type[^self.ifdef[$aOptions.type]{html}]
-
-  $self.contentType[^self.ifdef[$aOptions.contentType]]
+  $self.body[$aBody]
+  $self.download[$aOptions.download]
+  $self.type[^self.ifdef[$aOptions.type]{html}]
   $self.status(^self.ifdef[$aOptions.status]{200})
+  $self.contentType[^self.ifdef[$aOptions.contentType]{text/html}]
   $self.charset[^self.ifdef[$aOptions.charset]{$response:charset}]
 
   $self.headers[^hash::create[$aOptions.headers]]
   $self.cookie[^hash::create[$aOptions.cookie]]
-
-@GET_type[]
-  $result[$self._type]
-
-@SET_type[aType]
-  $self._type[$aType]
-
-@GET_body[]
-  $result[$self._body]
-
-@SET_body[aBody]
-  $self._body[$aBody]
-
-@GET_download[]
-  $result[$self._download]
-
-@SET_download[aDownload]
-  $self._download[$aDownload]
 
 @hasHeader[aName] -> [bool]
 ## Проверяет установлен ли заголовок.
@@ -1090,7 +1086,7 @@ pfClass
   ^if(!$lHasContentTypeHeader){
     ^if(def $self.charset){$response:charset[$self.charset]}
     $response:content-type[
-      $.value[^self.ifdef[$self.contentType]{text/html}]
+      $.value[$self.contentType]
       $.charset[$response:charset]
     ]
   }

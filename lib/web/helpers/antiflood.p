@@ -309,6 +309,6 @@ pfAntiFloodStorage
 
 @_unpackToken[aToken]
 ## result[$.id $.salt]
-  $result[^self._cryptoProvider.parseAndValidateToken[$aToken;
+  $result[^self.unsafe{^self._cryptoProvider.parseAndValidateToken[$aToken;
     $.log[-- Decrypt an antiflood token.]
-  ]]
+  ]}]
