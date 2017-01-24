@@ -58,6 +58,7 @@
 * pfTableFormGenerator
 * pfTableFormGeneratorBootstrap2Widgets
 * pfTableFormGeneratorBootstrap3Widgets
+* pfTableFormGeneratorBootstrap4Widgets
 * pfTableFormGeneratorSemanticUIWidgets
 
 ### [./lib/sql/models/generators/sql_table_generators.p](./lib/sql/models/generators/sql_table_generators.p)
@@ -106,6 +107,9 @@
 * pfResponse
 * pfResponseRedirect
 * pfMiddleware
+
+### [./lib/web/csrf.p](./lib/web/csrf.p)
+* pfCSRFMiddleware
 
 ### [./lib/web/helpers/antiflood.p](./lib/web/helpers/antiflood.p)
 * pfAntiFlood

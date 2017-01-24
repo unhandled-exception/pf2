@@ -13,12 +13,11 @@ pf2/lib/web/controllers.p
 #   if not getattr(request, 'csrf_cookie_needs_reset', False):
 # — Сделать исключения для урлов.
 #   Пример: aOptions.sslRedirectExempt[hash<$.name[regexp]>] — хеш с регулярными выражениями для путей в урлах, которые не надо редиректить. Решудяркой может быть строка или объект regex. По-умолчанию регулярки case-insensiteve, если надо иное, то явно создаем regex-объект.
-
+# — Проверяем реферер для https.
 
 # На будущее:
-# — Добавить timestamp в токен. ts : hex_timestamp. Проверять можно при валидации и сравнивать с cookieAge. Или сделать в токене valid_till: timestamp, чтобы токены устаревали сами.
-# — Проверять реферер.
 # — Соль в токене можно использовать для антифлуда. При посте формы, пишем соль в хранилище на 60 минут. Антифлуд проверям в обработчиках.
+# — Добавить обработчик для csrf-fail'ов ($.csrfFailureView[$self.csrfError[request;reason] -> [response[403]]]). Сейчас выдается 403 ошибка напрямую из мидлваре.
 
 @CLASS
 pfCSRFMiddleware
@@ -40,6 +39,7 @@ pfMiddleware
 ## aOptions.formFieldName[csrf_form_token] — имя поля формы с токеном
 ## aOptions.headerName[X-CSRFToken] — http-заголовок с токеном
 ## aOptions.pathExempt[hash<$.name[regexp]>] — хеш с регулярными выражениями для путей в урлах, которые не надо обрабатывать в мидлваре.
+## aOptions.trustedOrigins[hash<$.name[host.name]>] — хеш с именами доменов с которых могут идти небезопасные запросы. Используются при проверке рефереров.
 ## aOptions.requestVarName[CSRF] — имя переменной в запросе со ссылкой на мидлваре.
   ^self.cleanMethodArgument[]
   ^BASE:create[$aOptions]
@@ -58,6 +58,7 @@ pfMiddleware
   $self._headerName[^self.ifdef[$aOptions.headerName]{X-CSRFToken}]
 
   $self._pathExempt[^hash::create[$aOptions.pathExempt]]
+  $self._trustedOrigins[^hash::create[$aOptions.trustedOrigins]]
 
   $self._requestVarName[^self.ifdef[$aOtpions.requestVarName]{CSRF}]
 
@@ -78,43 +79,13 @@ pfMiddleware
   $self.REASON_NO_CSRF_COOKIE[CSRF cookie not set.]
   $self.REASON_BAD_TOKEN[CSRF token missing or incorrect.]
 
+  $self.REASON_NO_REFERER[Referer checking failed - no Referer.]
+  $self.REASON_BAD_REFERER[Referer checking failed - Referer does not match any trusted origins.]
+  $self.REASON_MALFORMED_REFERER[Referer checking failed - Referer is malformed.]
+  $self.REASON_INSECURE_REFERER[Referer checking failed - Referer is insecure while host is secure.]
+
 @GET_tokenSecret[]
   $result[$self.tokenSecret]
-
-@_makeNewSecret[] -> [a secret string]
-  $self._tokenSecret[^math:uuid[]]
-  $result[$self._tokenSecret]
-
-@_getSecretFromRequest[aRequest] -> [a secret string]
-  ^if(!def $self._tokenSecret){
-    ^try{
-      $lToken[$aRequest.cookie.[$self._cookieName]]
-      $lData[^self._cryptoProvider.parseAndValidateToken[$lToken;
-        $.serializer[$self._tokenSerializer]
-        $.log[-- Parse a cookie csrf token.]
-      ]]
-      $self._requestToken[$lData]
-      $self._tokenSecret[$lData.secret]
-    }{
-      ^if($exception.type eq "security.invalid.token"){
-        $exception.handled(true)
-      }
-    }
-  }
-  ^if(!def $self._tokenSecret){
-    $self._tokenSecret[^self._makeNewSecret[]]
-  }
-  $result[$self._tokenSecret]
-
-@_hasExempt[aRequest]
-  $result(false)
-  $lURI[]
-  ^self._pathExempt.foreach[_;v]{
-    ^if(^aRequest.PATH.match[$v][]){
-      $result(true)
-      ^break[]
-    }
-  }
 
 @makeToken[aOptions] -> [a token string]
 ## aOptions.log
@@ -157,11 +128,55 @@ pfMiddleware
           ^throw[security.invalid.token]
         }
         $self._formToken[$lFormTokenData]
+
+#       Проверяем реферер, если нам прислали запрос по https.
+#       Для нешифрованного соединеня проверять реферер не имеет смысла —
+#       «мужик посередине» может подделать любые поля запроса.
+        ^if($aRequest.isSECURE){
+          $lReferer[^aRequest.header[referer]]
+          ^if(!def $lReferer){
+            ^throw[security.invalid.referer;$self.REASON_NO_REFERER]
+          }
+          $lReferer[^pfString:parseURL[^lReferer.lower[]]]
+          ^if(!$lReferer){
+            ^throw[security.invalid.referer;$self.REASON_MALFORMED_REFERER]
+          }
+          ^if($lReferer.protocol ne "https"){
+            ^throw[security.invalid.referer;$self.REASON_INSECURE_REFERER]
+          }
+
+          $lGoodReferer[$self._cookieDomain]
+          ^if(def $lGoodReferer){
+            ^if($aRequest.PORT ne "80" && $aRequest.PORT ne "443"){
+              $lGoodReferer[${lGoodReferer}:$aRequest.PORT]
+            }
+          }{
+             $lGoodReferer[$aRequest.HOST]
+          }
+          $lGoodHosts[^hash::create[$self._trustedOrigins]]
+          $lGoodHosts.[^math:uid64[]][$lGoodReferer]
+
+          $lValidReferer(false)
+          ^lGoodHosts.foreach[_;lHost]{
+            ^if(^self._isSameDomain[$lReferer.netloc;$lHost]){
+              $lValidReferer(true)
+              ^break[]
+            }
+          }
+          ^if(!$lValidReferer){
+            ^throw[security.invalid.referer;$self.REASON_BAD_REFERER]
+          }
+        }
       }{
         ^if($exception.type eq "security.invalid.token"){
           $exception.handled(true)
           $self.isValidRequest(false)
           $result[^pfResponse::create[$self.REASON_BAD_TOKEN;$.status[403]]]
+        }
+        ^if($exception.type eq "security.invalid.referer"){
+          $exception.handled(true)
+          $self.isValidRequest(false)
+          $result[^pfResponse::create[$exception.source;$.status[403]]]
         }
       }
     }
@@ -187,3 +202,53 @@ pfMiddleware
 
 @tokenField[]
   $result[<input type="hidden" name="$self._formFieldName" value="^taint[html][^self.makeToken[$.log[-- Make a form csrf token.]]]" />]
+
+#----- Private -----
+
+@_makeNewSecret[] -> [a secret string]
+  $self._tokenSecret[^math:uuid[]]
+  $result[$self._tokenSecret]
+
+@_getSecretFromRequest[aRequest] -> [a secret string]
+  ^if(!def $self._tokenSecret){
+    ^try{
+      $lToken[$aRequest.cookie.[$self._cookieName]]
+      $lData[^self._cryptoProvider.parseAndValidateToken[$lToken;
+        $.serializer[$self._tokenSerializer]
+        $.log[-- Parse a cookie csrf token.]
+      ]]
+      $self._requestToken[$lData]
+      $self._tokenSecret[$lData.secret]
+    }{
+      ^if($exception.type eq "security.invalid.token"){
+        $exception.handled(true)
+      }
+    }
+  }
+  ^if(!def $self._tokenSecret){
+    $self._tokenSecret[^self._makeNewSecret[]]
+  }
+  $result[$self._tokenSecret]
+
+@_hasExempt[aRequest]
+  $result(false)
+  $lURI[]
+  ^self._pathExempt.foreach[_;v]{
+    ^if(^aRequest.PATH.match[$v][]){
+      $result(true)
+      ^break[]
+    }
+  }
+
+@_isSameDomain[aHost;aPattern] -> [bool]
+## Проверяет соответсвует ли домен aHost домену aPattern.
+## Если aPattern  начинается с точки, то проверяем является ли aHost поддоменом aPattern.
+## Паттерн ".example.com" совпадет с хостами "example.com" и "foo.example.com".
+  $result(false)
+  ^if(^aPattern.left(1) eq "."){
+    $result(^aHost.right(^aPattern.length[]) eq $aPattern
+      || $aHost eq ^aPattern.mid(1)
+    )
+  }{
+     $result($aHost eq $aPattern)
+   }
