@@ -209,13 +209,19 @@ pfClass
   }
 
 @login[aRequest;aOptions] -> [bool]
+## aOptions.loginField[login]
+## aOptions.passwordField[password]
+  ^self.cleanMethodArgument[]
   $result(false)
+  $lLoginField[^self.ifdef[$aOptions.loginField]{login}]
+  $lPasswordField[^self.ifdef[$aOptions.passwordField]{password}]
+
   $lUser[^self.users.fetch[
-    $.login[$aRequest.login]
+    $.login[$aRequest.[$lLoginField]]
     $.isActive(true)
   ]]
   ^if($lUser){
-    $lPasswordHash[^self.users.makePasswordHash[$aRequest.password;$lUser.passwordHash]]
+    $lPasswordHash[^self.users.makePasswordHash[$aRequest.[$lPasswordField];$lUser.passwordHash]]
     ^if($lUser.passwordHash eq $lPasswordHash){
       ^self._currentUser.delete[]
       ^self._currentUser.add[^self._makeUser[
