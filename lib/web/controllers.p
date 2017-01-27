@@ -820,7 +820,7 @@ locals
 
 @create[aRouter;aProcessorData;aOptions]
   ^BASE:create[$aRouter;$aProcessorData;$aOptions]
-  $self.functionName[^aProcessorData.trim[/ .]]
+  $self.functionName[$aProcessorData]
 
 @process[aAction;aRequest;aPrefix;aOptions]
   $result[^self.controller.[$self.functionName][$aRequest]]
