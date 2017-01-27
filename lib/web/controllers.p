@@ -407,12 +407,13 @@ locals
 
 @create[aController;aOptions]
   ^BASE:create[]
+  ^pfAssert:isTrue(def $aController)[Не задан контролер для роутера.]
   $self.controller[$aController]
 
   $self.processors[^hash::create[]]
-  ^self.assignProcessor[default;pfRouterDefaultProcessor]
-  ^self.assignProcessor[render;pfRouterRenderProcessor]
-  ^self.assignProcessor[call;pfRouterCallProcessor]
+  ^self.processor[default;pfRouterDefaultProcessor]
+  ^self.processor[render;pfRouterRenderProcessor]
+  ^self.processor[call;pfRouterCallProcessor]
 
   $self.routes[^hash::create[]]
   $self._reverseIndex[^hash::create[]]
@@ -431,15 +432,6 @@ locals
   $self._pfRouterTrapRegexp[(.*)]
   $self._pfRouterProcessorRegexp[^regex::create[^^(?:\s*(.*?)\s*::)?(.*)^$]]
 
-@assignProcessor[aName;aClassDef;aOptions] -> []
-## Регистрирует новый процессор для вызова
-## Процессор с именем default считаем процессором по-умолчанию.
-  $result[]
-  $lProcessor[^hash::create[]]
-  $lProcessor.classDef[^pfString:parseClassDef[$aClassDef]]
-  $lProcessor.options[$aOptions]
-  $self.processors.[$aName][$lProcessor]
-
 @where[aWhere]
   $result[]
   ^self._where.add[$aWhere]
@@ -448,11 +440,20 @@ locals
   $result[]
   ^self._defaults.add[$aDefaults]
 
-@assignModule[aName;aClassDef;aArgs] -> []
+@processor[aName;aClassDef;aOptions] -> []
+## Регистрирует новый процессор для вызова
+## Процессор с именем default считаем процессором по-умолчанию.
+  $result[]
+  $lProcessor[^hash::create[]]
+  $lProcessor.classDef[^pfString:parseClassDef[$aClassDef]]
+  $lProcessor.options[$aOptions]
+  $self.processors.[$aName][$lProcessor]
+
+@module[aName;aClassDef;aArgs] -> []
 ## Алиас для controller.assignModule, если удобнее писать ^router.assignModule[...]
   $result[^self.controller.assignModule[$aName;$aClassDef;$aArgs]]
 
-@assignMiddleware[aObject;aConstructorOptions] -> []
+@middleware[aObject;aConstructorOptions] -> []
 ## Алиас для controller.assignMiddleware, если удобнее писать ^router.assignMiddleware[...]
   $result[^self.controller.assignMiddleware[$aObject;$aConstructorOptions]]
 
