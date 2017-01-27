@@ -430,7 +430,7 @@ locals
   $self._pfRouterSegmentSeparators[\./]
   $self._pfRouterVarRegexp[[^^$self._pfRouterSegmentSeparators]+]
   $self._pfRouterTrapRegexp[(.*)]
-  $self._pfRouterProcessorRegexp[^regex::create[^^(?:\s*(.*?)\s*::)?(.*)^$]]
+  $self._pfRouterProcessorRegexp[^regex::create[^^(?:\s*(.*?)\s*(?:::|->))?(.*)^$]]
 
 @where[aWhere]
   $result[]
