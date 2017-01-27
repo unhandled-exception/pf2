@@ -262,14 +262,18 @@ pfClass
     }
   }
   ^if(!^aOptions.passPost.bool(false)){
-    $lPostDispatch[post^result.type.upper[]]
-    ^if($self.$lPostDispatch is junction){
-      $result[^self.[$lPostDispatch][$result]]
-    }{
-       ^if($self.postDEFAULT is junction){
-         $result[^self.postDEFAULT[$result]]
-       }
-     }
+    $lPostFunctions[
+      $.resp[response<^result.type.lower[]>]
+      $.post_t[post^result.type.upper[]]
+      $.resp_d[response<DEFAULT>]
+      $.post_d[postDEFAULT]
+    ]
+    ^lPostFunctions.foreach[_;name]{
+      ^if($self.[$name] is junction){
+        ^self.[$name][$result]
+        ^break[]
+      }
+    }
   }
 
 @render[aTemplateName;aContext]
@@ -386,13 +390,6 @@ pfClass
   ^aVars.foreach[k;v]{
     $self._templateVars.[$k][$v]
   }
-
-#@onINDEX[aRequest] -> [response]
-#@onAction[aRequest] -> [response]
-#@onNOTFOUND[aRequest] -> [response]
-
-#@postDEFAULT[aResponse] -> [response]
-#@postHTML[aResponse] -> [response]
 
 #--------------------------------------------------------------------------------------------------
 
