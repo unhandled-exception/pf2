@@ -213,11 +213,20 @@ pfClass
 ## aOptions.passProcessResponse(false)
   $result[]
   $lProcessed(false)
+  $lNotFoundFunctions[
+    $.nf_c[NOTFOUND]
+    $.nf[notfound]
+    $.on[onNOTFOUND]
+    $.nf_q[?]
+  ]
   ^switch[$aException.type]{
     ^case[http.404]{
-      ^if($self.onNOTFOUND is junction){
-        $result[^self.onNOTFOUND[$aRequest]]
-        $lProcessed(true)
+      ^lNotFoundFunctions.foreach[_;name]{
+        ^if($self.[$name] is junction){
+          $result[^self.[$name][$aRequest]]
+          $lProcessed(true)
+          ^break[]
+        }
       }
     }
     ^case[http.301]{
@@ -703,18 +712,6 @@ locals
       }
    }
 
-@makeActionName[aAction]
-## Формирует имя метода для экшна.
-  ^if(def $aAction){
-    $aAction[^aAction.lower[]]
-    $lSplitted[^pfString:rsplit[$aAction;[/\.]]]
-    ^if($lSplitted){
-     $result[on^lSplitted.menu{$lStr[$lSplitted.piece]$lFirst[^lStr.left(1)]^lFirst.upper[]^lStr.mid(1)}]
-   }
-  }{
-     $result[onINDEX]
-   }
-
 @findModule[aAction;aRequest] -> [$.module $.prefix $.action]
 ## Ищет модуль по имени экшна
   $result[^hash::create[]]
@@ -749,28 +746,65 @@ locals
 
 @findHandler[aAction;aRequest]
 ## Ищет и возвращает имя функции-обработчика для экшна.
-  $result[^self.makeActionName[$aAction]]
-
-  $lMethod[^aRequest.method.upper[]]
-  ^if(def $result){
-# Проверяем, что нам не пытаются передать в коце экшна имя http-метода action/p/o/s/t.
-# Если пытаются и у нас есть метод onActionPOST, то такой экшн не обрабатываем.
-    $lActionMethod[^result.match[$self.__pfRouterDefaultProcessor__.httpMethods]]
-    ^if(def $lActionMethod.1
-        && $self.controller.[$result] is junction
-    ){
-      $result[]
+  $result[]
+  $lFunctions[^self.makeActionNames[$aAction;$aRequest]]
+  ^lFunctions.foreach[_;name]{
+    ^if($self.controller.[$name] is junction){
+      $result[$name]
+      ^break[]
     }
   }
 
-# Ищем onActionHTTPMETHOD-обработчик
-  ^if(def $result && $self.controller.[${result}$lMethod] is junction){
-    $result[${result}$lMethod]
-  }
+@makeActionNames[aAction;aRequest] -> [hash]
+## Возвращает имена возможных функций для экшнов.
+  $result[^hash::create[]]
+  $aAction[^aAction.lower[]]
+  $aAction[^aAction.trim[/]]
+  $lMethod[^aRequest.method.lower[]]
 
-# Если обработчика нет, то ищем onDEFAULT.
-  ^if(!def $result || !($self.controller.[$result] is junction)){
-    $result[^if($self.controller.onDEFAULT is junction){onDEFAULT}]
+  ^if(def $aAction){
+    $result.uri_m[${lMethod}->/$aAction]
+    $result.uri[/$aAction]
+
+#   Старый метод path/to/action.ext -> onPathToAction.ext
+    $lOnAction[^_makeOldActionName[$aAction]]
+
+#   Проверяем, что нам не пытаются передать в коце экшна имя http-метода action/p/o/s/t.
+#   Если пытаются и у нас есть метод onActionPOST, то такой экшн не обрабатываем.
+    ^if(def $lOnAction){
+      $lActionMethod[^lOnAction.match[$self.__pfRouterDefaultProcessor__.httpMethods]]
+      ^if(def $lActionMethod.1 && $self.controller.[$lOnAction] is junction
+      ){
+         $lOnAction[]
+       }
+    }
+
+    ^if(def $lOnAction){
+      $result.on_m[${lOnAction}^lMethod.upper[]]
+      $result.on[$lOnAction]
+    }
+  }{
+#    Рутовый маршрут
+     $result.index_m[${lMethod}->index]
+     $result.index_u_m[${lMethod}->INDEX]
+     $result.index_slash_m[${lMethod}->/]
+     $result.index[index]
+     $result.index_u[INDEX]
+     $result.index_slash[/]
+     $result.on_index[onINDEX]
+   }
+
+# Дефолтный маршрут
+  $result.default[default]
+  $result.default_q[*]
+  $result.on_default[onDEFAULT]
+
+@_makeOldActionName[aAction]
+## Формирует имя метода для экшна.
+  $aAction[^aAction.lower[]]
+  $lSplitted[^pfString:rsplit[$aAction;[/\.]]]
+  ^if($lSplitted){
+    $result[on^lSplitted.menu{$lStr[$lSplitted.piece]$lFirst[^lStr.left(1)]^lFirst.upper[]^lStr.mid(1)}]
   }
 
 #--------------------------------------------------------------------------------------------------
