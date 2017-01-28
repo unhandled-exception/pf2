@@ -215,9 +215,7 @@ pfClass
   $lProcessed(false)
   $lNotFoundFunctions[
     $.nf_c[NOTFOUND]
-    $.nf[notfound]
     $.on[onNOTFOUND]
-    $.nf_q[?]
   ]
   ^switch[$aException.type]{
     ^case[http.404]{
@@ -783,18 +781,15 @@ locals
     }
   }{
 #    Рутовый маршрут
-     $result.index_m[${lMethod}->index]
      $result.index_u_m[${lMethod}->INDEX]
      $result.index_slash_m[${lMethod}->/]
-     $result.index[index]
      $result.index_u[INDEX]
      $result.index_slash[/]
      $result.on_index[onINDEX]
    }
 
 # Дефолтный маршрут
-  $result.default[default]
-  $result.default_q[*]
+  $result.default[DEFAULT]
   $result.on_default[onDEFAULT]
 
 @_makeOldActionName[aAction]

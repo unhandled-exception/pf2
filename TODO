@@ -14,7 +14,7 @@ Features:
      https://github.com/gin-gonic/gin/blob/master/context.go#L341
 
 Documentation:
-  ☐ Написать документацию для контролеров
+  ☐ Написать документацию для контролеров для новой системы имен экшнов.
     ☐ Обработка запроса: цeпочка модулей, обработчики, запросы и ответы, мидлваре
     ☐ Маршрутизация: роутер, процессоры, реверс путей
     ☐ Шаблоны
@@ -26,7 +26,13 @@ SQL:
      Cделать в pfConnection поля host, user и т.д.
 
 Controllers:
-
+  ✔ Добавить декларативные имена экшнов: @done (17-01-28 09:01)
+     Схему с onXxx, postXXX остаётся, но считается устаревшей.
+     @onActionPath -> @/action/path, @onActionGET -> @get->/on/action
+     @onINDEX -> @INDEX, @get->INDEX, @/, @get->/
+     @onNOTFOUND -> @NOTFOUND
+     @onDEFAULT -> @DEFAULT
+     @postJSON -> @response<json>, @postDEFAULT -> @response<DEFAULT>
 
 Middleware:
   ✔ Написать csrf-мидлваре. @done (17-01-24 13:39)
