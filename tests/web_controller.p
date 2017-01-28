@@ -52,7 +52,7 @@ pfController
     $result[$result.body]
   }
 
-@onINDEX[aRequest]
+@INDEX[aRequest]
   request type — $aRequest.CLASS_NAME
   action - "$aRequest.ACTION"
   path - "$aRequest.PATH"
@@ -61,13 +61,13 @@ pfController
   global link to page - ^linkTo[::root;$.page[4444]]
 #   ^router.routes.foreach[k;v]{{$k, as: "$v.as", pattern: "$v.pattern", regexp: "$v.regexp"}}[,^#0A]
 
-@onPager[aRequest]
+@/pager[aRequest]
   action — "$aRequest.ACTION", path — "$aRequest.path"
   page — "$aRequest.page"
   link to pager — ^linkTo[paged/], ^linkTo[pager]
   linkTo to pager page — ^linkTo[paged;$.page[789]], ^linkTo[pager;$.page[789]]
 
-@onNOTFOUND[aRequest]
+@NOTFOUND[aRequest]
   Not found!
   action - "$aRequest.ACTION"
   path - "$aRequest.PATH"

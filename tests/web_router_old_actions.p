@@ -77,10 +77,10 @@ pfController
   $result[^self.dispatch[$aAction;$lReq]]
   $result[$result.body]
 
-@INDEX[aRequest]
+@onINDEX[aRequest]
   $result[Index page]
 
-@/reverse[aRequest]
+@onReverse[aRequest]
   $result[Main module reverse...
     index: ^linkTo[/]
     action: ^linkTo[action/with/sub/uri]
@@ -89,10 +89,10 @@ pfController
     template prefix: $self.templatePrefix
   ]
 
-@NOTFOUND[aRequest]
+@onNOTFOUND[aRequest]
   $result[Manager not found.]
 
-@/users[aRequest]
+@onUsers[aRequest]
   $result[User — $aRequest.userID]
 
 
@@ -110,10 +110,10 @@ locals
   ^BASE:create[$aOptions]
   ^router.assign[account/:clientID;account]
 
-@INDEX[aRequest]
+@onINDEX[aRequest]
   $result[Vars: $aRequest.var1, $aRequest.var2 Action — $self.action Prefix — $self.uriPrefix MountTo — $self.mountTo]
 
-@/reverse[aRequest]
+@onReverse[aRequest]
   $result[Sub mount module reverse...
     index: ^linkTo[/]
     action: ^linkTo[action/with/sub/uri]
@@ -122,10 +122,10 @@ locals
     template prefix: $self.templatePrefix
   ]
 
-@NOTFOUND[aRequest]
+@onNOTFOUND[aRequest]
   $result[Mount module not found. Vars: $aRequest.var1, $aRequest.var2 Action — $self.action Prefix — $self.uriPrefix MountTo — $self.mountTo]
 
-@/about[aRequest]
+@onAbout[aRequest]
   $result[Sub mount module about render — ^render[about.pt]]
 
 
@@ -151,17 +151,17 @@ locals
   ^router.assign[about2;$.render[$.template[about.pt] $.context[$.var[Temp var]] $.status[404] $.type[text]]]
   ^router.assign[:clientID/about;render::/about.pt]
 
-  ^router.assign[:clientID/edit;call->edit;$.as[edit]]
+  ^router.assign[:clientID/edit;call::edit;$.as[edit]]
 
   ^router.assign[:clientID/*trap;client]
 
-@INDEX[aRequest]
+@onINDEX[aRequest]
   $result[Sub module's Index page. Filter — $aRequest.filter]
 
 @root[aRequest]
   $result[Sub module's Root page. Filter — $aRequest.filter]
 
-@/reverse[aRequest]
+@onReverse[aRequest]
   $result[Sub module reverse...
     index: ^linkTo[/]
     root: ^linkTo[root]
@@ -172,10 +172,10 @@ locals
     template prefix: $self.templatePrefix
   ]
 
-@NOTFOUND[aRequest]
+@onNOTFOUND[aRequest]
   $result[Sub module not found.]
 
-@/client[aRequest]
+@onClient[aRequest]
   $result[Client page — $aRequest.clientID Trap — $aRequest.trap  Prefix — $self.uriPrefix Filter — $aRequest.filter]
 
 @edit[aRequest]
