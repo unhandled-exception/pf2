@@ -66,7 +66,7 @@ locals
 @/hello[aRequest]
   Привет, ^ifdef[$aRequest.name]{мир}!
 
-@NOTFOUND[aRequest]
+@/NOTFOUND[aRequest]
   $result[
     $.status[404]
     $.body[Страница не найдена.]
