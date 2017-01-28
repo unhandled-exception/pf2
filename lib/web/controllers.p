@@ -213,11 +213,18 @@ pfClass
 ## aOptions.passProcessResponse(false)
   $result[]
   $lProcessed(false)
+  $lNotFoundFunctions[
+    $.nf_c[NOTFOUND]
+    $.on[onNOTFOUND]
+  ]
   ^switch[$aException.type]{
     ^case[http.404]{
-      ^if($self.onNOTFOUND is junction){
-        $result[^self.onNOTFOUND[$aRequest]]
-        $lProcessed(true)
+      ^lNotFoundFunctions.foreach[_;name]{
+        ^if($self.[$name] is junction){
+          $result[^self.[$name][$aRequest]]
+          $lProcessed(true)
+          ^break[]
+        }
       }
     }
     ^case[http.301]{
@@ -253,14 +260,18 @@ pfClass
     }
   }
   ^if(!^aOptions.passPost.bool(false)){
-    $lPostDispatch[post^result.type.upper[]]
-    ^if($self.$lPostDispatch is junction){
-      $result[^self.[$lPostDispatch][$result]]
-    }{
-       ^if($self.postDEFAULT is junction){
-         $result[^self.postDEFAULT[$result]]
-       }
-     }
+    $lPostFunctions[
+      $.resp[response<^result.type.lower[]>]
+      $.post_t[post^result.type.upper[]]
+      $.resp_d[response<DEFAULT>]
+      $.post_d[postDEFAULT]
+    ]
+    ^lPostFunctions.foreach[_;name]{
+      ^if($self.[$name] is junction){
+        ^self.[$name][$result]
+        ^break[]
+      }
+    }
   }
 
 @render[aTemplateName;aContext]
@@ -378,13 +389,6 @@ pfClass
     $self._templateVars.[$k][$v]
   }
 
-#@onINDEX[aRequest] -> [response]
-#@onAction[aRequest] -> [response]
-#@onNOTFOUND[aRequest] -> [response]
-
-#@postDEFAULT[aResponse] -> [response]
-#@postHTML[aResponse] -> [response]
-
 #--------------------------------------------------------------------------------------------------
 
 @CLASS
@@ -398,12 +402,13 @@ locals
 
 @create[aController;aOptions]
   ^BASE:create[]
+  ^pfAssert:isTrue(def $aController)[Не задан контролер для роутера.]
   $self.controller[$aController]
 
   $self.processors[^hash::create[]]
-  ^self.assignProcessor[default;pfRouterDefaultProcessor]
-  ^self.assignProcessor[render;pfRouterRenderProcessor]
-  ^self.assignProcessor[call;pfRouterCallProcessor]
+  ^self.processor[default;pfRouterDefaultProcessor]
+  ^self.processor[render;pfRouterRenderProcessor]
+  ^self.processor[call;pfRouterCallProcessor]
 
   $self.routes[^hash::create[]]
   $self._reverseIndex[^hash::create[]]
@@ -420,16 +425,7 @@ locals
   $self._pfRouterSegmentSeparators[\./]
   $self._pfRouterVarRegexp[[^^$self._pfRouterSegmentSeparators]+]
   $self._pfRouterTrapRegexp[(.*)]
-  $self._pfRouterProcessorRegexp[^regex::create[^^(?:\s*(.*?)\s*::)?(.*)^$]]
-
-@assignProcessor[aName;aClassDef;aOptions] -> []
-## Регистрирует новый процессор для вызова
-## Процессор с именем default считаем процессором по-умолчанию.
-  $result[]
-  $lProcessor[^hash::create[]]
-  $lProcessor.classDef[^pfString:parseClassDef[$aClassDef]]
-  $lProcessor.options[$aOptions]
-  $self.processors.[$aName][$lProcessor]
+  $self._pfRouterProcessorRegexp[^regex::create[^^(?:\s*(.*?)\s*(?:::|->))?(.*)^$]]
 
 @where[aWhere]
   $result[]
@@ -439,11 +435,20 @@ locals
   $result[]
   ^self._defaults.add[$aDefaults]
 
-@assignModule[aName;aClassDef;aArgs] -> []
+@processor[aName;aClassDef;aOptions] -> []
+## Регистрирует новый процессор для вызова
+## Процессор с именем default считаем процессором по-умолчанию.
+  $result[]
+  $lProcessor[^hash::create[]]
+  $lProcessor.classDef[^pfString:parseClassDef[$aClassDef]]
+  $lProcessor.options[$aOptions]
+  $self.processors.[$aName][$lProcessor]
+
+@module[aName;aClassDef;aArgs] -> []
 ## Алиас для controller.assignModule, если удобнее писать ^router.assignModule[...]
   $result[^self.controller.assignModule[$aName;$aClassDef;$aArgs]]
 
-@assignMiddleware[aObject;aConstructorOptions] -> []
+@middleware[aObject;aConstructorOptions] -> []
 ## Алиас для controller.assignMiddleware, если удобнее писать ^router.assignMiddleware[...]
   $result[^self.controller.assignMiddleware[$aObject;$aConstructorOptions]]
 
@@ -703,18 +708,6 @@ locals
       }
    }
 
-@makeActionName[aAction]
-## Формирует имя метода для экшна.
-  ^if(def $aAction){
-    $aAction[^aAction.lower[]]
-    $lSplitted[^pfString:rsplit[$aAction;[/\.]]]
-    ^if($lSplitted){
-     $result[on^lSplitted.menu{$lStr[$lSplitted.piece]$lFirst[^lStr.left(1)]^lFirst.upper[]^lStr.mid(1)}]
-   }
-  }{
-     $result[onINDEX]
-   }
-
 @findModule[aAction;aRequest] -> [$.module $.prefix $.action]
 ## Ищет модуль по имени экшна
   $result[^hash::create[]]
@@ -749,28 +742,62 @@ locals
 
 @findHandler[aAction;aRequest]
 ## Ищет и возвращает имя функции-обработчика для экшна.
-  $result[^self.makeActionName[$aAction]]
-
-  $lMethod[^aRequest.method.upper[]]
-  ^if(def $result){
-# Проверяем, что нам не пытаются передать в коце экшна имя http-метода action/p/o/s/t.
-# Если пытаются и у нас есть метод onActionPOST, то такой экшн не обрабатываем.
-    $lActionMethod[^result.match[$self.__pfRouterDefaultProcessor__.httpMethods]]
-    ^if(def $lActionMethod.1
-        && $self.controller.[$result] is junction
-    ){
-      $result[]
+  $result[]
+  $lFunctions[^self.makeActionNames[$aAction;$aRequest]]
+  ^lFunctions.foreach[_;name]{
+    ^if($self.controller.[$name] is junction){
+      $result[$name]
+      ^break[]
     }
   }
 
-# Ищем onActionHTTPMETHOD-обработчик
-  ^if(def $result && $self.controller.[${result}$lMethod] is junction){
-    $result[${result}$lMethod]
-  }
+@makeActionNames[aAction;aRequest] -> [hash]
+## Возвращает имена возможных функций для экшнов.
+  $result[^hash::create[]]
+  $aAction[^aAction.lower[]]
+  $aAction[^aAction.trim[/]]
+  $lMethod[^aRequest.method.lower[]]
 
-# Если обработчика нет, то ищем onDEFAULT.
-  ^if(!def $result || !($self.controller.[$result] is junction)){
-    $result[^if($self.controller.onDEFAULT is junction){onDEFAULT}]
+  ^if(def $aAction){
+    $result.uri_m[${lMethod}->/$aAction]
+    $result.uri[/$aAction]
+
+#   Старый метод path/to/action.ext -> onPathToAction.ext
+    $lOnAction[^_makeOldActionName[$aAction]]
+
+#   Проверяем, что нам не пытаются передать в коце экшна имя http-метода action/p/o/s/t.
+#   Если пытаются и у нас есть метод onActionPOST, то такой экшн не обрабатываем.
+    ^if(def $lOnAction){
+      $lActionMethod[^lOnAction.match[$self.__pfRouterDefaultProcessor__.httpMethods]]
+      ^if(def $lActionMethod.1 && $self.controller.[$lOnAction] is junction
+      ){
+         $lOnAction[]
+       }
+    }
+
+    ^if(def $lOnAction){
+      $result.on_m[${lOnAction}^lMethod.upper[]]
+      $result.on[$lOnAction]
+    }
+  }{
+#    Рутовый маршрут
+     $result.index_u_m[${lMethod}->INDEX]
+     $result.index_slash_m[${lMethod}->/]
+     $result.index_u[INDEX]
+     $result.index_slash[/]
+     $result.on_index[onINDEX]
+   }
+
+# Дефолтный маршрут
+  $result.default[DEFAULT]
+  $result.on_default[onDEFAULT]
+
+@_makeOldActionName[aAction]
+## Формирует имя метода для экшна.
+  $aAction[^aAction.lower[]]
+  $lSplitted[^pfString:rsplit[$aAction;[/\.]]]
+  ^if($lSplitted){
+    $result[on^lSplitted.menu{$lStr[$lSplitted.piece]$lFirst[^lStr.left(1)]^lFirst.upper[]^lStr.mid(1)}]
   }
 
 #--------------------------------------------------------------------------------------------------
@@ -820,7 +847,7 @@ locals
 
 @create[aRouter;aProcessorData;aOptions]
   ^BASE:create[$aRouter;$aProcessorData;$aOptions]
-  $self.functionName[^aProcessorData.trim[/ .]]
+  $self.functionName[$aProcessorData]
 
 @process[aAction;aRequest;aPrefix;aOptions]
   $result[^self.controller.[$self.functionName][$aRequest]]
