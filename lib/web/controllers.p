@@ -214,7 +214,7 @@ pfClass
   $result[]
   $lProcessed(false)
   $lNotFoundFunctions[
-    $.nf_c[NOTFOUND]
+    $.nf_c[/NOTFOUND]
     $.on[onNOTFOUND]
   ]
   ^switch[$aException.type]{
@@ -264,6 +264,7 @@ pfClass
       $.resp[response<^result.type.lower[]>]
       $.post_t[post^result.type.upper[]]
       $.resp_d[response<DEFAULT>]
+      $.resp_ast[response<*>]
       $.post_d[postDEFAULT]
     ]
     ^lPostFunctions.foreach[_;name]{
@@ -756,10 +757,11 @@ locals
   $result[^hash::create[]]
   $aAction[^aAction.lower[]]
   $aAction[^aAction.trim[/]]
+  $aAction[^aAction.left(^aAction.pos[<])]
   $lMethod[^aRequest.method.lower[]]
 
   ^if(def $aAction){
-    $result.uri_m[${lMethod}->/$aAction]
+    $result.uri_m[/$aAction<${lMethod}>]
     $result.uri[/$aAction]
 
 #   Старый метод path/to/action.ext -> onPathToAction.ext
@@ -781,15 +783,15 @@ locals
     }
   }{
 #    Рутовый маршрут
-     $result.index_u_m[${lMethod}->INDEX]
-     $result.index_slash_m[${lMethod}->/]
-     $result.index_u[INDEX]
+     $result.index_u_m[/INDEX<${lMethod}>]
+     $result.index_slash_m[/<${lMethod}>]
+     $result.index_u[/INDEX]
      $result.index_slash[/]
      $result.on_index[onINDEX]
    }
 
 # Дефолтный маршрут
-  $result.default[DEFAULT]
+  $result.default[/DEFAULT]
   $result.on_default[onDEFAULT]
 
 @_makeOldActionName[aAction]

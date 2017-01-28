@@ -13,13 +13,14 @@ PF2 помогает разработчикам писать веб-прилож
 
 В [папку с классами](http://www.parser.ru/docs/lang/app1pathclass.htm) загрузите библиотеку. Папка должна называться pf2. Папку со своими классами и классами pf2 положите вне веб пространства.
 
+auto.p
 ```
 $CLASS_PATH[^table::create{path
 /../classes/
 }]
 ```
 
-Пример:
+Устанавливаем pf2
 ```
 cd ~/mysite.ru/classes
 git clone https://github.com/unhandled-exception/pf2.git
