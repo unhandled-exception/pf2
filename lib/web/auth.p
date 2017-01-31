@@ -110,6 +110,7 @@ pfClass
 ## aOptions.authCookieName[auth_token] — имя куки для хранения сессий.
 ## aOptions.authCookieDomain — домен для куки сессии
 ## aOptions.authCookiePath — путь для куки сессии
+## aOptions.authCookieSecure(true) — ставим куку только на https
 ## aOptions.expires[days(365)|date|session] — срок жизни куки. По-умолчанию ставим ограничение куку на год.
   ^self.cleanMethodArgument[]
   $self.CSQL[$aOptions.sql]
@@ -121,6 +122,8 @@ pfClass
   $self._authCookieName[^ifdef[$aOptions.authCookieName]{auth_token}]
   $self._authCookieDomain[$aOptions.authCookieDomain]
   $self._authCookiePath[$aOptions.authCookiePath]
+  $self._authCookieSecure(^aOptions.authCookieSecure.bool(false))
+
   $self._expires[^ifdef[$aOptions.expires]{365}]
 
   $self._usersTableName[^ifdef[$aOptions.usersTableName]{auth_users}]
@@ -162,6 +165,7 @@ pfClass
       $.expires[$self._expires]
       ^if(def $self._authCookieDomain){$.domain[$self._authCookieDomain]}
       ^if(def $self._authCookiePath){$.path[$self._authCookiePath]}
+      $.secure($self._authCookieSecure)
     ]
   }{
 #    Если у нас неактивный пользователь и у нас была авторизационная кука, то удаляем ее.

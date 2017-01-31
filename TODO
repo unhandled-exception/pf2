@@ -50,6 +50,7 @@ Console:
 Auth:
   ✔ Перенести метод digest из pf-secrets-app@CoreSecurity, добавить параметры secretKey и disableHMAC. @done (16-12-26 15:23)
     В psSQLSecurity есть метод digest описан как hmac-digest, но хеширует без hmac.
+  ✔ Добавить опцию authCookieSecure в конструкторе pfUerRolesAuth. @done (17-01-31 17:51)
   ☐ В auth.p@pfUserRolesAuth добавить время жизни куки в токен и проверять при авторизации
   ☐ Сделать дефолтную генерацию secureToken в модели pfUserModel. Посолить токен текущим временем.
   ☐ Команда manage.p auth [create-user|modify-user]
