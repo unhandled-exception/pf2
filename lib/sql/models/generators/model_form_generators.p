@@ -63,12 +63,12 @@ pfClass
 
 @_makeWidgetLine[aField;aOptions]
   $result[^switch[$aField.widget]{
-        ^case[;input;password]{^self._widgets.inputWidget[$aField;$aField.widget;$aOptions]}
-        ^case[hidden]{^self._widgets.hiddenWidget[$aField;$aOptions]}
-        ^case[textarea]{^self._widgets.textareaWidget[$aField;$aOptions]}
-        ^case[checkbox;radio]{^self._widgets.checkboxWidget[$aField;$aField.widget;$aOptions]}
-        ^case[select]{^self._widgets.selectWidget[$aField;$aOptions]}
-      }]
+    ^case[;input;password]{^self._widgets.inputWidget[$aField;$aField.widget;$aOptions]}
+    ^case[hidden]{^self._widgets.hiddenWidget[$aField;$aOptions]}
+    ^case[textarea]{^self._widgets.textareaWidget[$aField;$aOptions]}
+    ^case[checkbox;radio]{^self._widgets.checkboxWidget[$aField;$aField.widget;$aOptions]}
+    ^case[select]{^self._widgets.selectWidget[$aField;$aOptions]}
+  }]
 
 #--------------------------------------------------------------------------------------------------
 # Виджеты для генератора форм
@@ -138,7 +138,7 @@ pfClass
 
 @submitWidget[aOptions]
   ^self.cleanMethodArgument[]
-  $result[^^antiFlood.field^[^]
+  $result[^^REQUEST.CSRF.tokenField^[^]
     <div class="control-group">
       <div class="controls">
         <input type="submit" id="f-sub" value="Сохранить" class="btn btn-primary" />
@@ -164,7 +164,7 @@ pfClass
   ^BASE:create[]
 
 @formWidget[aBlock]
-  $result[<form action="" method="post" class="form-horizontal form-default">
+  $result[<form action="" method="post">
     $aBlock
   </form>]
 
@@ -213,7 +213,7 @@ pfClass
 
 @submitWidget[aOptions]
   ^self.cleanMethodArgument[]
-  $result[^^antiFlood.field^[^]
+  $result[^^REQUEST.CSRF.tokenField^[^]
     <div class="form-group">
       <div class="col-sm-offset-3 col-sm-9">
         <input type="submit" id="f-sub" value="Сохранить" class="btn btn-primary" />
@@ -225,9 +225,9 @@ pfClass
 #--------------------------------------------------------------------------------------------------
 
 @CLASS
-pfTableFormGeneratorBootstrap4Widgets
+pfTableFormGeneratorBootstrap4HorizontalWidgets
 
-## Bootstrap 4
+## Bootstrap 4 (horizontal)
 
 @OPTIONS
 locals
@@ -240,6 +240,7 @@ pfClass
 
 @formWidget[aBlock]
   $result[<form action="" method="post" class="form-horizontal form-default">
+    ^^REQUEST.CSRF.tokenField^[^]
     $aBlock
   </form>]
 
@@ -288,12 +289,79 @@ pfClass
 
 @submitWidget[aOptions]
   ^self.cleanMethodArgument[]
-  $result[^^antiFlood.field^[^]
-    <div class="form-group row">
+  $result[<div class="form-group row">
       <div class="offset-sm-3 col-sm-9">
         <input type="submit" id="f-sub" value="Сохранить" class="btn btn-primary" />
         или <a href="^^linkTo^[/^]" class="action">Ничего не менять</a>
       </div>
+    </div>
+  ]
+
+#--------------------------------------------------------------------------------------------------
+
+@CLASS
+pfTableFormGeneratorBootstrap4VerticalWidgets
+
+## Bootstrap 4 (vertical)
+
+@OPTIONS
+locals
+
+@BASE
+pfClass
+
+@create[aOptions]
+  ^BASE:create[]
+
+@formWidget[aBlock]
+  $result[<form action="" method="post" class="form-horizontal form-default">
+    ^^REQUEST.CSRF.tokenField^[^]
+    $aBlock
+  </form>]
+
+@inputWidget[aField;aType;aOptions]
+  $result[
+    <div class="form-group">
+      <label for="f-$aField.name">$aField.label</label>
+      <input type="^if(def $aType){$aType}{text}" name="$aField.name" id="f-$aField.name" value="^$${aOptions.argName}.$aField.name" class="form-control" placeholder="" />
+    </div>]
+
+@textareaWidget[aField;aOptions]
+  $result[
+    <div class="form-group">
+      <label for="f-$aField.name">$aField.label</label>
+      <textarea name="$aField.name" id="f-$aField.name" class="form-control" rows="7" placeholder="" />^$${aOptions.argName}.$aField.name</textarea>
+    </div>]
+
+@checkboxWidget[aField;aType;aOptions]
+  $lVarName[^$${aOptions.argName}.$aField.name]
+  $aType[^if(def $aType){$aType}{checkbox}]
+  $result[
+    <div class="form-group">
+      <div class="form-check">
+        <label class="form-check-label"><input type="$aType" name="$aField.name" id="f-${aField.name}1" value="1" ^^if($lVarName){checked="true"} class="form-check-input" /> $aField.label</label>
+        </div>
+      </div>
+    </div>]
+
+@selectWidget[aField;aOptions]
+  $result[
+    <div class="form-group">
+      <label for="f-$aField.name">$aField.label</label>
+      <select name="$aField.name" id="f-$aField.name" class="form-control" placeholder="">
+        <option value=""></option>
+^#        <option value="" ^^if(^$${aOptions.argName}.$aField.name eq ""){selected="true"}></option>
+      </select>
+    </div>]
+
+@hiddenWidget[aField;aOptions]
+  $result[    <input type="hidden" name="$aField.name" value="^$${aOptions.argName}.$aField.name" />]
+
+@submitWidget[aOptions]
+  ^self.cleanMethodArgument[]
+  $result[<div class="form-group">
+      <input type="submit" id="f-sub" value="Сохранить" class="btn btn-primary" />
+        или <a href="^^linkTo^[/^]" class="action">Ничего не менять</a>
     </div>
   ]
 
@@ -362,7 +430,7 @@ pfClass
 
 @submitWidget[aOptions]
   ^self.cleanMethodArgument[]
-  $result[^^antiFlood.field^[^]
+  $result[^^REQUEST.CSRF.tokenField^[^]
     <div class="ui hidden divider"></div>
     <button type="submit" class="ui primary button">Сохранить</button>
     или <a href="^^linkTo^[/^]" class="action">Ничего не менять</a>

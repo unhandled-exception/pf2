@@ -33,9 +33,14 @@ Controllers:
      @onNOTFOUND -> @NOTFOUND
      @onDEFAULT -> @DEFAULT
      @postJSON -> @response<json>, @postDEFAULT -> @response<DEFAULT>
+  ☐ Вынести обработку эксепшнов в отдельные методы котролеров
+     @catch<http.404>[request;exception] <--- ^abort(404)[...] -> [response]
+       ...
+       $exception.handled(true)
 
 Middleware:
   ✔ Написать csrf-мидлваре. @done (17-01-24 13:39)
+  ☐ В csrf-мидлваре удалять поле токена из request.form.
 
 Generators:
   ☐ Рефакторинг manage.p generate form.
