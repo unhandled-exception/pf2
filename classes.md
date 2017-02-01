@@ -58,7 +58,8 @@
 * pfTableFormGenerator
 * pfTableFormGeneratorBootstrap2Widgets
 * pfTableFormGeneratorBootstrap3Widgets
-* pfTableFormGeneratorBootstrap4Widgets
+* pfTableFormGeneratorBootstrap4HorizontalWidgets
+* pfTableFormGeneratorBootstrap4VerticalWidgets
 * pfTableFormGeneratorSemanticUIWidgets
 
 ### [./lib/sql/models/generators/sql_table_generators.p](./lib/sql/models/generators/sql_table_generators.p)
