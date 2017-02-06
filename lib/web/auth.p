@@ -28,7 +28,7 @@ pfMiddleware
 
 ## Объект для хранения данных авторизации
 ## Содержит минимально-необходимый набор полей, которые любой класс авторизации должен писать в объект пользователя.
-  $self._user[
+  $self._currentUser[
     $.id[]
     $.isAuthenticated(false) # Аутентифицирован
     $.isAnonymous(true) # Анонимный пользователь
@@ -37,14 +37,14 @@ pfMiddleware
     $.can[$self.can] # Ссылка на функцию првоерки прав
   ]
 
-@GET_user[]
-  $result[$self._user]
+@GET_currentUser[]
+  $result[$self._currentUser]
 
 @processRequest[aAction;aRequest;aController;aProcessOptions] -> []
   $result[]
   $self._request[$aRequest]
   ^self.authenticate[$aRequest]
-  ^aRequest.assign[$self._userFieldName;$self._user]
+  ^aRequest.assign[$self._userFieldName;$self._currentUser]
 
 @authenticate[aRequest]
   $result[]
@@ -74,12 +74,12 @@ pfAuthBase
 
 @authenticate[aRequest]
   $result[]
-  $self._user.id[^ifdef[$aRequest.ENV.REMOTE_USER]{$aRequest.ENV.REDIRECT_REMOTE_USER}]
-  $self._user.isAuthenticated(true)
-  $self._user.isAnonymous(false)
-  $self._user.isActive(true)
-  ^if(def $self._user.id){
-    $self._user.data[^self.getUser[$self._user.id]]
+  $self._currentUser.id[^ifdef[$aRequest.ENV.REMOTE_USER]{$aRequest.ENV.REDIRECT_REMOTE_USER}]
+  $self._currentUser.isAuthenticated(true)
+  $self._currentUser.isAnonymous(false)
+  $self._currentUser.isActive(true)
+  ^if(def $self._currentUser.id){
+    $self._currentUser.data[^self.getUser[$self._currentUser.id]]
   }
 
 @getUser[aID;aOptions]
