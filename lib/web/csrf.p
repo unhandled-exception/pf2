@@ -203,6 +203,12 @@ pfMiddleware
 @tokenField[]
   $result[<input type="hidden" name="$self._formFieldName" value="^taint[html][^self.makeToken[$.log[-- Make a form csrf token.]]]" />]
 
+@tokenMetaTag[]
+  $result[
+    <meta name="csrf-token" content="^taint[^self.makeToken[$.log[-- Make a meta csrf token.]]]" />
+    <meta name="csrf-name" content="$self._formFieldName" />
+  ]
+
 #----- Private -----
 
 @_makeNewSecret[] -> [a secret string]
