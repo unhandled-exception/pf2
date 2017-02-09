@@ -210,39 +210,50 @@ pfClass
 
 @processException[aAction;aRequest;aException;aOptions] -> [response]
 ## Обрабатывает исключительную ситуацию, возникшую в обработчике.
-## aOptions.passProcessResponse(false)
+## Ищет и вызывает функции catch<exception.type> или catch<*> в контролере.
+## aOptions.passProcessResponse(false) — не вызывать фунуцию processResponse.
   $result[]
-  $lProcessed(false)
+
+  $lCatchFunctions[
+    $.on[catch<$aException.type>]
+    $.else[catch<*>]
+  ]
+  ^lCatchFunctions.foreach[_;func]{
+    ^if($self.[$func] is junction){
+      $aException.handled(true)
+      $result[^self.[$func][$aRequest;$aException]]
+      ^if(!^aOptions.passProcessResponse.bool(false)){
+        $result[^self.processResponse[$aAction;$aRequest;$result;$aOptions]]
+      }
+      ^break[]
+    }
+  }
+
+@catch<http.404>[aRequest;aException]
   $lNotFoundFunctions[
     $.nf_c[/NOTFOUND]
     $.on[onNOTFOUND]
   ]
-  ^switch[$aException.type]{
-    ^case[http.404]{
-      ^lNotFoundFunctions.foreach[_;name]{
-        ^if($self.[$name] is junction){
-          $result[^self.[$name][$aRequest]]
-          $lProcessed(true)
-          ^break[]
-        }
-      }
-    }
-    ^case[http.301]{
-      $result[^pfResponseRedirect::create[$aException.source;301]]
+
+  $result[]
+  $lProcessed(false)
+  ^lNotFoundFunctions.foreach[_;name]{
+    ^if($self.[$name] is junction){
+      $result[^self.[$name][$aRequest]]
       $lProcessed(true)
-    }
-    ^case[http.302]{
-      $result[^pfResponseRedirect::create[$aException.source]]
-      $lProcessed(true)
+      ^break[]
     }
   }
 
-  ^if($lProcessed){
-    $aException.handled(true)
-    ^if(!^aOptions.passProcessResponse.bool(false)){
-      $result[^self.processResponse[$aAction;$aRequest;$result;$aOptions]]
-    }
+  ^if(!$lProcessed){
+    ^throw[$aException.type;$aException.source;$aException.comment]
   }
+
+@catch<http.301>[aRequest;aException]
+  $result[^pfResponseRedirect::create[$aException.source;301]]
+
+@catch<http.302>[aRequest;aException]
+  $result[^pfResponseRedirect::create[$aException.source;302]]
 
 @processResponse[aAction;aRequest;aResponse;aOptions] -> [response]
 ## aOptions.passPost(false) — не делать постобработку запроса.

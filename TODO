@@ -33,10 +33,8 @@ Controllers:
      @onNOTFOUND -> @NOTFOUND
      @onDEFAULT -> @DEFAULT
      @postJSON -> @response<json>, @postDEFAULT -> @response<DEFAULT>
-  ☐ Вынести обработку эксепшнов в отдельные методы котролеров
+  ✔ Вынести обработку эксепшнов в отдельные методы котролеров @done (17-02-09 16:58)
      @catch<http.404>[request;exception] <--- ^abort(404)[...] -> [response]
-       ...
-       $exception.handled(true)
 
 Middleware:
   ✔ Написать csrf-мидлваре. @done (17-01-24 13:39)
