@@ -21,6 +21,7 @@ Documentation:
 
 SQL table:
     ☐ Сделать функцию для замены ^_builder.quoteIdentifier[$TABLE_ALIAS].^_builder.quoteIdentifier[last_ip])
+       Используется для ip-поля в генераторе модели. Может быть и не проблема вызывать это в конструкторе.
 
 SQL:
   ✔ Перенести команду manage.p sql в библиотеку @done (17-02-14 19:26)
@@ -41,7 +42,7 @@ Generators:
 Console:
   ☐ Алиасы для команд?
      manage.p gen form
-  ☐ Добавить в generate model обработку generated-полей в Майсиквеле.
+  ✔ Добавить в generate model обработку generated-полей в Майсиквеле. @done (17-02-14 19:47)
 
 Auth:
   ☐ В auth.p@pfUserRolesAuth добавить время жизни куки в токен и проверять при авторизации
