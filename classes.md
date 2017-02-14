@@ -36,6 +36,9 @@
 ### [./lib/console/commands/generate.p](./lib/console/commands/generate.p)
 * pfConsoleGenerateCommand
 
+### [./lib/console/commands/mysql.p](./lib/console/commands/mysql.p)
+* pfMySQLCommand
+
 ### [./lib/console/console_app.p](./lib/console/console_app.p)
 * pfConsoleApp
 * pfConsoleAppStdout
