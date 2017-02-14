@@ -117,16 +117,18 @@ pfClass
   $lField.widget[$aOptions.widget]
 
   ^if(^aOptions.contains[fieldExpression] || ^aOptions.contains[expression]){
-     ^if(def $aOptions.dbField){$lField.dbField[$aOptions.dbField]}
-     $lField.fieldExpression[$aOptions.fieldExpression]
-     $lField.expression[$aOptions.expression]
-     ^if(!def $lField.expression){
-       $lField.expression[$lField.fieldExpression]
-     }
-     ^if(!def $lField.dbField){
-       $self._skipOnUpdate.[$aFieldName](true)
-       $self._skipOnInsert.[$aFieldName](true)
-     }
+    ^if(def $aOptions.dbField){$lField.dbField[$aOptions.dbField]}
+    $lField.fieldExpression[$aOptions.fieldExpression]
+    $lField.expression[$aOptions.expression]
+    ^if(!def $lField.expression){
+      $lField.expression[$lField.fieldExpression]
+    }
+    ^if(^aOptions.skipOnUpdate.bool(false) || !def $lField.dbField){
+      $self._skipOnUpdate.[$aFieldName](true)
+    }
+    ^if(^aOptions.skipOnInsert.bool(false) || !def $lField.dbField){
+      $self._skipOnInsert.[$aFieldName](true)
+    }
   }{
      $lField.dbField[^if(def $aOptions.dbField){$aOptions.dbField}{$aFieldName}]
      $lField.primary(^aOptions.primary.bool(false))
