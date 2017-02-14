@@ -3,7 +3,7 @@
 # Используем для задач плагин https://github.com/aziz/PlainTasks
 
 Features:
-  ☐ pfAssert:failIf(condition)[data] — удобно для отладки
+  ✔ pfAssert:failIf(condition)[data] — удобно для отладки @done (17-02-14 19:36)
   ☐ Убрать в antiflood sql-команды с данными из лога?
   ☐ В генераторе форм учитывать поле formField из поля модели
   ☐ Процессор static в роутере. Полезно, если статику хотим закрыть авторизацией
