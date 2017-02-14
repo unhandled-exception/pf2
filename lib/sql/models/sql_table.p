@@ -175,7 +175,7 @@ pfClass
     ^if(^self._fields.contains[$k]
         && $self._fields.[$k].widget ne "none"
     ){
-      $result.[$k][$v]
+       $result.[$k][$v]
     }
   }
 
