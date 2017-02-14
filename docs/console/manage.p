@@ -1,11 +1,22 @@
-#!/usr/local/bin/parser3
+#!/usr/bin/env parser3
 
 ## Пример менеджера консольных скриптов для Юникса.
 ##
-## Я положил Парсер, собранный с --disable-safe-mode в папку /usr/local/bin/,
-## а библиотеки и кодировки в /usr/local/share/parser3. Это удобно, но делать так не обязательно.
-## Если хотите использовать локальные версии Парсера, то поправьте полный путь к parser3 в первой строке файла
-## и путь к кодировкой в переменной $confdir метода auto[].
+## Предположим, что папка нашего пользователя /usr/home/parser_user,
+## а проект на pf2 лежит в /usr/home/parser_user/pf2_project
+##
+## Создаем Папку /usr/home/parser_user/bin и кладем в папку parser3,
+## драйверы для базы данных и кодировки:
+## bin/
+## bin/parser3
+## bin/lib/libparser3mysql.so
+## bin/charsets/koi8-r.cfg
+## bin/charsets/windows-1250.cfg
+## bin/charsets/windows-1251.cfg
+## bin/charsets/windows-1254.cfg
+## bin/charsets/windows-1257.cfg
+##
+## Кладем этот manage.p в корень нашего проекта.
 ##
 ## Не забываем сделать "chmod u+x manage.p". Тогда можно будет вызывать файл напрямую из командной строки:
 ## > ./manage.p
@@ -16,6 +27,7 @@
 ##
 ## Commands:
 ##   generate    Generate models, forms and controllers. See "manage.p generate --help" for more info.
+##   sql   A MySQL management command. See "manage.p sql --help" for more info.
 ##   core:regions    See "manage.p core:regions --help" for more info.
 ##
 ## Но можно вызывать и с помощью бинарника Парсера:
@@ -51,7 +63,14 @@
 
 # Добавляем команду для генерации кода моделей форм и контроллеров.
 # Имя команды может быть любым и не зависит от имени файла с командой или именем класса.
-  ^app.assignCommand[generate;pf2/lib/console/commands/generate.p@pfConsoleGenerateCommand;$.sql[$csql] $.core[$core]]
+  ^app.assignCommand[generate;pf2/lib/console/commands/generate.p@pfConsoleGenerateCommand;
+    $.sql[$csql]
+  ]
+
+# Добавляем команду для работы с sql-сервером
+  ^app.assignCommand[sql;pf2/lib/console/commands/mysql.p@pfMySQLCommand;
+    $.sql[$csql]
+  ]
 
 # Подключаем команду из нашего проекта.
 # В имени команды можно использовать двоеточие. Это удобно, если у нас есть несколько одинаковых команд
@@ -71,7 +90,9 @@ $confdir[^file:dirname[$filespec]]
 # Назначаем директорию со скриптом как рут для поиска
 $request:document-root[$confdir]
 
-$parserlibsdir[/usr/local/share/parser3]
+# Задаем путь к библиотекам и кодировкам
+$parserlibsdir[$confdir/../bin]
+
 $charsetsdir[$parserlibsdir/charsets]
 $sqldriversdir[$parserlibsdir/lib]
 

@@ -477,9 +477,7 @@ pfClass
     $lOrder[$aOptions.orderBy]
   }(def $self._defaultOrderBy){
     $lOrder[$self._defaultOrderBy]
-  }{
-     $lOrder[^if(def $self._primaryKey){$self.PRIMARYKEY asc}]
-   }
+  }
   ^self.asContext[group]{
     ^switch(true){
       ^case($lOrder is hash){$result[^lOrder.foreach[k;v]{^if(^self._fields.contains[$k]){^self.sqlFieldName[$k] ^if(^v.lower[] eq "desc"){desc}{asc}}}[, ]]}

@@ -33,9 +33,12 @@ Controllers:
      @onNOTFOUND -> @NOTFOUND
      @onDEFAULT -> @DEFAULT
      @postJSON -> @response<json>, @postDEFAULT -> @response<DEFAULT>
+  ✔ Вынести обработку эксепшнов в отдельные методы котролеров @done (17-02-09 16:58)
+     @catch<http.404>[request;exception] <--- ^abort(404)[...] -> [response]
 
 Middleware:
   ✔ Написать csrf-мидлваре. @done (17-01-24 13:39)
+  ☐ В csrf-мидлваре удалять поле токена из request.form.
 
 Generators:
   ☐ Рефакторинг manage.p generate form.
@@ -50,6 +53,7 @@ Console:
 Auth:
   ✔ Перенести метод digest из pf-secrets-app@CoreSecurity, добавить параметры secretKey и disableHMAC. @done (16-12-26 15:23)
     В psSQLSecurity есть метод digest описан как hmac-digest, но хеширует без hmac.
+  ✔ Добавить опцию authCookieSecure в конструкторе pfUerRolesAuth. @done (17-01-31 17:51)
   ☐ В auth.p@pfUserRolesAuth добавить время жизни куки в токен и проверять при авторизации
   ☐ Сделать дефолтную генерацию secureToken в модели pfUserModel. Посолить токен текущим временем.
   ☐ Команда manage.p auth [create-user|modify-user]

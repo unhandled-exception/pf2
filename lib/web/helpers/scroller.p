@@ -51,7 +51,7 @@ pfClass
 # $formName          название элемента формы через который передается номер страницы (по умолчанию "page")
 
 @GET[aType]
-  $result($pagesCount > 1)
+  $result($self.pagesCount > 1)
 
 @GET_itemsCount[]
   $result[$self._scroller.items_count]
@@ -164,42 +164,42 @@ $self.form_name[^if(def $form_name){$form_name}{page}]
   $page[$form:[$self.form_name]]
 }
 $self.items_count(^items_count.int(0))
-$limit(^items_per_page.int(0))
-$page_count(^math:ceiling($self.items_count / $limit))
+$self.limit(^items_per_page.int(0))
+$self.page_count(^math:ceiling($self.items_count / $limit))
 ^if(^direction.int(0) < 0){
-  $current_page(^page.int($page_count))
-  ^if($current_page > $page_count){
-    $current_page($page_count)
+  $self.current_page(^page.int($self.page_count))
+  ^if($self.current_page > $self.page_count){
+    $self.current_page($self.page_count)
   }{
-    ^if($current_page < 1){$current_page(1)}
+    ^if($self.current_page < 1){$self.current_page(1)}
   }
-  $current_page_number($page_count - $current_page + 1)
-  $current_page_name($current_page_number)
-  ^if($page_count && $current_page < $page_count){
-    $is_full_page(^if($self.items_count % $limit){1}{0})
-    $offset($self.items_count % $limit + ($page_count - $current_page - $is_full_page) * $limit)
+  $self.current_page_number($self.page_count - $self.current_page + 1)
+  $self.current_page_name($self.current_page_number)
+  ^if($self.page_count && $self.current_page < $self.page_count){
+    $self.is_full_page(^if($self.items_count % $self.limit){1}{0})
+    $self.offset($self.items_count % $self.limit + ($self.page_count - $self.current_page - $self.is_full_page) * $self.limit)
   }{
-    $offset(0)
+    $self.offset(0)
   }
   $self.direction(-1)
-  $first_page($page_count)
-  $last_page(1)
+  $self.first_page($page_count)
+  $self.last_page(1)
 }{
-  $current_page(^page.int(1))
-  ^if($current_page > $page_count){
-    $current_page($page_count)
+  $self.current_page(^page.int(1))
+  ^if($self.current_page > $self.page_count){
+    $self.current_page($self.page_count)
   }{
-    ^if($current_page < 1){$current_page(1)}
+    ^if($self.current_page < 1){$self.current_page(1)}
   }
-  $current_page_number($current_page)
-  $current_page_name($current_page)
+  $self.current_page_number($self.current_page)
+  $self.current_page_name($self.current_page)
   $self.direction(+1)
-  $first_page(1)
-  $last_page($page_count)
-  ^if($page_count){
-    $offset(($current_page - 1) * $limit)
+  $self.first_page(1)
+  $self.last_page($self.page_count)
+  ^if($self.page_count){
+    $self.offset(($self.current_page - 1) * $self.limit)
   }{
-    $offset(0)
+    $self.offset(0)
   }
 }
 
@@ -226,10 +226,10 @@ $page_count(^math:ceiling($self.items_count / $limit))
 #   $.left_divider[|]
 # ]
 
-^if($page_count > 1){
+^if($self.page_count > 1){
   $lparams[^hash::create[$in_params]]
   ^if(def $lparams.mode){
-    $mode[$lparams.mode]
+    $self.mode[$lparams.mode]
   }
   $nav_count(^lparams.nav_count.int(5))
   $first_nav($current_page_number - $nav_count \ 2)
@@ -292,7 +292,7 @@ $page_count(^math:ceiling($self.items_count / $limit))
 
 @print_nav_item[type;name;url;url_separator;page_num]
 # выводит элемент постраничной навигации
-^if($mode eq "html"){
+^if($self.mode eq "html"){
   ^if($type eq "separator"){
     $result[$name]
   }{

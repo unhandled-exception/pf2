@@ -967,15 +967,22 @@ static
 
 @resources[]
 ## Возвращает хеш с информацией о времени и памяти, затраченных на данный момент
+  ^if($self._maxMemoryUsage < $status:memory.used){
+    $self._maxMemoryUsage($status:memory.used)
+  }
   $result[
     $.time($status:rusage.tv_sec + $status:rusage.tv_usec/1000000.0)
     $.utime($status:rusage.utime)
     $.stime($status:rusage.stime)
 
     $.allocated($status:memory.ever_allocated_since_start)
-    $.compacts($compactsCount)
+    $.allocatedSinceCompact($status:memory.ever_allocated_since_start)
     $.used($status:memory.used)
     $.free($status:memory.free)
+    $.maxMemoryUsage($self._maxMemoryUsage)
+
+    $.compacts($self.compactsCount)
+    $.memoryLimit($self.memoryLimit)
   ]
 
 @profile[aCode;aComment]

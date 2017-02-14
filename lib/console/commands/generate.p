@@ -32,7 +32,8 @@ pfConsoleCommandWithSubcommands
   $self._formWidgets[
     $.bootstrap2[pfTableFormGeneratorBootstrap2Widgets]
     $.bootstrap3[pfTableFormGeneratorBootstrap3Widgets]
-    $.bootstrap4[pfTableFormGeneratorBootstrap4Widgets]
+    $.bs4v[pfTableFormGeneratorBootstrap4VerticalWidgets]
+    $.bs4h[pfTableFormGeneratorBootstrap4HorizontalWidgets]
     $.semantic[pfTableFormGeneratorSemanticUIWidgets]
   ]
   $self._defaultFormWidget[^if(def $aOptions.formWidgets){$aOptions.formWidgets}{bootstrap3}]

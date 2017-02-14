@@ -158,6 +158,7 @@ pfMiddleware
 ## aOptions.sql — класс с sql-соединением
 ## aOptions.hideQueryLog(false) — не показывать лог соединений.
 ## aOptions.enableHighlightJS(false) — подключить библиотеку highlight.js и подсветить синтаксис SQL.
+## aOptions.cssClass[] — классы для дива с отладочной информацией.
   ^self.cleanMethodArgument[]
   $self._enabled(^aOptions.enable.bool(true))
   $self._sql[$aOptions.sql]
@@ -165,6 +166,7 @@ pfMiddleware
   $self._hideQueryLog(^aOptions.hideQueryLog.bool(false))
 
   $self._highlightJSVersion[9.9.0]
+  $self._cssClass[^self.ifdef[$aOptions.cssClass]{debug-info hidden-xs}]
 
 @processResponse[aAction;aRequest;aResponse;aController;aProcessOptions] -> [response]
   $result[$aResponse]
@@ -192,20 +194,27 @@ pfMiddleware
   </div></div></div>
 
 @_debugInfo[]
-  <div class="hidden-xs" style="margin-top: 1.5em^; margin-bottom: 0^; color: #555^;">
-    <p>Time: ^eval($status:rusage.utime + $status:rusage.stime + $sqlStat.queriesTime + $sphinxStat.queriesTime)[%.6f] (utime: ^status:rusage.utime.format[%.6f], stime: ^status:rusage.stime.format[%.6f]).<br />
-    Memory: $status:memory.used KB, free: $status:memory.free KB (total: ^status:memory.ever_allocated_since_start.format[%.0f] KB, after gc: ^status:memory.ever_allocated_since_compact.format[%.0f] KB)
+  $lRes[^pfRuntime:resources[]]
+  <div class="$self._cssClass">
+    <p>Time: ^eval($lRes.utime + $lRes.stime + ^self._getSQLTime[])[%.6f] (utime: ^lRes.utime.format[%.6f], stime: ^lRes.stime.format[%.6f]).<br />
+    Memory: $lRes.used KB, free: $lRes.free KB (total: ^lRes.allocated.format[%.0f] KB, after gc: ^lRes.allocatedSinceCompact.format[%.0f] KB, $lRes.compacts compacts, limit $lRes.memoryLimit KB)
     </p>
-    ^if(def $self._sql){
-      <div class="sql-log block">
-        ^self._queriesStat[$self._sql.stat]
-      </div>
-    }
+    ^self._sqlInfo[]
   </div>
 
-@_queriesStat[aStat]
-  <p class="sql-stat">SQL queries ($self._sql.serverType): ${aStat.queriesCount} (^aStat.queriesTime.format[%.6f] sec).
-       Memory cache: size — ${aStat.memoryCache.size}, hits — ${aStat.memoryCache.usage}.
+@_getSQLTime[]
+  $result(^self.sqlStat.queriesTime.double(0))
+
+@_sqlInfo[]
+  ^if(def $self._sql){
+    <div class="sql-log block">
+      ^self._queriesStat[$self._sql.stat;$self._sql.serverType]
+    </div>
+  }
+
+@_queriesStat[aStat;aServerType]
+  <p class="sql-stat">SQL queries^if(def $aServerType){ ($aServerType)}: ${aStat.queriesCount} (^aStat.queriesTime.format[%.6f] sec).
+       Memory cache: ${aStat.memoryCache.size} results, ${aStat.memoryCache.usage} hits.
   </p>
 
   ^if(!$self._hideQueryLog){
