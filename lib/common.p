@@ -291,6 +291,9 @@ static
     ^throw[$self._exceptionName;Fail;^if(def $aComment){$aComment}{Assertion failed exception.}]
   }
 
+@failIf[aCondition;aComment]
+  $result[^if($aCondition){^self.fail[$aComment]}]
+
 @pass[aComment][result]
   ^if($enabled){
     ^throw[$self._passExceptionName;Pass;^if(def $aComment){$aComment}{Assertion pass exception.}]

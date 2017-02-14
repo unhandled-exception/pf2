@@ -197,6 +197,11 @@ pfSQLModelGenerator
       $lData.label[]
     }
 
+    ^if(^lDDL.Extra.match[\bgenerated\b][in]){
+      $lData.skipOnInsert(true)
+      $lData.skipOnUpdate(true)
+    }
+
     $result.[$lName][$lData]
   }
 
