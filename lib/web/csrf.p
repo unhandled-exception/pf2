@@ -167,6 +167,9 @@ pfMiddleware
             ^throw[security.invalid.referer;$self.REASON_BAD_REFERER]
           }
         }
+
+#       Удаляем поле с токеном из request.form
+        ^aRequest.form.delete[$self._formFieldName]
       }{
         ^if($exception.type eq "security.invalid.token"){
           $exception.handled(true)

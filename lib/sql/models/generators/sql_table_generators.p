@@ -97,6 +97,12 @@ $result[
   ^@restore^[$lArgument^]
     ^$result^[^^self.modify^[^$$lArgument^;^$.isActive(true)^]^]
   }
+
+  ^@cleanFormData[aFormData^;aOptions] -> [hash]
+    ^^cleanMethodArgument[]
+    ^$result[^^BASE:cleanFormData[^$aFormData]]
+
+    ^self._fields.foreach[k;v]{^if($v.processor eq "bool" && $v.widget ne "none"){^$result.${k}[^^aFormData.${k}.bool(false)]}}[^#0A    ]
 ]
 
 #--------------------------------------------------------------------------------------------------
