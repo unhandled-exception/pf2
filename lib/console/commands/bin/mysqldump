@@ -1,0 +1,12 @@
+#!/bin/sh
+if [ -n "$CGI_MANAGE_MYSQL_DUMP_FILE" ]; then
+  if [ "$CGI_MANAGE_MYSQL_DUMP_ARCHIVER" = "gzip" ]; then
+    mysqldump $* | gzip > $CGI_MANAGE_MYSQL_DUMP_FILE
+  elif [ "$CGI_MANAGE_MYSQL_DUMP_ARCHIVER" = "bzip2" ]; then
+    mysqldump $* | bzip2 > $CGI_MANAGE_MYSQL_DUMP_FILE
+  else
+    mysqldump $* > $CGI_MANAGE_MYSQL_DUMP_FILE
+  fi
+else
+   mysqldump $*
+fi
