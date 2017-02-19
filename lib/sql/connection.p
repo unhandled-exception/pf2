@@ -92,13 +92,18 @@ pfClass
 
 @transaction[aCode;aOptions]
 ## Организует транзакцию, обеспечивая возможность отката.
-## aOptions.disableQueriesLog(false) — отключить лог на время работы транзакции
+## aOptions.disableQueriesLog(false) — отключить лог на время транзакции
+## aOptions.disableMemoryCache(false) — отелючить кеш в памяти на время транзакции
 ## aOptions.nestedAsSavepoints(false) — заменить вложенные транзакции на сейвпоинты
   ^self.cleanMethodArgument[]
   $result[]
   ^self.connect{
-    $lIsEnabledQueryLog($self._enableQueriesLog)
+    $lEnableQueriesLog($self._enableQueriesLog)
     ^if(^aOptions.disableQueriesLog.bool(false)){$self._enableQueriesLog(false)}
+
+    $lEnableMemoryCache($self._enableMemoryCache)
+    ^if(^aOptions.disableMemoryCache.bool(false)){$self._enableMemoryCache(false)}
+
     ^self._transactionsCount.inc(1)
 
     $lOldNestedAsSavepoints($self._nestedAsSavepoints)
@@ -125,7 +130,8 @@ pfClass
       }
     }{}{
       ^self._transactionsCount.dec(1)
-      $self._enableQueriesLog($lIsEnabledQueryLog)
+      $self._enableQueriesLog($lEnableQueriesLog)
+      $self._enableMemoryCache($lEnableMemoryCache)
       $self._nestedAsSavepoints($lOldNestedAsSavepoints)
     }
   }
