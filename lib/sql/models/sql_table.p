@@ -254,7 +254,7 @@ pfClass
 ##   aSQLOptions.force — отменить кеширование результата запроса
 ##   + Все опции pfSQL.
   ^self.cleanMethodArgument[aOptions;aSQLOptions]
-  $lResultType[^self.__getResultType[$aOptions]]
+  $lResultType[^if(def $aOptions.asHashOn){table}{^self.__getResultType[$aOptions]}]
   $result[^self.CSQL.[$lResultType]{^self.__allSQLExpression[$lResultType;$aOptions;$aSQLOptions]}[][$aSQLOptions]]
 
   ^if($result is table && def $aOptions.asHashOn){
@@ -307,7 +307,7 @@ pfClass
 ## ^aggregate[func(expr) as alias;_fields(field1, field2 as alias2);_fields(*);conditions hash;sqlOptions]
 ## aConds.asHashOn[fieldName] — возвращаем хеш таблиц, ключем которого будет fieldName
   $lConds[^self.__getAgrConds[$aConds]]
-  $lResultType[^self.__getResultType[$lConds.options]]
+  $lResultType[^if(def $lConds.options.asHashOn){table}{^self.__getResultType[$lConds.options]}]
   $lExpression[^self.__aggregateSQLExpression[$lResultType;$lConds]]
   $result[^self.CSQL.[$lResultType]{$lExpression}[][$lConds.sqlOptions]]
 
