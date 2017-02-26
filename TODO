@@ -3,8 +3,7 @@
 # Используем для задач плагин https://github.com/aziz/PlainTasks
 
 Features:
-  ✔ pfAssert:failIf(condition)[data] — удобно для отладки @done (17-02-14 19:36)
-  ☐ Убрать в antiflood sql-команды с данными из лога?
+  ☐ Выпилить pfAntiFlood из библиотеки?
   ☐ В генераторе форм учитывать поле formField из поля модели
   ☐ Процессор static в роутере. Полезно, если статику хотим закрыть авторизацией
      router.Static("/assets", "./assets")
@@ -20,13 +19,21 @@ Documentation:
     ☐ Шаблоны
 
 SQL table:
+    ☐ Доработать метод pfSQLTable.newOrModify для поддержки составных ключей:
+        ^self.uniqueKey[accountID, period, paymentDate]
+        ^self.uniqueKey[$.accountID[] $.period[] $.paymentDate[]]
+        По-умолчанию uniqueKey == promaryKey.
+        В newOrModify вытаскиаем составной ключ для where.
+        Делаем в генераторе поиск уникального ключа по show indexes from asu_raw_charges where non_unique = 0;
+        Выбираем при генерации первый ключ в котором больше одного поля. (или первый не primary c одним полем)
     ☐ Если задано dbField, то пишем его в fieldExpression, если FE не задано явно.
-       $lField.fieldExpression[$aOptions.fieldExpression]
+        $lField.fieldExpression[$aOptions.fieldExpression]
     ☐ Сделать функцию для замены ^_builder.quoteIdentifier[$TABLE_ALIAS].^_builder.quoteIdentifier[last_ip])
         Используется для ip-поля в генераторе модели. Может быть и не проблема вызывать это в конструкторе.
         Вариант: _f(fieldName)
                  $.expression[inet_ntoa(_f(firstIP))] $.fieldExpression[_f(firstIP)]
                  $.expression[interval(_f(monthes), 3, 6, 12)]
+        Переделать генератор моделей.
     ☐ Сделать синтаксис для выражений к полям в запросах
         В выражении для поля
           _f(field) — поле
@@ -60,38 +67,48 @@ SQL table:
         ^self.addFieldsFrom[$core.auth.users;_fields(*)]
         ^self.addFieldsFrom[$core.auth.users;$.fields[$.userName[name] $.userPhone[phone]]]
         ^self.addFieldsFrom[$core.auth.users;_fields(name as userName, phone as userPhone)] — для алиасов забиваем на plurals
+    ☐ Добавить мягкое удаление с полем deleted_at.
+        Доработать генератор модели, который ставит поле deletedAt с процессором datetime (поддерживает null) и добавляет вычисляемое поле isActive. В @delete и @restore манипулируем полем deletedAt.
+        В Ларавеле сделано через миксины — https://laravel.com/docs/5.4/eloquent#soft-deleting.
 
 SQL:
-  ✔ Перенести команду manage.p sql в библиотеку @done (17-02-14 19:26)
-     Готово для mysql.
-     Дамп схемы для sqlite: echo ".schema" | sqlite3 test_dump.sqlite3
 
 Controllers:
+  ☐ Роутинг для эксепшнов
+      ^router.exception[http.401.csrf;http.404]
+      ^router.exception[http.401.csrf;$self.[catch<*>]]
+      ^router.exception[http.401.*;http.fail] — .* заменяем на (\..*)?
+      ^router.exception[http.500.*;*] — переадресация на дефолтный обработчик.
+      @catch<http.401>[...]
 
 Middleware:
-  ✔ В csrf-мидлваре удалять поле токена из request.form. @done (17-02-14 19:59)
+  ☐ Сделать в csrf-мидлваре вызов csrfView для ответов с ошибками или опцию для выброса исключения http.401 или http.401.csrf
 
 Generators:
   ☐ Рефакторинг manage.p generate form.
     ☐ Вынести виджеты в отдельные пакеты.
     ☐ Сделать класс виджетов для вертикальной формы BS4.
     ☐ Сделать короткие имена для виджетов: bs2, bs3, bs4, bs4_h, sui.
-  ✔ Добавить генерацию cleanFormData с проверокой checkbox'ов в generate model. @done (17-02-14 20:26)
 
 Console:
   ☐ Алиасы для команд?
      manage.p gen form
-  ✔ Добавить в generate model обработку generated-полей в Майсиквеле. @done (17-02-14 19:47)
 
 Auth:
   ☐ В auth.p@pfUserRolesAuth добавить время жизни куки в токен и проверять при авторизации
   ☐ Сделать дефолтную генерацию secureToken в модели pfUserModel. Посолить токен текущим временем.
-  ☐ Команда manage.p auth [create-user|modify-user]
-
-
+  ☐ Команда manage.p auth [create-user|modify-user]. Генерируем пароль чепез питон и urandom.
+  ☐ auth.can[right1;right2;...] — проверка нескольких прав с and
 
 ＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿
 Archive:
+ ✔ Добавить генерацию cleanFormData с проверокой checkbox'ов в generate model. @done (17-02-14 20:26) @project(Generators)
+ ✔ В csrf-мидлваре удалять поле токена из request.form. @done (17-02-14 19:59) @project(Middleware)
+ ✔ Добавить в generate model обработку generated-полей в Майсиквеле. @done (17-02-14 19:47) @project(Console)
+ ✔ pfAssert:failIf(condition)[data] — удобно для отладки @done (17-02-14 19:36) @project(Features)
+ ✔ Перенести команду manage.p sql в библиотеку @done (17-02-14 19:26) @project(SQL)
+  Готово для mysql.
+  Дамп схемы для sqlite: echo ".schema" | sqlite3 test_dump.sqlite3
  ✔ Вынести обработку эксепшнов в отдельные методы котролеров @done (17-02-09 16:58) @project(Controllers)
   @catch<http.404>[request;exception] <--- ^abort(404)[...] -> [response]
  ✔ Добавить опцию authCookieSecure в конструкторе pfUerRolesAuth. @done (17-01-31 17:51) @project(Auth)
@@ -104,4 +121,6 @@ Archive:
   @postJSON -> @response<json>, @postDEFAULT -> @response<DEFAULT>
  ✔ Написать csrf-мидлваре. @done (17-01-24 13:39) @project(Middleware)
  ✔ Перенести метод digest из pf-secrets-app@CoreSecurity, добавить параметры secretKey и disableHMAC. @done (16-12-26 15:23) @project(Auth)
+  В psSQLSecurity есть метод digest описан как hmac-digest, но хеширует без hmac. ✔ Добавить параметр cryptKey в pfSQLSecurity.encode/decode @done (16-12-09 12:08) @project(Features)
+
   В psSQLSecurity есть метод digest описан как hmac-digest, но хеширует без hmac. ✔ Добавить параметр cryptKey в pfSQLSecurity.encode/decode @done (16-12-09 12:08) @project(Features)
