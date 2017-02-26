@@ -20,8 +20,46 @@ Documentation:
     ☐ Шаблоны
 
 SQL table:
+    ☐ Если задано dbField, то пишем его в fieldExpression, если FE не задано явно.
+       $lField.fieldExpression[$aOptions.fieldExpression]
     ☐ Сделать функцию для замены ^_builder.quoteIdentifier[$TABLE_ALIAS].^_builder.quoteIdentifier[last_ip])
-       Используется для ip-поля в генераторе модели. Может быть и не проблема вызывать это в конструкторе.
+        Используется для ip-поля в генераторе модели. Может быть и не проблема вызывать это в конструкторе.
+        Вариант: _f(fieldName)
+                 $.expression[inet_ntoa(_f(firstIP))] $.fieldExpression[_f(firstIP)]
+                 $.expression[interval(_f(monthes), 3, 6, 12)]
+    ☐ Сделать синтаксис для выражений к полям в запросах
+        В выражении для поля
+          _f(field) — поле
+          _t(data) — ^taint[data] ???
+          _e(expression) — выражение
+
+          $.[_e(extract_json(_f(json), '^$.balance.summa')) <= [3]][10]
+          $.[(extract_json(_f(json), '^$.balance.summa')) <= [3]][10]
+          $.[@(extract_json(_f(json), '^$.balance.summa')) <= ][10]
+
+          $.[(_f(json)->>'^$.date')][...]
+          $.[_e(_f(json)->>'^$.date') between [10]][...]
+          $.[@(_f(json)->>'^$.date') range[$.from[1] $.to[2]]
+
+          where `table`.json->>'$.date' between '1' to '2'
+
+          $.where[inet_ntoa('_t($lIP)') between _f(firstIP) and _f(lastIP)]
+
+          ^t.match[^^\s*(_e|@)?(\((?:(?>[^^()]+)|(?2))*\))(?:\s*(\S+)(?:\s*(\S+))?)?][]
+
+        Нужен синтаксис для обратного
+          $.[summa <= _e->][(_f(json)->>'^$.balance.charges' * -1) + _f(json)->>'$.balance.payments']
+    ☐ Подумать, что делать с not like, not regexp, similar to, not similar to
+        $.[text (not similar to)][%(b|d)%]
+    ☐ Автоматически подставлять поля из приджоиной таблицы:
+        Добавляем метод для простого джоина
+          ^self.joinTo[$core.auth.users;$self.userID = $core.auth.users.userID;$.type[left]]
+          ^self.leftJoinTo[$core.auth.users;$self.userID = $core.auth.users.userID]
+          @_allJoin[aOptions] оставляем для джоина по условию ^if($aOptions.joinToUsers){join users ...}
+
+        ^self.addFieldsFrom[$core.auth.users;_fields(*)]
+        ^self.addFieldsFrom[$core.auth.users;$.fields[$.userName[name] $.userPhone[phone]]]
+        ^self.addFieldsFrom[$core.auth.users;_fields(name as userName, phone as userPhone)] — для алиасов забиваем на plurals
 
 SQL:
   ✔ Перенести команду manage.p sql в библиотеку @done (17-02-14 19:26)
