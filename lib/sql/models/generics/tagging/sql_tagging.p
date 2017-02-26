@@ -164,7 +164,7 @@ pfSQLTable
 
 @GET_transliter[]
   ^if(!def $self._transliter){
-    ^use[pf/wiki/pfURLTranslit.p]
+    ^use[pf2/lib/web/helpers/translit.p]
     $self._transliter[^pfURLTranslit::create[]]
   }
   $result[$self._transliter]
