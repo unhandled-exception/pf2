@@ -83,6 +83,7 @@ Controllers:
 
 Middleware:
   ☐ Сделать в csrf-мидлваре вызов csrfView для ответов с ошибками или опцию для выброса исключения http.401 или http.401.csrf
+  ☐ Добавить трехзначную логику для secureCookie[true/false/auto]. Перенести в auth.
 
 Generators:
   ✔ Убрать генератор контролеров из библиотеки @done (17-02-27 09:26)
