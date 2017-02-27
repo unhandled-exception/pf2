@@ -3,7 +3,6 @@
 @USE
 pf2/lib/sql/models/sql_table.p
 pf2/lib/sql/models/generators/sql_table_generators.p
-pf2/lib/sql/models/generators/model_controller_generators.p
 pf2/lib/sql/models/generators/model_form_generators.p
 
 @main[][locals]
@@ -22,9 +21,6 @@ SQL orm generators test!
 
     $fg3[^pfTableFormGenerator::create[$.widgets[^pfTableFormGeneratorBootstrap3Widgets::create[]]]]
     ^fg3.generate[$users]
-
-    $cg[^pfTableControllerGenerator::create[]]
-    ^cg.generate[$users;core.users;$.name[User]]
 
 Finish tests.^#0A
 

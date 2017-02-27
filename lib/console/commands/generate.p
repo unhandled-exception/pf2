@@ -4,7 +4,6 @@ pf2/lib/sql/models/structs.p
 
 pf2/lib/sql/models/generators/sql_table_generators.p
 pf2/lib/sql/models/generators/model_form_generators.p
-pf2/lib/sql/models/generators/model_controller_generators.p
 
 @CLASS
 pfConsoleGenerateCommand
@@ -46,9 +45,6 @@ pfConsoleCommandWithSubcommands
   ]
   ^self.assignSubcommand[form core.model_name [widgets];$form;
     $.help[Generate a html-form by a model object. Available widgets: ^_formWidgets.foreach[k;_]{$k}[, ] (default: ${self._defaultFormWidget}).]
-  ]
-  ^self.assignSubcommand[controller model.name [entity_name];$controller;
-    $.help[Generate a controller class by a model object.]
   ]
 
 @_getModelGenerator[aServerType;aTableName;aSchema]
@@ -108,13 +104,6 @@ pfConsoleCommandWithSubcommands
        ^self.print[$exception.source]
      }
    }
-
-@controller[aArgs;aSwitches]
-  $aModelName[$aArgs.1]
-  $aEntityName[$aArgs.2]
-  ^if(!def $aModelName){^self.fail[Not specified a model name.]}
-  $lGenerator[^pfTableControllerGenerator::create[]]
-  ^self.print[^lGenerator.generate[^self._getModel[$aModelName];$aModelName;$.name[$aEntityName]]]
 
 @_getModel[aModelName]
   $result[]
