@@ -255,7 +255,7 @@ pfClass
 ##   + Все опции pfSQL.
   ^self.cleanMethodArgument[aOptions;aSQLOptions]
   $lResultType[^if(def $aOptions.asHashOn){table}{^self.__getResultType[$aOptions]}]
-  $result[^self.CSQL.[$lResultType]{^self.__allSQLExpression[$lResultType;$aOptions;$aSQLOptions]}[][$aSQLOptions]]
+  $result[^self.CSQL.[$lResultType]{^self.__normalizeWhitespaces{^self.__allSQLExpression[$lResultType;$aOptions;$aSQLOptions]}}[][$aSQLOptions]]
 
   ^if($result is table && def $aOptions.asHashOn){
     $result[^result.hash[$aOptions.asHashOn;$.type[table] $.distinct(true)]]
@@ -265,7 +265,7 @@ pfClass
 ## Возвращает текст запроса из метода all.
   ^self.cleanMethodArgument[aOptions;aSQLOptions]
   $lResultType[^self.__getResultType[$aOptions]]
-  $result[^apply-taint[^self.__allSQLExpression[$lResultType;$aOptions;$aSQLOptions]]]
+  $result[^self.__normalizeWhitespaces{^self.__allSQLExpression[$lResultType;$aOptions;$aSQLOptions]]}[$.apply(true)]]
 
 @union[*aConds]
 ## Выполняет несколько запросов и объединяет их в один результат.
@@ -300,7 +300,7 @@ pfClass
 # Если нужны сложные варианты используйте aggregate.
   $aConds[^hash::create[$aConds] $.orderBy[] $.having[]]
   $lExpression[^self._selectExpression[count(*)][;$aConds;$aSQLOptions]]
-  $result[^self.CSQL.int{$lExpression}[][$aSQLOptions]]
+  $result[^self.CSQL.int{^self.__normalizeWhitespaces{$lExpression}}[][$aSQLOptions]]
 
 @aggregate[*aConds]
 ## Выборки с группировкой
@@ -309,7 +309,7 @@ pfClass
   $lConds[^self.__getAgrConds[$aConds]]
   $lResultType[^if(def $lConds.options.asHashOn){table}{^self.__getResultType[$lConds.options]}]
   $lExpression[^self.__aggregateSQLExpression[$lResultType;$lConds]]
-  $result[^self.CSQL.[$lResultType]{$lExpression}[][$lConds.sqlOptions]]
+  $result[^self.CSQL.[$lResultType]{^self.__normalizeWhitespaces{$lExpression}}[][$lConds.sqlOptions]]
 
   ^if($result is table && def $lConds.options.asHashOn){
     $result[^result.hash[$lConds.options.asHashOn;$.type[table] $.distinct(true)]]
@@ -320,7 +320,7 @@ pfClass
   $lConds[^self.__getAgrConds[$aConds]]
   $lResultType[^self.__getResultType[$lConds.options]]
   $lExpression[^self.__aggregateSQLExpression[$lResultType;$lConds]]
-  $result[^self.CSQL.connect{^apply-taint[$lExpression]}]
+  $result[^self.CSQL.connect{^self.__normalizeWhitespaces{$lExpression}[$.apply(true)]}]
 
 #----- Манипуляции с данными -----
 
@@ -330,12 +330,12 @@ pfClass
 ## Возврашает автосгенерированное значение первичного ключа (last_insert_id) для sequence-полей.
   ^self.cleanMethodArgument[aData;aSQLOptions]
   ^self.asContext[update]{
-    $result[^self.CSQL.void{^self._builder.insertStatement[$self.TABLE_NAME;$self._fields;$aData;
+    $result[^self.CSQL.void{^self.__normalizeWhitespaces{^self._builder.insertStatement[$self.TABLE_NAME;$self._fields;$aData;
       ^hash::create[$aSQLOptions]
       $.skipFields[$self._skipOnInsert]
       $.schema[$self.SCHEMA]
       $.fieldValueFunction[$self.fieldValue]
-    ]}]
+    ]}}]
   }
   ^if(def $self._primaryKey && $self._fields.[$self._primaryKey].sequence){
     $result[^self.CSQL.lastInsertID[]]
@@ -347,7 +347,7 @@ pfClass
   ^pfAssert:isTrue(def $aPrimaryKeyValue){Не задано значение первичного ключа}
   ^self.cleanMethodArgument[aData]
   $result[^self.CSQL.void{
-    ^self.asContext[update]{
+    ^self.asContext[update]{^self.__normalizeWhitespaces{
       ^self._builder.updateStatement[$self.TABLE_NAME;$self._fields;$aData][$self.PRIMARYKEY = ^self.fieldValue[$self._fields.[$self._primaryKey];$aPrimaryKeyValue]][
         $.skipAbsent(true)
         $.skipFields[$self._skipOnUpdate]
@@ -355,7 +355,7 @@ pfClass
         $.schema[$self.SCHEMA]
         $.fieldValueFunction[$self.fieldValue]
       ]
-    }
+    }}
   }]
 
 @newOrModify[aData;aSQLOptions]
@@ -377,9 +377,9 @@ pfClass
   ^pfAssert:isTrue(def $self._primaryKey){Не определен первичный ключ для таблицы ${TABLE_NAME}.}
   ^pfAssert:isTrue(def $aPrimaryKeyValue){Не задано значение первичного ключа}
   $result[^self.CSQL.void{
-    ^self.asContext[update]{
+    ^self.asContext[update]{^self.__normalizeWhitespaces{
       delete from ^if(def $self.SCHEMA){^self._builder.quoteIdentifier[$self.SCHEMA].}^self._builder.quoteIdentifier[$self.TABLE_NAME] where $self.PRIMARYKEY = ^self.fieldValue[$self._fields.[$self._primaryKey];$aPrimaryKeyValue]
-    }
+    }}
   }]
 
 @shift[aPrimaryKeyValue;aFieldName;aValue]
@@ -392,11 +392,11 @@ pfClass
   $aValue(^if(def $aValue){$aValue}{1})
   $lFieldName[^self._builder.sqlFieldName[$self._fields.[$aFieldName]]]]
   $result[^self.CSQL.void{
-    ^self.asContext[update]{
+    ^self.asContext[update]{^self.__normalizeWhitespaces{
       update ^if(def $self.SCHEMA){^self._builder.quoteIdentifier[$self.SCHEMA].}^self._builder.quoteIdentifier[$self.TABLE_NAME]
          set $lFieldName = $lFieldName ^if($aValue < 0){-}{+} ^self.fieldValue[$self._fields.[$aFieldName]](^math:abs($aValue))
        where $self.PRIMARYKEY = ^self.fieldValue[$self._fields.[$self._primaryKey];$aPrimaryKeyValue]
-    }
+    }}
   }]
 
 #----- Групповые операции с данными -----
@@ -406,7 +406,7 @@ pfClass
 ## Условие обновления берем из _allWhere
   ^self.cleanMethodArgument[aOptions;aData]
   $result[^self.CSQL.void{
-    ^self.asContext[update]{
+    ^self.asContext[update]{^self.__normalizeWhitespaces{
       ^self._builder.updateStatement[$self.TABLE_NAME;$self._fields;$aData][
         ^self._allWhere[$aOptions]
       ][
@@ -416,7 +416,7 @@ pfClass
         $.emptySetExpression[]
         $.fieldValueFunction[$self.fieldValue]
       ]
-    }
+    }}
   }]
 
 @deleteAll[aOptions]
@@ -424,10 +424,10 @@ pfClass
 ## Условие для удаления берем из self._allWhere
   ^self.cleanMethodArgument[]
   $result[^self.CSQL.void{
-    ^self.asContext[update]{
+    ^self.asContext[update]{^self.__normalizeWhitespaces{
       delete from ^if(def $self.SCHEMA){^self._builder.quoteIdentifier[$self.SCHEMA].}^self._builder.quoteIdentifier[$self.TABLE_NAME]
        where ^self._allWhere[$aOptions]
-    }
+    }}
   }]
 
 #----- Private -----
@@ -698,6 +698,13 @@ pfClass
   }
   $result[^result.foreach[_;v]{$v.expr^if(def $v.alias){ as ^self._builder.quoteIdentifier[$v.alias]}}[, ]]
 
+@__normalizeWhitespaces[aQuery;aOptions]
+  $result[^untaint[optimized-as-is]{^untaint[sql]{$aQuery}}]
+
+  ^if(^aOptions.apply.bool(false)){
+    $result[^apply-taint[$result]]
+  }
+
 #----------------------------------------------------------------------------------------------------------------------
 
 @CLASS
@@ -918,6 +925,7 @@ pfClass
   ^self.cleanMethodArgument[aData;aOptions]
   $lOpts[^if(^aOptions.ignore.bool(false)){ignore}]
   $result[insert $lOpts into ^if(def $aOptions.schema){${self._quote}${aOptions.schema}${self._quote}.}${self._quote}${aTableName}${self._quote} (^self.fieldsList[$aFields;^hash::create[$aOptions] $.data[$aData]]) values (^self.setExpression[$aFields;$aData;^hash::create[$aOptions] $.skipNames(true)])]
+
 
 @updateStatement[aTableName;aFields;aData;aWhere;aOptions]
 ## Строит выражение для update
