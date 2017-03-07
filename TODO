@@ -19,6 +19,11 @@ Documentation:
     ☐ Шаблоны
 
 SQL table:
+    ☐ Сделать получение запроса хешем не таблиц, а хешем хешей.
+        Если есть PK, то это не проблема.
+        Вместо allAsTable сделать $.as[table|hash|hash_table]. Дефолтное — hash
+    ☐ Добавить менеджеры в стиле Джанго
+        ^users.admins.visible.all[]
     ☐ Доработать метод pfSQLTable.newOrModify для поддержки составных ключей:
         ^self.uniqueKey[accountID, period, paymentDate]
         ^self.uniqueKey[$.accountID[] $.period[] $.paymentDate[]]
