@@ -286,7 +286,7 @@ pfClass
 
 @_makeQueryKey[aQuery;aType;aSQLOptions]
 ## Формирует ключ для запроса
-   $result[auto-${aType}-^math:sha1[$aQuery]]
+   $result[auto-${aType}-^math:sha1[^taint[as-is][$aQuery]]]
    ^if(def $aSQLOptions.limit){$result[${result}-l$aSQLOptions.limit]}
    ^if(def $aSQLOptions.offset){$result[${result}-o$aSQLOptions.offset]}
 
