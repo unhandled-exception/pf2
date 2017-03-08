@@ -23,6 +23,7 @@ SQL Table  test!
     $t[^users.orderByName.all[]]
     $t[^users.vasya10.all[]]
     $t[^users.vasya10.visible.orderByName.all[]]
+    $t[^users.vasya10.visible.orderByName.all[$.isActive[any] $.limit(5) $.orderBy[uuid]]]
 
     ^drop_tables[$db]
   }{}{
@@ -81,3 +82,10 @@ pfSQLTable
   ^self.addScope[orderByName;$.orderBy[$.name[asc]]]
   ^self.addScope[visible;$.isActive(true)]
   ^self.addScope[vasya10;$.[name like][%vasya%] $.limit(10)]
+
+@_allWhere[aOptions]
+  $aOptions[^hash::create[$aOptions]]
+  ^if($aOptions.isActive is string && $aOptions.isActive eq "any"){
+    ^aOptions.delete[isActive]
+  }
+  $result[^BASE:_allWhere[$aOptions]]
