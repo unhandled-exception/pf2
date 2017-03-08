@@ -217,7 +217,7 @@ pfClass
   ^if(^self._scopes.contains[$aField]){
     $lScope[^hash::create[$self._defaultScope]]
     ^lScope.add[$self._scopes.[$aField]]
-    $result[^pfSQLTableScope::create[$self;$lScope]]
+    $result[^pfSQLTableScope::create[$self;$lScope;$.name[$aField]]]
   }{
     $lField[^if(^aField.pos[f_] == 0){^aField.mid(2)}{$aField}]
     ^if($lField eq "PRIMARYKEY"){
@@ -731,8 +731,10 @@ pfSQLTableScope
 locals
 
 @create[aModel;aScope;aOptions]
+## aOptions.name - имя скоупа, которое использовали в модели
   $self.__model__[$aModel]
   $self.__scope__[$aScope]
+  $self.__name__[$aOptions.name]
   ^reflection:copy[$aModel;$self]
   ^reflection:mixin[$aModel]
   $self._defaultScope[$aScope]
