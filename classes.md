@@ -54,9 +54,6 @@
 ### [./lib/sql/connection.p](./lib/sql/connection.p)
 * pfSQLConnection
 
-### [./lib/sql/models/generators/model_controller_generators.p](./lib/sql/models/generators/model_controller_generators.p)
-* pfTableControllerGenerator
-
 ### [./lib/sql/models/generators/model_form_generators.p](./lib/sql/models/generators/model_form_generators.p)
 * pfTableFormGenerator
 * pfTableFormGeneratorBootstrap2Widgets
@@ -84,6 +81,7 @@
 
 ### [./lib/sql/models/sql_table.p](./lib/sql/models/sql_table.p)
 * pfSQLTable
+* pfSQLTableScope
 * pfSQLBuilder
 
 ### [./lib/sql/models/structs.p](./lib/sql/models/structs.p)
