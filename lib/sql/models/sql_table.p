@@ -29,6 +29,7 @@ pfClass
 ##   aOptions.skipOnUpdate[$.field(bool)]
   ^self.cleanMethodArgument[]
   ^BASE:create[$aOptions]
+  $self.__options[^hash::create[$aOptions]]
 
   $self._csql[^if(def $aOptions.sql){$aOptions.sql}{$self._PFSQLTABLE_CSQL}]
   ^pfAssert:isTrue(def $self._csql){Не задан объект для работы с SQL-сервером.}
@@ -59,7 +60,15 @@ pfClass
   $self._defaultOrderBy[]
   $self._defaultGroupBy[]
 
+  $self._scopes[^hash::create[]]
+  $self._defaultScope[^hash::create[]]
+
   $self.__context[]
+
+@__copy__[]
+## Копирующий конструктор
+## Возвращает копию объекта, какой она была бы после вызова create
+  $result[^reflection:create[$self.CLASS_NAME;create;$self._tableName;$self.__options]]
 
 #----- Статические методы и конструктор -----
 
@@ -179,6 +188,11 @@ pfClass
     }
   }
 
+@addScope[aName;aConditions]
+  $result[]
+  $self._scopes.[$aName][^hash::create[$aConditions]]
+
+
 #----- Свойства -----
 
 @GET_SCHEMA[]
@@ -201,15 +215,22 @@ pfClass
   $result[$self._fields]
 
 @GET_DEFAULT[aField]
+# Если нам пришло имя скоупа, то возвращаем таблицу со скоупом
 # Если нам пришло имя поля, то возвращаем имя поля в БД
 # Для сложных случаев поддерживаем альтернативный синтаксис f_fieldName.
   $result[]
-  $lField[^if(^aField.pos[f_] == 0){^aField.mid(2)}{$aField}]
-  ^if($lField eq "PRIMARYKEY"){
-    $lField[$self._primaryKey]
-  }
-  ^if(^self._fields.contains[$lField]){
-    $result[^self.sqlFieldName[$lField]]
+  ^if(^self._scopes.contains[$aField]){
+    $result[^self.__copy__[]]
+    $result._defaultScope[^hash::create[$self._defaultScope]]
+    ^result._defaultScope.add[$self._scopes.[$aField]]
+  }{
+    $lField[^if(^aField.pos[f_] == 0){^aField.mid(2)}{$aField}]
+    ^if($lField eq "PRIMARYKEY"){
+      $lField[$self._primaryKey]
+    }
+    ^if(^self._fields.contains[$lField]){
+      $result[^self.sqlFieldName[$lField]]
+    }
   }
 
 @TABLE_AS[aAlias]
@@ -578,12 +599,14 @@ pfClass
   $result[^self.sqlFieldName[$lField.name] ^if($aOperator eq "not" || $aOperator eq "!in"){not in}{in} (^self.valuesArray[$lField.name;$aValue;$.column[$lColumn]])]
 
 @_selectExpression[aFields;aResultType;aOptions;aSQLOptions]
+  $aOptions[^hash::create[$aOptions]]
+  $aOptions[^aOptions.union[$self._defaultScope]]
+
   ^self.asContext[where]{
     $lGroup[^self._allGroup[$aOptions]]
     $lOrder[^self._allOrder[$aOptions]]
     $lHaving[^if(^aOptions.contains[having]){$aOptions.having}{^self._allHaving[$aOptions]}]
   }
-
   $result[
        select $aFields
          from ^if(def $self.SCHEMA){^self._builder.quoteIdentifier[$self.SCHEMA].}^self._builder.quoteIdentifier[$self.TABLE_NAME] as ^self._builder.quoteIdentifier[$self.TABLE_ALIAS]

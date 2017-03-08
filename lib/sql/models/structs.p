@@ -50,11 +50,16 @@ pfSQLTable
 ## aOptions.tableName
 ## aOptions.ignoreChainMixin(false)
   ^BASE:create[$aOptions.tableName;$aOptions]
+  $self.__options[^hash::create[$aOptions]]
   ^if(!^aOptions.ignoreChainMixin.bool(false)){
     ^pfModelChainMixin:mixin[$self;^hash::create[$aOptions]
       $.ignoreSQLFields(true)
     ]
   }
+
+@__copy__[]
+## Возвращает копию объекта
+  $result[^reflection:create[$self.CLASS_NAME;create;$self.__options]]
 
 #--------------------------------------------------------------------------------------------------
 

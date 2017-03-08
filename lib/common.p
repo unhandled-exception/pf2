@@ -199,7 +199,7 @@ pfMixin
 
   ^if(^aOptions.exportModulesProperty.bool(false)){
     ^process[$aThis]{@GET_MODULES[]
-      ^$result[^$${self.mixinName}.modules]
+      ^$result[^$self.${self.mixinName}.modules]
     }
   }
 
@@ -221,7 +221,7 @@ pfMixin
   ]
 
   ^process[$this]{@GET_${aName}[]
-    ^$result[^^${self.mixinName}.getModule[$aName]]
+    ^$result[^^self.${self.mixinName}.getModule[$aName]]
   }
 
 @getModule[aName]
