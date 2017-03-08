@@ -65,11 +65,6 @@ pfClass
 
   $self.__context[]
 
-@__copy__[]
-## Копирующий конструктор
-## Возвращает копию объекта, какой она была бы после вызова create
-  $result[^reflection:create[$self.CLASS_NAME;create;$self._tableName;$self.__options]]
-
 #----- Статические методы и конструктор -----
 
 @auto[]
@@ -220,9 +215,9 @@ pfClass
 # Для сложных случаев поддерживаем альтернативный синтаксис f_fieldName.
   $result[]
   ^if(^self._scopes.contains[$aField]){
-    $result[^self.__copy__[]]
-    $result._defaultScope[^hash::create[$self._defaultScope]]
-    ^result._defaultScope.add[$self._scopes.[$aField]]
+    $lScope[^hash::create[$self._defaultScope]]
+    ^lScope.add[$self._scopes.[$aField]]
+    $result[^pfSQLTableScope::create[$self;$lScope]]
   }{
     $lField[^if(^aField.pos[f_] == 0){^aField.mid(2)}{$aField}]
     ^if($lField eq "PRIMARYKEY"){
@@ -267,7 +262,6 @@ pfClass
 ##   aOptions.join[] — выражение для join. Заменяет результат вызова ^self._allJoin[].
 ## aOptions.limit
 ## aOptions.offset
-## aOptions.primaryKeyColumn[:primaryKey] — имя колонки для первичного ключа
 ## Для поддержки специфики СУБД:
 ##   aSQLOptions.tail — концовка запроса
 ##   aSQLOptions.selectОptions — модификатор после select (distinct, sql_no_cache и т.п.)
@@ -727,6 +721,21 @@ pfClass
   ^if(^aOptions.apply.bool(false)){
     $result[^apply-taint[$result]]
   }
+
+#----------------------------------------------------------------------------------------------------------------------
+
+@CLASS
+pfSQLTableScope
+
+@OPTIONS
+locals
+
+@create[aModel;aScope;aOptions]
+  $self.__model__[$aModel]
+  $self.__scope__[$aScope]
+  ^reflection:copy[$aModel;$self]
+  ^reflection:mixin[$aModel]
+  $self._defaultScope[$aScope]
 
 #----------------------------------------------------------------------------------------------------------------------
 

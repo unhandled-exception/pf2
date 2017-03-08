@@ -10,7 +10,7 @@ SQL Table  test!
   ^try{
     $db[^pfSQLConnection::create[sqlite://${dbFile};
       $.enableQueriesLog(true)
-      $.enableMemoryCache(true)
+#       $.enableMemoryCache(true)
     ]]
     Type: $db.serverType
     ^create_tables[$db]
