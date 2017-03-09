@@ -79,10 +79,10 @@ pfClass
   $self._PFSQLTABLE_COMPARSION_REGEX[^regex::create[^^\s*(\S+)(?:\s+(\S+))?][]]
   $self._PFSQLTABLE_AGR_REGEX[^regex::create[^^\s*(([^^\s(]+)(.*?))\s*(?:as\s+([^^\s\)]+))?\s*^$][i]]
   $self._PFSQLTABLE_LOGICAL[
-    $.OR[or]
-    $.AND[and]
-    $.NOT[and]
-    $._default[and]
+    $.OR[OR]
+    $.AND[AND]
+    $.NOT[AND]
+    $._default[AND]
   ]
 
 @static:assignServer[aSQLConnection]
@@ -211,7 +211,7 @@ pfClass
   $result[$self._tableAlias]
 
 @GET_TABLE_EXPRESSION[]
-  $result[^if(def $self.SCHEMA){^self._builder.quoteIdentifier[$self.SCHEMA].}^self._builder.quoteIdentifier[$self.TABLE_NAME] as ^self._builder.quoteIdentifier[$self.TABLE_ALIAS]]
+  $result[^if(def $self.SCHEMA){^self._builder.quoteIdentifier[$self.SCHEMA].}^self._builder.quoteIdentifier[$self.TABLE_NAME] AS ^self._builder.quoteIdentifier[$self.TABLE_ALIAS]]
 
 @GET_FIELDS[]
   $result[$self._fields]
@@ -236,7 +236,7 @@ pfClass
   }
 
 @TABLE_AS[aAlias]
-  $result[^if(def $self.SCHEMA){^self._builder.quoteIdentifier[$self.SCHEMA].}^self._builder.quoteIdentifier[$self.TABLE_NAME]^if(def $aAlias){ as ^self._builder.quoteIdentifier[$aAlias]}]
+  $result[^if(def $self.SCHEMA){^self._builder.quoteIdentifier[$self.SCHEMA].}^self._builder.quoteIdentifier[$self.TABLE_NAME]^if(def $aAlias){ AS ^self._builder.quoteIdentifier[$aAlias]}]
 
 #----- Выборки -----
 
@@ -321,7 +321,7 @@ pfClass
 # на поля выборки, которых нет при вызове select count(*).
 # Если нужны сложные варианты используйте aggregate.
   $aConds[^hash::create[$aConds] $.orderBy[] $.having[]]
-  $lExpression[^self._selectExpression[count(*)][;$aConds;$aSQLOptions]]
+  $lExpression[^self._selectExpression[COUNT(*)][;$aConds;$aSQLOptions]]
   $result[^self.CSQL.int{^self.__normalizeWhitespaces{$lExpression}}[][$aSQLOptions]]
 
 @aggregate[*aConds]
@@ -400,7 +400,7 @@ pfClass
   ^pfAssert:isTrue(def $aPrimaryKeyValue){Не задано значение первичного ключа}
   $result[^self.CSQL.void{
     ^self.asContext[update]{^self.__normalizeWhitespaces{
-      delete from ^if(def $self.SCHEMA){^self._builder.quoteIdentifier[$self.SCHEMA].}^self._builder.quoteIdentifier[$self.TABLE_NAME] where $self.PRIMARYKEY = ^self.fieldValue[$self._fields.[$self._primaryKey];$aPrimaryKeyValue]
+      DELETE FROM ^if(def $self.SCHEMA){^self._builder.quoteIdentifier[$self.SCHEMA].}^self._builder.quoteIdentifier[$self.TABLE_NAME] WHERE $self.PRIMARYKEY = ^self.fieldValue[$self._fields.[$self._primaryKey];$aPrimaryKeyValue]
     }}
   }]
 
@@ -415,9 +415,9 @@ pfClass
   $lFieldName[^self._builder.sqlFieldName[$self._fields.[$aFieldName]]]]
   $result[^self.CSQL.void{
     ^self.asContext[update]{^self.__normalizeWhitespaces{
-      update ^if(def $self.SCHEMA){^self._builder.quoteIdentifier[$self.SCHEMA].}^self._builder.quoteIdentifier[$self.TABLE_NAME]
-         set $lFieldName = $lFieldName ^if($aValue < 0){-}{+} ^self.fieldValue[$self._fields.[$aFieldName]](^math:abs($aValue))
-       where $self.PRIMARYKEY = ^self.fieldValue[$self._fields.[$self._primaryKey];$aPrimaryKeyValue]
+      UPDATE ^if(def $self.SCHEMA){^self._builder.quoteIdentifier[$self.SCHEMA].}^self._builder.quoteIdentifier[$self.TABLE_NAME]
+         SET $lFieldName = $lFieldName ^if($aValue < 0){-}{+} ^self.fieldValue[$self._fields.[$aFieldName]](^math:abs($aValue))
+       WHERE $self.PRIMARYKEY = ^self.fieldValue[$self._fields.[$self._primaryKey];$aPrimaryKeyValue]
     }}
   }]
 
@@ -447,8 +447,8 @@ pfClass
   ^self.cleanMethodArgument[]
   $result[^self.CSQL.void{
     ^self.asContext[update]{^self.__normalizeWhitespaces{
-      delete from ^if(def $self.SCHEMA){^self._builder.quoteIdentifier[$self.SCHEMA].}^self._builder.quoteIdentifier[$self.TABLE_NAME]
-       where ^self._allWhere[$aOptions]
+      DELETE FROM ^if(def $self.SCHEMA){^self._builder.quoteIdentifier[$self.SCHEMA].}^self._builder.quoteIdentifier[$self.TABLE_NAME]
+       WHERE ^self._allWhere[$aOptions]
     }}
   }]
 
@@ -476,7 +476,7 @@ pfClass
 ## Дополнительное выражение для where
 ## (выражение для полей формируется в _fieldsWhere)
   $lConds[^self._buildConditions[$aOptions]]
-  $result[^if(^aOptions.contains[where]){$aOptions.where}{1=1}^if(def $lConds){ and $lConds}]
+  $result[^if(^aOptions.contains[where]){$aOptions.where}{1=1}^if(def $lConds){ AND $lConds}]
 
 @_allHaving[aOptions]
   $result[]
@@ -573,9 +573,9 @@ pfClass
       ^if($match.2 eq "range" || $match.2 eq "!range"){
 #       $.[field range][$.from $.to]
 #       $.[field !range][$.from $.to]
-        $lRes.[^lRes._count[]][^if(^match.2.left(1) eq "!"){not }^(^self.sqlFieldName[$match.1] between ^self.fieldValue[$lField;$v.from] and ^self.fieldValue[$lField;$v.to])]
+        $lRes.[^lRes._count[]][^if(^match.2.left(1) eq "!"){NOT }^(^self.sqlFieldName[$match.1] BETWEEN ^self.fieldValue[$lField;$v.from] AND ^self.fieldValue[$lField;$v.to])]
       }(^self._fields.contains[$match.1] && $match.2 eq "is"){
-        $lRes.[^lRes._count[]][^self.sqlFieldName[$match.1] is ^if(!def $v || $v eq "null"){null}{not null}]
+        $lRes.[^lRes._count[]][^self.sqlFieldName[$match.1] IS ^if(!def $v || $v eq "null"){NULL}{NOT NULL}]
       }(^self._plurals.contains[$match.1]
         || (^self._fields.contains[$match.1] && ($match.2 eq "in" || $match.2 eq "!in"))
        ){
@@ -592,12 +592,12 @@ pfClass
       }
     }
   }
-  $result[^if($lRes){^if($aOP eq "NOT"){not} (^lRes.foreach[_;v]{$v}[ $self._PFSQLTABLE_LOGICAL.[$aOP] ])}]
+  $result[^if($lRes){^if($aOP eq "NOT"){NOT} (^lRes.foreach[_;v]{$v}[ $self._PFSQLTABLE_LOGICAL.[$aOP] ])}]
 
 @_condArrayField[aConds;aFieldName;aOperator;aValue]
   $lField[^if(^self._plurals.contains[$aFieldName]){$self._plurals.[$aFieldName]}{$self._fields.[$aFieldName]}]
   $lColumn[^if(^aConds.contains[${aFieldName}Column]){$aConds.[${aFieldName}Column]}{$lField.name}]
-  $result[^self.sqlFieldName[$lField.name] ^if($aOperator eq "not" || $aOperator eq "!in"){not in}{in} (^self.valuesArray[$lField.name;$aValue;$.column[$lColumn]])]
+  $result[^self.sqlFieldName[$lField.name] ^if($aOperator eq "not" || $aOperator eq "!in"){NOT IN}{IN} (^self.valuesArray[$lField.name;$aValue;$.column[$lColumn]])]
 
 @_selectExpression[aFields;aResultType;aOptions;aSQLOptions]
   $aOptions[^hash::create[$aOptions]]
@@ -609,26 +609,26 @@ pfClass
     $lHaving[^if(^aOptions.contains[having]){$aOptions.having}{^self._allHaving[$aOptions]}]
   }
   $result[
-       select $aFields
-         from ^if(def $self.SCHEMA){^self._builder.quoteIdentifier[$self.SCHEMA].}^self._builder.quoteIdentifier[$self.TABLE_NAME] as ^self._builder.quoteIdentifier[$self.TABLE_ALIAS]
+       SELECT $aFields
+         FROM ^if(def $self.SCHEMA){^self._builder.quoteIdentifier[$self.SCHEMA].}^self._builder.quoteIdentifier[$self.TABLE_NAME] AS ^self._builder.quoteIdentifier[$self.TABLE_ALIAS]
               ^self.asContext[where]{^if(^aOptions.contains[join]){$aOptions.join}{^self._allJoin[$aOptions]}}
-        where ^self.asContext[where]{^self._allWhere[$aOptions]}
+        WHERE ^self.asContext[where]{^self._allWhere[$aOptions]}
       ^if(def $lGroup){
-        group by $lGroup
+        GROUP BY $lGroup
       }
       ^if(def $lHaving){
-       having $lHaving
+       HAVING $lHaving
       }
       ^if(def $lOrder){
-        order by $lOrder
+        ORDER BY $lOrder
       }
 #     Строим выражение для limit и offset.
       $lLimit(^aOptions.limit.int(-1))
       $lOffset(^aOptions.offset.int(-1))
       ^if($lLimit >= 0 || $lOffset >= 0){
-        limit ^if($lLimit >=0){$lLimit}{18446744073709551615}
+        LIMIT ^if($lLimit >=0){$lLimit}{18446744073709551615}
         ^if($lOffset >= 0){
-          offset $lOffset
+          OFFSET $lOffset
         }
       }
       ^if(def $aSQLOptions.tail){$aSQLOptions.tail}
@@ -666,7 +666,7 @@ pfClass
        ^if($aResultType eq "hash"){
          ^pfAssert:isTrue(def $self._primaryKey){Не определен первичный ключ для таблицы ${TABLE_NAME}. Выборку можно делать только в таблицу.}
 #         Для хеша добавляем еще одно поле с первичным ключем
-          $self.PRIMARYKEY as ^self._builder.quoteIdentifier[_ORM_HASH_KEY_],
+          $self.PRIMARYKEY AS ^self._builder.quoteIdentifier[_ORM_HASH_KEY_],
        }
        $lJoinFields[^self._allJoinFields[$aOptions]]
        ^self._allFields[$aOptions;$aSQLOptions]^if(def $lJoinFields){, $lJoinFields}
@@ -713,14 +713,14 @@ pfClass
           $lField.expr[^self._allFields[]]
         }{
            $lSplit[^lField.args.split[,;lv]]
-           $lField.expr[^lSplit.menu{^lSplit.piece.match[$self._PFSQLTABLE_AGR_REGEX][]{^if(def $match.1){^self.sqlFieldName[$match.1] as ^self._builder.quoteIdentifier[^if(def $match.4){$match.4}{$match.1}]}}}[, ]]
+           $lField.expr[^lSplit.menu{^lSplit.piece.match[$self._PFSQLTABLE_AGR_REGEX][]{^if(def $match.1){^self.sqlFieldName[$match.1] AS ^self._builder.quoteIdentifier[^if(def $match.4){$match.4}{$match.1}]}}}[, ]]
            $lField.alias[]
          }
       }
       $result.[^result._count[]][$lField]
     }
   }
-  $result[^result.foreach[_;v]{$v.expr^if(def $v.alias){ as ^self._builder.quoteIdentifier[$v.alias]}}[, ]]
+  $result[^result.foreach[_;v]{$v.expr^if(def $v.alias){ AS ^self._builder.quoteIdentifier[$v.alias]}}[, ]]
 
 @__normalizeWhitespaces[aQuery;aOptions]
   $result[^untaint[optimized-as-is]{^untaint[sql]{$aQuery}}]
@@ -855,9 +855,9 @@ pfClass
   ^aFields.foreach[k;v]{
     ^if(^aOptions.skipFields.contains[$k]){^continue[]}
     ^if(^v.contains[expression]){
-      $result.[^result._count[]][$v.expression as ${self._quote}${k}${self._quote}]]
+      $result.[^result._count[]][$v.expression AS ${self._quote}${k}${self._quote}]]
     }{
-       $result.[^result._count[]][^self.sqlFieldName[$v;$lTableAlias] as ${self._quote}${k}${self._quote}]]
+       $result.[^result._count[]][^self.sqlFieldName[$v;$lTableAlias] AS ${self._quote}${k}${self._quote}]]
      }
   }
   $result[^result.foreach[_;v]{$v}[, ]]
@@ -914,15 +914,15 @@ pfClass
       ^case[now;auto_now]{^if(def $aValue){'^if($aValue is date){^aValue.sql-string[]}{^taint[$aValue]}'}{$lNow[^date::now[]]'^lNow.sql-string[]'}}
       ^case[curtime;auto_curtime]{'^if(def $aValue){^if($aValue is date){^aValue.sql-string[time]}{^taint[$aValue]}}{$lNow[^date::now[]]^lNow.sql-string[time]}'}
       ^case[curdate;auto_curdate]{'^if(def $aValue){^if($aValue is date){^aValue.sql-string[date]}{^taint[$aValue]}}{$lNow[^date::now[]]^lNow.sql-string[date]}'}
-      ^case[datetime]{^if(def $aValue){'^if($aValue is date){^aValue.sql-string[]}{^taint[$aValue]}'}{null}}
-      ^case[date]{^if(def $aValue){'^if($aValue is date){^aValue.sql-string[date]}{^taint[$aValue]}'}{null}}
-      ^case[time]{^if(def $aValue){'^if($aValue is date){^aValue.sql-string[time]}{^taint[$aValue]}'}{null}}
-      ^case[json]{^if(def $aValue){'^taint[^json:string[$aValue]]'}{null}}
-      ^case[null]{^if(def $aValue){'^taint[$aValue]'}{null}}
-      ^case[int_null]{^if(def $aValue){$lVal($aValue)^lVal.format[%d]}{null}}
-      ^case[uint_null]{^if(def $aValue){$lVal($aValue)^lVal.format[%u]}{null}}
+      ^case[datetime]{^if(def $aValue){'^if($aValue is date){^aValue.sql-string[]}{^taint[$aValue]}'}{NULL}}
+      ^case[date]{^if(def $aValue){'^if($aValue is date){^aValue.sql-string[date]}{^taint[$aValue]}'}{NULL}}
+      ^case[time]{^if(def $aValue){'^if($aValue is date){^aValue.sql-string[time]}{^taint[$aValue]}'}{NULL}}
+      ^case[json]{^if(def $aValue){'^taint[^json:string[$aValue]]'}{NULL}}
+      ^case[null]{^if(def $aValue){'^taint[$aValue]'}{NULL}}
+      ^case[int_null]{^if(def $aValue){$lVal($aValue)^lVal.format[%d]}{NULL}}
+      ^case[uint_null]{^if(def $aValue){$lVal($aValue)^lVal.format[%u]}{NULL}}
       ^case[uid;auto_uid;uuid;uuid_auto]{'^taint[^if(def $aValue){$aValue}{$lUUID[^math:uuid[]]^lUUID.lower[]}]'}
-      ^case[inet_ip]{^self.unsafe{^inet:aton[$aValue]}{null}}
+      ^case[inet_ip]{^self.unsafe{^inet:aton[$aValue]}{NULL}}
       ^case[first_upper]{'^taint[^if(def $aValue){^aValue.match[$self._PFSQLBUILDER_PROCESSOR_FIRST_UPPER][]{^match.1.upper[]$match.2}}(def $aField.default){$aField.default}]'}
       ^case[hash_md5]{'^taint[^if(def $aValue){^math:md5[$aValue]}]'}
       ^case[lower_trim]{$lVal[^aValue.lower[]]'^taint[^lVal.trim[both]]'}
@@ -982,7 +982,7 @@ pfClass
   ^pfAssert:isTrue(def $aFields){Не задан список полей.}
   ^self.cleanMethodArgument[aData;aOptions]
   $lOpts[^if(^aOptions.ignore.bool(false)){ignore}]
-  $result[insert $lOpts into ^if(def $aOptions.schema){${self._quote}${aOptions.schema}${self._quote}.}${self._quote}${aTableName}${self._quote} (^self.fieldsList[$aFields;^hash::create[$aOptions] $.data[$aData]]) values (^self.setExpression[$aFields;$aData;^hash::create[$aOptions] $.skipNames(true)])]
+  $result[INSERT $lOpts INTO ^if(def $aOptions.schema){${self._quote}${aOptions.schema}${self._quote}.}${self._quote}${aTableName}${self._quote} (^self.fieldsList[$aFields;^hash::create[$aOptions] $.data[$aData]]) VALUES (^self.setExpression[$aFields;$aData;^hash::create[$aOptions] $.skipNames(true)])]
 
 
 @updateStatement[aTableName;aFields;aData;aWhere;aOptions]
@@ -1004,4 +1004,4 @@ pfClass
 
   $lSetExpression[^self.setExpression[$aFields;$aData;$aOptions]]
   ^pfAssert:isTrue(def $lSetExpression || (!def $lSetExpression && def $aOptions.emptySetExpression)){Необходимо задать выражение для пустого update set.}
-  $result[update ^if(def $aOptions.schema){${self._quote}${aOptions.schema}${self._quote}.}${self._quote}${aTableName}${self._quote} set ^if(def $lSetExpression){$lSetExpression}{$aOptions.emptySetExpression} where $aWhere]
+  $result[UPDATE ^if(def $aOptions.schema){${self._quote}${aOptions.schema}${self._quote}.}${self._quote}${aTableName}${self._quote} SET ^if(def $lSetExpression){$lSetExpression}{$aOptions.emptySetExpression} WHERE $aWhere]

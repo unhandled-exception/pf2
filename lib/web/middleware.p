@@ -223,7 +223,7 @@ pfMiddleware
          <li value="^eval($number+1)" style="margin-bottom: 0.5em^; ^if(def $it.exception){color: #94333C}">
            (^it.time.format[%.6f] sec, $it.results rec, $it.memory KB, $it.type)
            ^if(def $it.exception){<span>[^taint[$it.exception.type — $it.exception.comment]]</span>}
-           <pre class="sql-log-query"><code class="sql">^it.query.trim[both]
+           <pre class="sql-log-query"><code class="sql">^taint[html][^it.query.trim[both]]
            ^if(def $it.limit){limit $it.limit} ^if(def $it.offset){offset $it.offset}
            </code></pre>
          </li>
