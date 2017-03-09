@@ -68,6 +68,9 @@ pfClass
 
   $self.__context[]
 
+# Делаем алиас на aggregate, чтобы писать кастомные запросы через ^model.select[...]
+  ^self.alias[select;$self.aggregate]
+
 #----- Статические методы и конструктор -----
 
 @auto[]
@@ -731,6 +734,13 @@ pfClass
 @CLASS
 pfSQLTableScope
 
+## Класс-копия модели с новым _defaultScope.
+## Используем для вызова скоупов в pfSQLTable.
+
+## Притворяется оригинальной моделью. Содержит в себе все поля и методы модели.
+## Механизм похож на наследование. Можно переопределить методы как в наследнике,
+## но для вызова «базового» класса надо писать ^__model__.method[]
+
 @OPTIONS
 locals
 
@@ -743,12 +753,15 @@ locals
   ^reflection:mixin[$aModel]
   $self._defaultScope[$aScope]
 
-# Делаем копии небезопасных полей из модели
+# Делаем копии небезопасных полей и алиасов из модели
+# В наследниках обязательно делайте копии хешиков и алиасов в конструкторе,
+# чтобы не повредить оригинальный объект.
   $self._fields[^reflection:fields_reference[$self._fields]]
   $self._plurals[^reflection:fields_reference[$self._plurals]]
   $self._skipOnInsert[^reflection:fields_reference[$self._skipOnInsert]]
   $self._skipOnUpdate[^reflection:fields_reference[$self._skipOnUpdate]]
   $self._scopes[^reflection:fields_reference[$self._scopes]]
+  ^self.alias[select;$self.aggregate]
 
 #----------------------------------------------------------------------------------------------------------------------
 

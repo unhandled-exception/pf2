@@ -68,7 +68,7 @@ locals
 ## Создает алиас aAliasName для метода aMethod.
 ## aMethod — ссылка на функцию.
   ^pfAssert:isTrue($aMethod is junction)[Переменная aMethod должна содержать ссылку на функцию.]
-  $self.[$aName][$aMethod]
+  $self.[$aAliasName][$aMethod]
   $result[]
 
 @unsafe[aCode;aCatchCode]
