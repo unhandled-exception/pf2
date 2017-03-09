@@ -50,6 +50,7 @@ pfSQLTable
 ## aOptions.tableName
 ## aOptions.ignoreChainMixin(false)
   ^BASE:create[$aOptions.tableName;$aOptions]
+  $self.__options[^hash::create[$aOptions]]
   ^if(!^aOptions.ignoreChainMixin.bool(false)){
     ^pfModelChainMixin:mixin[$self;^hash::create[$aOptions]
       $.ignoreSQLFields(true)

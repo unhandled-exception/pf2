@@ -29,6 +29,7 @@ pfClass
 ##   aOptions.skipOnUpdate[$.field(bool)]
   ^self.cleanMethodArgument[]
   ^BASE:create[$aOptions]
+  $self.__options[^hash::create[$aOptions]]
 
   $self._csql[^if(def $aOptions.sql){$aOptions.sql}{$self._PFSQLTABLE_CSQL}]
   ^pfAssert:isTrue(def $self._csql){Не задан объект для работы с SQL-сервером.}
@@ -58,6 +59,12 @@ pfClass
 
   $self._defaultOrderBy[]
   $self._defaultGroupBy[]
+
+# Скоупы. Наборы параметров, которые ограничивают Выборку
+# ^addScope[visible;$.isActive(true)]
+# ^model.visible.all[] аналогично ^model.all[$.isActive(true)]
+  $self._scopes[^hash::create[]]
+  $self._defaultScope[^hash::create[]]
 
   $self.__context[]
 
@@ -179,6 +186,12 @@ pfClass
     }
   }
 
+@addScope[aName;aConditions]
+## Добавлет новый скоуп в модель
+  $result[]
+  ^pfAssert:isTrue(def ^aName.trim[]){На задано имя скоупа.}
+  $self._scopes.[$aName][^hash::create[$aConditions]]
+
 #----- Свойства -----
 
 @GET_SCHEMA[]
@@ -201,15 +214,22 @@ pfClass
   $result[$self._fields]
 
 @GET_DEFAULT[aField]
+# Если нам пришло имя скоупа, то возвращаем таблицу со скоупом
 # Если нам пришло имя поля, то возвращаем имя поля в БД
 # Для сложных случаев поддерживаем альтернативный синтаксис f_fieldName.
   $result[]
-  $lField[^if(^aField.pos[f_] == 0){^aField.mid(2)}{$aField}]
-  ^if($lField eq "PRIMARYKEY"){
-    $lField[$self._primaryKey]
-  }
-  ^if(^self._fields.contains[$lField]){
-    $result[^self.sqlFieldName[$lField]]
+  ^if(^self._scopes.contains[$aField]){
+    $lScope[^hash::create[$self._defaultScope]]
+    ^lScope.add[$self._scopes.[$aField]]
+    $result[^pfSQLTableScope::create[$self;$lScope;$.name[$aField]]]
+  }{
+    $lField[^if(^aField.pos[f_] == 0){^aField.mid(2)}{$aField}]
+    ^if($lField eq "PRIMARYKEY"){
+      $lField[$self._primaryKey]
+    }
+    ^if(^self._fields.contains[$lField]){
+      $result[^self.sqlFieldName[$lField]]
+    }
   }
 
 @TABLE_AS[aAlias]
@@ -246,7 +266,6 @@ pfClass
 ##   aOptions.join[] — выражение для join. Заменяет результат вызова ^self._allJoin[].
 ## aOptions.limit
 ## aOptions.offset
-## aOptions.primaryKeyColumn[:primaryKey] — имя колонки для первичного ключа
 ## Для поддержки специфики СУБД:
 ##   aSQLOptions.tail — концовка запроса
 ##   aSQLOptions.selectОptions — модификатор после select (distinct, sql_no_cache и т.п.)
@@ -578,12 +597,14 @@ pfClass
   $result[^self.sqlFieldName[$lField.name] ^if($aOperator eq "not" || $aOperator eq "!in"){not in}{in} (^self.valuesArray[$lField.name;$aValue;$.column[$lColumn]])]
 
 @_selectExpression[aFields;aResultType;aOptions;aSQLOptions]
+  $aOptions[^hash::create[$aOptions]]
+  $aOptions[^aOptions.union[$self._defaultScope]]
+
   ^self.asContext[where]{
     $lGroup[^self._allGroup[$aOptions]]
     $lOrder[^self._allOrder[$aOptions]]
     $lHaving[^if(^aOptions.contains[having]){$aOptions.having}{^self._allHaving[$aOptions]}]
   }
-
   $result[
        select $aFields
          from ^if(def $self.SCHEMA){^self._builder.quoteIdentifier[$self.SCHEMA].}^self._builder.quoteIdentifier[$self.TABLE_NAME] as ^self._builder.quoteIdentifier[$self.TABLE_ALIAS]
@@ -704,6 +725,30 @@ pfClass
   ^if(^aOptions.apply.bool(false)){
     $result[^apply-taint[$result]]
   }
+
+#----------------------------------------------------------------------------------------------------------------------
+
+@CLASS
+pfSQLTableScope
+
+@OPTIONS
+locals
+
+@create[aModel;aScope;aOptions]
+## aOptions.name - имя скоупа, которое использовали в модели
+  $self.__model__[$aModel]
+  $self.__scope__[$aScope]
+  $self.__name__[$aOptions.name]
+  ^reflection:copy[$aModel;$self]
+  ^reflection:mixin[$aModel]
+  $self._defaultScope[$aScope]
+
+# Делаем копии небезопасных полей из модели
+  $self._fields[^reflection:fields_reference[$self._fields]]
+  $self._plurals[^reflection:fields_reference[$self._plurals]]
+  $self._skipOnInsert[^reflection:fields_reference[$self._skipOnInsert]]
+  $self._skipOnUpdate[^reflection:fields_reference[$self._skipOnUpdate]]
+  $self._scopes[^reflection:fields_reference[$self._scopes]]
 
 #----------------------------------------------------------------------------------------------------------------------
 
