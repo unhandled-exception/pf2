@@ -22,8 +22,6 @@ SQL table:
     ☐ Сделать получение запроса хешем не таблиц, а хешем хешей.
         Если есть PK, то это не проблема.
         Вместо allAsTable сделать $.as[table|hash|hash_table]. Дефолтное — hash
-    ☐ Добавить менеджеры в стиле Джанго
-        ^users.admins.visible.all[]
     ☐ Доработать метод pfSQLTable.newOrModify для поддержки составных ключей:
         ^self.uniqueKey[accountID, period, paymentDate]
         ^self.uniqueKey[$.accountID[] $.period[] $.paymentDate[]]
@@ -91,8 +89,6 @@ Middleware:
   ☐ Добавить трехзначную логику для secureCookie[true/false/auto]. Перенести в auth.
 
 Generators:
-  ✔ Убрать генератор контролеров из библиотеки @done (17-02-27 09:26)
-      Генератор надо писать с нуля, чтобы он использовал фичи pf2.
   ☐ Рефакторинг manage.p generate form.
     ☐ Вынести виджеты в отдельные пакеты.
     ☐ Сделать класс виджетов для вертикальной формы BS4.
@@ -110,6 +106,10 @@ Auth:
 
 ＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿
 Archive:
+ ✔ Добавить менеджеры в стиле Джанго @done (17-03-09 06:02) @project(SQL table)
+  ^users.admins.visible.all[]
+ ✔ Убрать генератор контролеров из библиотеки @done (17-02-27 09:26) @project(Generators)
+  Генератор надо писать с нуля, чтобы он использовал фичи pf2.
  ✔ Добавить генерацию cleanFormData с проверокой checkbox'ов в generate model. @done (17-02-14 20:26) @project(Generators)
  ✔ В csrf-мидлваре удалять поле токена из request.form. @done (17-02-14 19:59) @project(Middleware)
  ✔ Добавить в generate model обработку generated-полей в Майсиквеле. @done (17-02-14 19:47) @project(Console)
@@ -130,5 +130,7 @@ Archive:
  ✔ Написать csrf-мидлваре. @done (17-01-24 13:39) @project(Middleware)
  ✔ Перенести метод digest из pf-secrets-app@CoreSecurity, добавить параметры secretKey и disableHMAC. @done (16-12-26 15:23) @project(Auth)
   В psSQLSecurity есть метод digest описан как hmac-digest, но хеширует без hmac. ✔ Добавить параметр cryptKey в pfSQLSecurity.encode/decode @done (16-12-09 12:08) @project(Features)
+  В psSQLSecurity есть метод digest описан как hmac-digest, но хеширует без hmac. ✔ Добавить параметр cryptKey в pfSQLSecurity.encode/decode @done (16-12-09 12:08) @project(Features)
 
   В psSQLSecurity есть метод digest описан как hmac-digest, но хеширует без hmac. ✔ Добавить параметр cryptKey в pfSQLSecurity.encode/decode @done (16-12-09 12:08) @project(Features)
+

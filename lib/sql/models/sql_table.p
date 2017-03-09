@@ -60,6 +60,9 @@ pfClass
   $self._defaultOrderBy[]
   $self._defaultGroupBy[]
 
+# Скоупы. Наборы параметров, которые ограничивают Выборку
+# ^addScope[visible;$.isActive(true)]
+# ^model.visible.all[] аналогично ^model.all[$.isActive(true)]
   $self._scopes[^hash::create[]]
   $self._defaultScope[^hash::create[]]
 
@@ -184,9 +187,10 @@ pfClass
   }
 
 @addScope[aName;aConditions]
+## Добавлет новый скоуп в модель
   $result[]
+  ^pfAssert:isTrue(def ^aName.trim[]){На задано имя скоупа.}
   $self._scopes.[$aName][^hash::create[$aConditions]]
-
 
 #----- Свойства -----
 
@@ -738,6 +742,13 @@ locals
   ^reflection:copy[$aModel;$self]
   ^reflection:mixin[$aModel]
   $self._defaultScope[$aScope]
+
+# Делаем копии небезопасных полей из модели
+  $self._fields[^reflection:fields_reference[$self._fields]]
+  $self._plurals[^reflection:fields_reference[$self._plurals]]
+  $self._skipOnInsert[^reflection:fields_reference[$self._skipOnInsert]]
+  $self._skipOnUpdate[^reflection:fields_reference[$self._skipOnUpdate]]
+  $self._scopes[^reflection:fields_reference[$self._scopes]]
 
 #----------------------------------------------------------------------------------------------------------------------
 
