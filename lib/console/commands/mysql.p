@@ -36,7 +36,7 @@ pfConsoleCommandWithSubcommands
   ^self.assignSubcommand[databases [prefix];$databases][
     $.help[Show available schemas.]
   ]
-  ^self.assignSubcommand[dump file_name [--gzip|--bzip2] [--tables=table1,table2] [--ignore=table3,table4];$dump][
+  ^self.assignSubcommand[dump file_name [--gzip|--bzip2] [--tables=table1,table2] [--ignore=table3,table4] [--only-data];$dump][
     $.help[Dump data to file.]
   ]
   ^self.assignSubcommand[schema [file_name];$schema;
@@ -53,6 +53,12 @@ pfConsoleCommandWithSubcommands
   ]
 
 @dump[aArgs;aSwitches]
+## aArgs.1 — имя файда с дампом
+## aSwitches.gzip
+## aSwitches.bzip2
+## aSwitches.tables[table1,table2]
+## aSwitches.ignore[table3,table4]
+## aSwitches.only-data
   $lFile[^aArgs.1.trim[]]
   ^if(def $lFile){
     $lOptions[^self._defaultMysqlOptions[]]
@@ -82,6 +88,10 @@ pfConsoleCommandWithSubcommands
       }
     }{
        ^lOptions.append{--all-databases}
+    }
+
+    ^if(^aSwitches.contains[only-data]){
+      ^lOptions.append{--no-create-info}
     }
 
     $lEnv[^hash::create[]]

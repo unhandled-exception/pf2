@@ -517,6 +517,10 @@ ORM-классы
     # Выбираем только поля clientID и title из таблицы:
       ^ct.aggregate[$ct.clientID as clientID;$ct.title as title]
 
+Или можно воспользоваться алиасом select на метод aggregate.
+
+    ^ct.select[$ct.clientID as clientID;$ct.title as title]
+
 Писать каждый раз имена полей и алиасы не очень удобно, но можно сильно упростить работу, воспользовавшись встроенной функцией `_fields`. Тогда запрос на выборку двух полей будет короче:
 
     # Табличка с полями clientID/title

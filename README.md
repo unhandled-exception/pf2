@@ -83,8 +83,15 @@ locals
 
 ## Документация
 
-* [Контролеры и маршрутизация](docs/controllers.md)
-
-* [Концепция и стили кодирования](docs/concepts.md)
 * [Список классов в модулях](classes.md)
+* [Концепция и стили кодирования](docs/concepts.md)
 
+### MVC
+
+* [Контролеры и маршрутизация](docs/controllers.md)
+* Мидлваре
+
+### Модели
+
+* [ORM-классы](docs/sql/sql_table.md)
+* [Очередь задач](docs/sql/generics/queue.md)

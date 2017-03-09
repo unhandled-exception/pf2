@@ -68,7 +68,7 @@ locals
 ## Создает алиас aAliasName для метода aMethod.
 ## aMethod — ссылка на функцию.
   ^pfAssert:isTrue($aMethod is junction)[Переменная aMethod должна содержать ссылку на функцию.]
-  $self.[$aName][$aMethod]
+  $self.[$aAliasName][$aMethod]
   $result[]
 
 @unsafe[aCode;aCatchCode]
@@ -199,7 +199,7 @@ pfMixin
 
   ^if(^aOptions.exportModulesProperty.bool(false)){
     ^process[$aThis]{@GET_MODULES[]
-      ^$result[^$${self.mixinName}.modules]
+      ^$result[^$self.${self.mixinName}.modules]
     }
   }
 
@@ -221,7 +221,7 @@ pfMixin
   ]
 
   ^process[$this]{@GET_${aName}[]
-    ^$result[^^${self.mixinName}.getModule[$aName]]
+    ^$result[^^self.${self.mixinName}.getModule[$aName]]
   }
 
 @getModule[aName]
@@ -1066,7 +1066,11 @@ locals
 ## Возвращает полный путь к файлу относительно aBasePath[$request:document-root].
   $aPath[^file:fullpath[$aPath]]
   $aPath[^aPath.trim[both;/\]]
-  $aBasePath[^if(def $aBasePath){^aBasePath.trim[both;/\]}{^request:document-root.trim[both;/\]}]
+
+  $aBasePath[^if(def $aBasePath){$aBasePath}{$request:document-root}]
+  $aBasePath[^file:dirname[$aBasePath]]
+  $aBasePath[^aBasePath.trim[both;/\]]
+
   $lParts[^aPath.split[/]]
 
 # Вычисляем число уровней на которые нам надо подняться

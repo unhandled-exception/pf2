@@ -29,6 +29,7 @@ pfClass
 ##   aOptions.skipOnUpdate[$.field(bool)]
   ^self.cleanMethodArgument[]
   ^BASE:create[$aOptions]
+  $self.__options[^hash::create[$aOptions]]
 
   $self._csql[^if(def $aOptions.sql){$aOptions.sql}{$self._PFSQLTABLE_CSQL}]
   ^pfAssert:isTrue(def $self._csql){Не задан объект для работы с SQL-сервером.}
@@ -59,7 +60,16 @@ pfClass
   $self._defaultOrderBy[]
   $self._defaultGroupBy[]
 
+# Скоупы. Наборы параметров, которые ограничивают Выборку
+# ^addScope[visible;$.isActive(true)]
+# ^model.visible.all[] аналогично ^model.all[$.isActive(true)]
+  $self._scopes[^hash::create[]]
+  $self._defaultScope[^hash::create[]]
+
   $self.__context[]
+
+# Делаем алиас на aggregate, чтобы писать кастомные запросы через ^model.select[...]
+  ^self.alias[select;$self.aggregate]
 
 #----- Статические методы и конструктор -----
 
@@ -179,6 +189,12 @@ pfClass
     }
   }
 
+@addScope[aName;aConditions]
+## Добавлет новый скоуп в модель
+  $result[]
+  ^pfAssert:isTrue(def ^aName.trim[]){На задано имя скоупа.}
+  $self._scopes.[$aName][^hash::create[$aConditions]]
+
 #----- Свойства -----
 
 @GET_SCHEMA[]
@@ -201,15 +217,22 @@ pfClass
   $result[$self._fields]
 
 @GET_DEFAULT[aField]
+# Если нам пришло имя скоупа, то возвращаем таблицу со скоупом
 # Если нам пришло имя поля, то возвращаем имя поля в БД
 # Для сложных случаев поддерживаем альтернативный синтаксис f_fieldName.
   $result[]
-  $lField[^if(^aField.pos[f_] == 0){^aField.mid(2)}{$aField}]
-  ^if($lField eq "PRIMARYKEY"){
-    $lField[$self._primaryKey]
-  }
-  ^if(^self._fields.contains[$lField]){
-    $result[^self.sqlFieldName[$lField]]
+  ^if(^self._scopes.contains[$aField]){
+    $lScope[^hash::create[$self._defaultScope]]
+    ^lScope.add[$self._scopes.[$aField]]
+    $result[^pfSQLTableScope::create[$self;$lScope;$.name[$aField]]]
+  }{
+    $lField[^if(^aField.pos[f_] == 0){^aField.mid(2)}{$aField}]
+    ^if($lField eq "PRIMARYKEY"){
+      $lField[$self._primaryKey]
+    }
+    ^if(^self._fields.contains[$lField]){
+      $result[^self.sqlFieldName[$lField]]
+    }
   }
 
 @TABLE_AS[aAlias]
@@ -246,7 +269,6 @@ pfClass
 ##   aOptions.join[] — выражение для join. Заменяет результат вызова ^self._allJoin[].
 ## aOptions.limit
 ## aOptions.offset
-## aOptions.primaryKeyColumn[:primaryKey] — имя колонки для первичного ключа
 ## Для поддержки специфики СУБД:
 ##   aSQLOptions.tail — концовка запроса
 ##   aSQLOptions.selectОptions — модификатор после select (distinct, sql_no_cache и т.п.)
@@ -254,8 +276,8 @@ pfClass
 ##   aSQLOptions.force — отменить кеширование результата запроса
 ##   + Все опции pfSQL.
   ^self.cleanMethodArgument[aOptions;aSQLOptions]
-  $lResultType[^self.__getResultType[$aOptions]]
-  $result[^self.CSQL.[$lResultType]{^self.__allSQLExpression[$lResultType;$aOptions;$aSQLOptions]}[][$aSQLOptions]]
+  $lResultType[^if(def $aOptions.asHashOn){table}{^self.__getResultType[$aOptions]}]
+  $result[^self.CSQL.[$lResultType]{^self.__normalizeWhitespaces{^self.__allSQLExpression[$lResultType;$aOptions;$aSQLOptions]}}[][$aSQLOptions]]
 
   ^if($result is table && def $aOptions.asHashOn){
     $result[^result.hash[$aOptions.asHashOn;$.type[table] $.distinct(true)]]
@@ -265,7 +287,7 @@ pfClass
 ## Возвращает текст запроса из метода all.
   ^self.cleanMethodArgument[aOptions;aSQLOptions]
   $lResultType[^self.__getResultType[$aOptions]]
-  $result[^self.__allSQLExpression[$lResultType;$aOptions;$aSQLOptions]]
+  $result[^self.__normalizeWhitespaces{^self.__allSQLExpression[$lResultType;$aOptions;$aSQLOptions]]}[$.apply(true)]]
 
 @union[*aConds]
 ## Выполняет несколько запросов и объединяет их в один результат.
@@ -300,16 +322,16 @@ pfClass
 # Если нужны сложные варианты используйте aggregate.
   $aConds[^hash::create[$aConds] $.orderBy[] $.having[]]
   $lExpression[^self._selectExpression[count(*)][;$aConds;$aSQLOptions]]
-  $result[^self.CSQL.int{$lExpression}[][$aSQLOptions]]
+  $result[^self.CSQL.int{^self.__normalizeWhitespaces{$lExpression}}[][$aSQLOptions]]
 
 @aggregate[*aConds]
 ## Выборки с группировкой
 ## ^aggregate[func(expr) as alias;_fields(field1, field2 as alias2);_fields(*);conditions hash;sqlOptions]
 ## aConds.asHashOn[fieldName] — возвращаем хеш таблиц, ключем которого будет fieldName
   $lConds[^self.__getAgrConds[$aConds]]
-  $lResultType[^self.__getResultType[$lConds.options]]
+  $lResultType[^if(def $lConds.options.asHashOn){table}{^self.__getResultType[$lConds.options]}]
   $lExpression[^self.__aggregateSQLExpression[$lResultType;$lConds]]
-  $result[^self.CSQL.[$lResultType]{$lExpression}[][$lConds.sqlOptions]]
+  $result[^self.CSQL.[$lResultType]{^self.__normalizeWhitespaces{$lExpression}}[][$lConds.sqlOptions]]
 
   ^if($result is table && def $lConds.options.asHashOn){
     $result[^result.hash[$lConds.options.asHashOn;$.type[table] $.distinct(true)]]
@@ -320,7 +342,7 @@ pfClass
   $lConds[^self.__getAgrConds[$aConds]]
   $lResultType[^self.__getResultType[$lConds.options]]
   $lExpression[^self.__aggregateSQLExpression[$lResultType;$lConds]]
-  $result[^self.CSQL.connect{^apply-taint[$lExpression]}]
+  $result[^self.CSQL.connect{^self.__normalizeWhitespaces{$lExpression}[$.apply(true)]}]
 
 #----- Манипуляции с данными -----
 
@@ -330,12 +352,12 @@ pfClass
 ## Возврашает автосгенерированное значение первичного ключа (last_insert_id) для sequence-полей.
   ^self.cleanMethodArgument[aData;aSQLOptions]
   ^self.asContext[update]{
-    $result[^self.CSQL.void{^self._builder.insertStatement[$self.TABLE_NAME;$self._fields;$aData;
+    $result[^self.CSQL.void{^self.__normalizeWhitespaces{^self._builder.insertStatement[$self.TABLE_NAME;$self._fields;$aData;
       ^hash::create[$aSQLOptions]
       $.skipFields[$self._skipOnInsert]
       $.schema[$self.SCHEMA]
       $.fieldValueFunction[$self.fieldValue]
-    ]}]
+    ]}}]
   }
   ^if(def $self._primaryKey && $self._fields.[$self._primaryKey].sequence){
     $result[^self.CSQL.lastInsertID[]]
@@ -347,7 +369,7 @@ pfClass
   ^pfAssert:isTrue(def $aPrimaryKeyValue){Не задано значение первичного ключа}
   ^self.cleanMethodArgument[aData]
   $result[^self.CSQL.void{
-    ^self.asContext[update]{
+    ^self.asContext[update]{^self.__normalizeWhitespaces{
       ^self._builder.updateStatement[$self.TABLE_NAME;$self._fields;$aData][$self.PRIMARYKEY = ^self.fieldValue[$self._fields.[$self._primaryKey];$aPrimaryKeyValue]][
         $.skipAbsent(true)
         $.skipFields[$self._skipOnUpdate]
@@ -355,7 +377,7 @@ pfClass
         $.schema[$self.SCHEMA]
         $.fieldValueFunction[$self.fieldValue]
       ]
-    }
+    }}
   }]
 
 @newOrModify[aData;aSQLOptions]
@@ -377,9 +399,9 @@ pfClass
   ^pfAssert:isTrue(def $self._primaryKey){Не определен первичный ключ для таблицы ${TABLE_NAME}.}
   ^pfAssert:isTrue(def $aPrimaryKeyValue){Не задано значение первичного ключа}
   $result[^self.CSQL.void{
-    ^self.asContext[update]{
+    ^self.asContext[update]{^self.__normalizeWhitespaces{
       delete from ^if(def $self.SCHEMA){^self._builder.quoteIdentifier[$self.SCHEMA].}^self._builder.quoteIdentifier[$self.TABLE_NAME] where $self.PRIMARYKEY = ^self.fieldValue[$self._fields.[$self._primaryKey];$aPrimaryKeyValue]
-    }
+    }}
   }]
 
 @shift[aPrimaryKeyValue;aFieldName;aValue]
@@ -392,11 +414,11 @@ pfClass
   $aValue(^if(def $aValue){$aValue}{1})
   $lFieldName[^self._builder.sqlFieldName[$self._fields.[$aFieldName]]]]
   $result[^self.CSQL.void{
-    ^self.asContext[update]{
+    ^self.asContext[update]{^self.__normalizeWhitespaces{
       update ^if(def $self.SCHEMA){^self._builder.quoteIdentifier[$self.SCHEMA].}^self._builder.quoteIdentifier[$self.TABLE_NAME]
          set $lFieldName = $lFieldName ^if($aValue < 0){-}{+} ^self.fieldValue[$self._fields.[$aFieldName]](^math:abs($aValue))
        where $self.PRIMARYKEY = ^self.fieldValue[$self._fields.[$self._primaryKey];$aPrimaryKeyValue]
-    }
+    }}
   }]
 
 #----- Групповые операции с данными -----
@@ -406,7 +428,7 @@ pfClass
 ## Условие обновления берем из _allWhere
   ^self.cleanMethodArgument[aOptions;aData]
   $result[^self.CSQL.void{
-    ^self.asContext[update]{
+    ^self.asContext[update]{^self.__normalizeWhitespaces{
       ^self._builder.updateStatement[$self.TABLE_NAME;$self._fields;$aData][
         ^self._allWhere[$aOptions]
       ][
@@ -416,7 +438,7 @@ pfClass
         $.emptySetExpression[]
         $.fieldValueFunction[$self.fieldValue]
       ]
-    }
+    }}
   }]
 
 @deleteAll[aOptions]
@@ -424,10 +446,10 @@ pfClass
 ## Условие для удаления берем из self._allWhere
   ^self.cleanMethodArgument[]
   $result[^self.CSQL.void{
-    ^self.asContext[update]{
+    ^self.asContext[update]{^self.__normalizeWhitespaces{
       delete from ^if(def $self.SCHEMA){^self._builder.quoteIdentifier[$self.SCHEMA].}^self._builder.quoteIdentifier[$self.TABLE_NAME]
        where ^self._allWhere[$aOptions]
-    }
+    }}
   }]
 
 #----- Private -----
@@ -578,12 +600,14 @@ pfClass
   $result[^self.sqlFieldName[$lField.name] ^if($aOperator eq "not" || $aOperator eq "!in"){not in}{in} (^self.valuesArray[$lField.name;$aValue;$.column[$lColumn]])]
 
 @_selectExpression[aFields;aResultType;aOptions;aSQLOptions]
+  $aOptions[^hash::create[$aOptions]]
+  $aOptions[^aOptions.union[$self._defaultScope]]
+
   ^self.asContext[where]{
     $lGroup[^self._allGroup[$aOptions]]
     $lOrder[^self._allOrder[$aOptions]]
     $lHaving[^if(^aOptions.contains[having]){$aOptions.having}{^self._allHaving[$aOptions]}]
   }
-
   $result[
        select $aFields
          from ^if(def $self.SCHEMA){^self._builder.quoteIdentifier[$self.SCHEMA].}^self._builder.quoteIdentifier[$self.TABLE_NAME] as ^self._builder.quoteIdentifier[$self.TABLE_ALIAS]
@@ -697,6 +721,47 @@ pfClass
     }
   }
   $result[^result.foreach[_;v]{$v.expr^if(def $v.alias){ as ^self._builder.quoteIdentifier[$v.alias]}}[, ]]
+
+@__normalizeWhitespaces[aQuery;aOptions]
+  $result[^untaint[optimized-as-is]{^untaint[sql]{$aQuery}}]
+
+  ^if(^aOptions.apply.bool(false)){
+    $result[^apply-taint[$result]]
+  }
+
+#----------------------------------------------------------------------------------------------------------------------
+
+@CLASS
+pfSQLTableScope
+
+## Класс-копия модели с новым _defaultScope.
+## Используем для вызова скоупов в pfSQLTable.
+
+## Притворяется оригинальной моделью. Содержит в себе все поля и методы модели.
+## Механизм похож на наследование. Можно переопределить методы как в наследнике,
+## но для вызова «базового» класса надо писать ^__model__.method[]
+
+@OPTIONS
+locals
+
+@create[aModel;aScope;aOptions]
+## aOptions.name - имя скоупа, которое использовали в модели
+  $self.__model__[$aModel]
+  $self.__scope__[$aScope]
+  $self.__name__[$aOptions.name]
+  ^reflection:copy[$aModel;$self]
+  ^reflection:mixin[$aModel]
+  $self._defaultScope[$aScope]
+
+# Делаем копии небезопасных полей и алиасов из модели
+# В наследниках обязательно делайте копии хешиков и алиасов в конструкторе,
+# чтобы не повредить оригинальный объект.
+  $self._fields[^reflection:fields_reference[$self._fields]]
+  $self._plurals[^reflection:fields_reference[$self._plurals]]
+  $self._skipOnInsert[^reflection:fields_reference[$self._skipOnInsert]]
+  $self._skipOnUpdate[^reflection:fields_reference[$self._skipOnUpdate]]
+  $self._scopes[^reflection:fields_reference[$self._scopes]]
+  ^self.alias[select;$self.aggregate]
 
 #----------------------------------------------------------------------------------------------------------------------
 
@@ -918,6 +983,7 @@ pfClass
   ^self.cleanMethodArgument[aData;aOptions]
   $lOpts[^if(^aOptions.ignore.bool(false)){ignore}]
   $result[insert $lOpts into ^if(def $aOptions.schema){${self._quote}${aOptions.schema}${self._quote}.}${self._quote}${aTableName}${self._quote} (^self.fieldsList[$aFields;^hash::create[$aOptions] $.data[$aData]]) values (^self.setExpression[$aFields;$aData;^hash::create[$aOptions] $.skipNames(true)])]
+
 
 @updateStatement[aTableName;aFields;aData;aWhere;aOptions]
 ## Строит выражение для update
