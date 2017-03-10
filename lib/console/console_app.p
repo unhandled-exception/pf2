@@ -143,19 +143,33 @@ static
 @auto[]
   $self._buffer[^hash::create[]]
 
+# Режим вывода
+# console — выводим результаты через console:line
+# buffer — накапливаем в буфер и отдаем в вызывающую программу при вызове метода stdout
+  $self.mode[console]
+
 @print[aLine;aOptions]
-## aOptions.end[^#0A] — окончание строки. Если не надо переходить на следующую строку передаем пустой $.end[].
+## aOptions.end[^#0A] — окончание строки. Если не надо переходить на следующую строку передаем пустой $.end[]. Отменить переход на новую строку в режиме console не получится.
 ## aOptions.start[] — начало строки. Удобно через него задавать отступы.
   $aOptions[^hash::create[$aOptions]]
   $result[]
-  $self._buffer.[^self._buffer._count[]][
-    $.line[$aLine]
-    $.start[$aOptions.start]
-    $.end[^if(^aOptions.contains[end]){$aOptions.end}{^#0A}]
-  ]
+  ^if($self.mode eq "console"){
+#    Убираем лишний перевод строки
+    ^if(^aOptions.end.right(1) eq ^#0A){$aOptions.end[^aOptions.end.left(^aOptions.end.length[] - 1)]}
+    $console:line[${aOptions.start}${aLine}${aOptions.end}]
+  }{
+    $self._buffer.[^self._buffer._count[]][
+      $.line[$aLine]
+      $.start[$aOptions.start]
+      $.end[^if(^aOptions.contains[end]){$aOptions.end}{^#0A}]
+    ]
+  }
 
 @stdout[]
-  $result[^self._buffer.foreach[_;l]{${l.start}${l.line}${l.end}}]
+  $result[]
+  ^if($self.mode ne console){
+    $result[^self._buffer.foreach[_;l]{${l.start}${l.line}${l.end}}]
+  }
 
 @clear[]
   $result[]
