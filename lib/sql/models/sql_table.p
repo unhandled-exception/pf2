@@ -40,10 +40,10 @@ pfClass
     $self._builder[^pfSQLBuilder::create[$.quoteStyle[$self._csql.serverType]]]
   }
 
-  $self._schema[^aOptions.schema.trim[]]
+  $self._schema[^taint[^aOptions.schema.trim[]]]
 
-  $self._tableName[$aTableName]
-  $self._tableAlias[^if(def $aOptions.tableAlias){$aOptions.tableAlias}(def $self._schema){${self._schema}_$self._tableName}]
+  $self._tableName[^taint[$aTableName]]
+  $self._tableAlias[^if(def $aOptions.tableAlias){^taint[$aOptions.tableAlias]}(def $self._schema){^taint[${self._schema}_$self._tableName]}]
   $self._primaryKey[^if(def $aOptions.primaryKey){$aOptions.primaryKey}]
 
   $self._fields[^hash::create[]]
@@ -235,8 +235,17 @@ pfClass
     }
   }
 
-@TABLE_AS[aAlias]
-  $result[^if(def $self.SCHEMA){^self._builder.quoteIdentifier[$self.SCHEMA].}^self._builder.quoteIdentifier[$self.TABLE_NAME]^if(def $aAlias){ AS ^self._builder.quoteIdentifier[$aAlias]}]
+@TABLE_AS[*aArgs]
+## ^TABLE_AS[name] -> schema.table_name as name
+## ^TABLE_AS[name]{t.TABLE_EXPRESSION ... $t.field} — временно переименовывает таблицы и выполняет код
+  ^if($aArgs == 2){
+    $lOldTableAlias[$self._tableAlias]
+    $self._tableAlias[$aArgs.0]
+    $result[$aArgs.1]
+    $self._tableAlias[$lOldTableAlias]
+  }{
+    $result[^if(def $self.SCHEMA){^self._builder.quoteIdentifier[$self.SCHEMA].}^self._builder.quoteIdentifier[$self.TABLE_NAME]^if(def $aAlias){ AS ^self._builder.quoteIdentifier[$aAlias]}]
+   }
 
 #----- Выборки -----
 
@@ -286,8 +295,10 @@ pfClass
 @allSQL[aOptions;aSQLOptions]
 ## Возвращает текст запроса из метода all.
   ^self.cleanMethodArgument[aOptions;aSQLOptions]
-  $lResultType[^self.__getResultType[$aOptions]]
-  $result[^self.__normalizeWhitespaces{^self.__allSQLExpression[$lResultType;$aOptions;$aSQLOptions]]}[$.apply(true)]]
+  ^CSQL.connect{
+    $lResultType[^self.__getResultType[$aOptions]]
+    $result[^self.__normalizeWhitespaces{^self.__allSQLExpression[$lResultType;$aOptions;$aSQLOptions]}[$.apply(true)]]
+  }
 
 @union[*aConds]
 ## Выполняет несколько запросов и объединяет их в один результат.
@@ -339,10 +350,12 @@ pfClass
 
 @aggregateSQL[*aConds]
 ## Возвращает текст запроса из метода aggregate.
-  $lConds[^self.__getAgrConds[$aConds]]
-  $lResultType[^self.__getResultType[$lConds.options]]
-  $lExpression[^self.__aggregateSQLExpression[$lResultType;$lConds]]
-  $result[^self.CSQL.connect{^self.__normalizeWhitespaces{$lExpression}[$.apply(true)]}]
+  ^CSQL.connect{
+    $lConds[^self.__getAgrConds[$aConds]]
+    $lResultType[^self.__getResultType[$lConds.options]]
+    $lExpression[^self.__aggregateSQLExpression[$lResultType;$lConds]]
+    $result[^self.CSQL.connect{^self.__normalizeWhitespaces{$lExpression}[$.apply(true)]}]
+  }
 
 #----- Манипуляции с данными -----
 
