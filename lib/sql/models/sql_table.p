@@ -352,7 +352,7 @@ pfClass
 ## Возврашает автосгенерированное значение первичного ключа (last_insert_id) для sequence-полей.
   ^self.cleanMethodArgument[aData;aSQLOptions]
   ^self.asContext[update]{
-    $result[^self.CSQL.void{^self.__normalizeWhitespaces{^self._builder.insertStatement[$self.TABLE_NAME;$self._fields;$aData;
+    $result[^self.CSQL.void{^self.__normalizeWhitespaces{^self._builder.insertStatement[$self.TABLE_NAME;$self._fields;^if($aData is table){$aData.fields}{$aData};
       ^hash::create[$aSQLOptions]
       $.skipFields[$self._skipOnInsert]
       $.schema[$self.SCHEMA]
@@ -370,7 +370,7 @@ pfClass
   ^self.cleanMethodArgument[aData]
   $result[^self.CSQL.void{
     ^self.asContext[update]{^self.__normalizeWhitespaces{
-      ^self._builder.updateStatement[$self.TABLE_NAME;$self._fields;$aData][$self.PRIMARYKEY = ^self.fieldValue[$self._fields.[$self._primaryKey];$aPrimaryKeyValue]][
+      ^self._builder.updateStatement[$self.TABLE_NAME;$self._fields;^if($aData is table){$aData.fields}{$aData}][$self.PRIMARYKEY = ^self.fieldValue[$self._fields.[$self._primaryKey];$aPrimaryKeyValue]][
         $.skipAbsent(true)
         $.skipFields[$self._skipOnUpdate]
         $.emptySetExpression[$self.PRIMARYKEY = $self.PRIMARYKEY]
