@@ -1143,7 +1143,7 @@ locals
 pfResponse
 
 @create[aLocation;aStatus]
-## aPath — полный путь для редиректа или uri
+## aLocation — полный путь для редиректа или uri
 ## aStatus[302]
   ^BASE:create[;$.type[redirect] $.status[^ifdef[$aStatus]{302}]]
   $self.headers.location[^untaint{$aLocation}]
