@@ -503,7 +503,7 @@ pfClass
   }
   ^self.asContext[group]{
     ^switch(true){
-      ^case($lGroup is hash){$result[^lGroup.foreach[k;v]{^if(^self._fields.contains[$k]){^self.sqlFieldName[$k]^if(^v.lower[] eq "desc"){ desc}(^v.lower[] eq "asc"){ asc}}}[, ]]}
+      ^case($lGroup is hash){$result[^lGroup.foreach[k;v]{^if(^self._fields.contains[$k]){^self.sqlFieldName[$k]^if(^v.lower[] eq "desc"){ DESC}(^v.lower[] eq "asc"){ ASC}}}[, ]]}
       ^case[DEFAULT]{$result[^lGroup.trim[]]}
     }
   }
@@ -517,7 +517,7 @@ pfClass
   }
   ^self.asContext[group]{
     ^switch(true){
-      ^case($lOrder is hash){$result[^lOrder.foreach[k;v]{^if(^self._fields.contains[$k]){^self.sqlFieldName[$k] ^if(^v.lower[] eq "desc"){desc}{asc}}}[, ]]}
+      ^case($lOrder is hash){$result[^lOrder.foreach[k;v]{^if(^self._fields.contains[$k]){^self.sqlFieldName[$k] ^if(^v.lower[] eq "desc"){DESC}{ASC}}}[, ]]}
       ^case[DEFAULT]{$result[^lOrder.trim[]]}
     }
   }
