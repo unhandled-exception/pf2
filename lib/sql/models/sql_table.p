@@ -77,7 +77,7 @@ pfClass
   $self._PFSQLTABLE_CSQL[]
   $self._PFSQLTABLE_BUILDER[]
   $self._PFSQLTABLE_COMPARSION_REGEX[^regex::create[^^\s*(\S+)(?:\s+(\S+))?][]]
-  $self._PFSQLTABLE_AGR_REGEX[^regex::create[^^\s*(([^^\s(]+)(.*?))\s*(?:as\s+([^^\s\)]+))?\s*^$][i]]
+  $self._PFSQLTABLE_AGR_REGEX[^regex::create[^^\s*(\(*([^^\s(]+)(.*?))\s*(?:as\s+([^^\s\)]+))?\s*^$][i]]
   $self._PFSQLTABLE_LOGICAL[
     $.OR[OR]
     $.AND[AND]
