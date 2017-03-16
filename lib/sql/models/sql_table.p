@@ -537,7 +537,7 @@ pfClass
   ^if($aField is string){
     $aField[$self._fields.[$aField]]
   }
-  $result[^self._builder.array[$aField;$aValues;$aOptions $.valueFunction[$fieldValue]]]
+  $result[^self._builder.array[$aField;$aValues;$aOptions $.valueFunction[$self.fieldValue]]]
 
 @sqlFieldName[aFieldName]
   ^pfAssert:isTrue(^self._fields.contains[$aFieldName]){Неизвестное поле «${aFieldName}».}
