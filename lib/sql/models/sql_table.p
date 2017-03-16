@@ -601,7 +601,7 @@ pfClass
       }(^self._fields.contains[$match.1]){
 #       Операторы
 #       $.[field operator][value]
-        $lRes.[^lRes._count[]][^self.sqlFieldName[$match.1] ^taint[^ifdef[$match.2]{=}] ^self.fieldValue[$lField;$v]]
+        $lRes.[^lRes._count[]][^self.sqlFieldName[$match.1] ^taint[^self.ifdef[$match.2]{=}] ^self.fieldValue[$lField;$v]]
       }
     }
   }
