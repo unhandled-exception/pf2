@@ -244,7 +244,8 @@ pfClass
     $result[$aArgs.1]
     $self._tableAlias[$lOldTableAlias]
   }{
-    $result[^if(def $self.SCHEMA){^self._builder.quoteIdentifier[$self.SCHEMA].}^self._builder.quoteIdentifier[$self.TABLE_NAME]^if(def $aAlias){ AS ^self._builder.quoteIdentifier[$aAlias]}]
+    $lAlias[$aArgs.0]
+    $result[^if(def $self.SCHEMA){^self._builder.quoteIdentifier[$self.SCHEMA].}^self._builder.quoteIdentifier[$self.TABLE_NAME]^if(def $lAlias){ AS ^self._builder.quoteIdentifier[$lAlias]}]
    }
 
 #----- Выборки -----
