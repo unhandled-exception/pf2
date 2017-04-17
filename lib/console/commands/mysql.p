@@ -70,14 +70,18 @@ pfConsoleCommandWithSubcommands
 
     ^if(def $self._settings.schema){
       ^lOptions.append{$self._settings.schema}
+
       ^if(^aSwitches.contains[tables]){
-        $lTables[^aSwitches.tables.split[,;lv]]
+        $lTables[^aSwitches.tables.trim[both;"]]
+        $lTables[^lTables.split[,;lv]]
         ^lTables.foreach[_;v]{
           ^lOptions.append{^v.piece.trim[]}
         }
       }
+
       ^if(^aSwitches.contains[ignore]){
-        $lIgnore[^aSwitches.ignore.split[,;lv]]
+        $lIgnore[$aSwitches.ignore]
+        $lIgnore[^lIgnore.split[,;lv]]
         ^lIgnore.foreach[_;v]{
           $lTable[^v.piece.trim[]]
           ^if(^lTable.pos[.] < 0){
