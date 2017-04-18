@@ -1070,7 +1070,6 @@ locals
   $aPath[^aPath.trim[both;/\]]
 
   $aBasePath[^if(def $aBasePath){$aBasePath}{$request:document-root}]
-  $aBasePath[^file:dirname[$aBasePath]]
   $aBasePath[^aBasePath.trim[both;/\]]
 
   $lParts[^aPath.split[/]]
