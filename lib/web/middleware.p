@@ -218,7 +218,7 @@ pfMiddleware
   </p>
 
   ^if(!$self._hideQueryLog){
-    <ol style="sql-queries">
+    <ol class="sql-queries">
        ^aStat.queries.foreach[number;it]{
          <li value="^eval($number+1)" style="margin-bottom: 0.5em^; ^if(def $it.exception){color: #94333C}">
            (^it.time.format[%.6f] sec, $it.results rec, $it.memory KB, $it.type)
