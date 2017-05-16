@@ -27,6 +27,7 @@ pfClass
   $self.name[$args.name]
 
   $self.help[$aOptions.help]
+  $self._maxHelpCommandLength(0)
 
 @assignCommand[aCommandName;aClassDef;aOptions]
   $result[]
@@ -42,6 +43,11 @@ pfClass
   $self._commands.[$aCommandName][
     $.moduleName[$lModuleName]
   ]
+
+  $lLen(^lModuleName.length[])
+  ^if($lLen > $self._maxHelpCommandLength){
+    $self._maxHelpCommandLength($lLen)
+  }
 
 @getCommand[aCommandName]
   ^if(!def $aCommandName || !^self._commands.contains[$aCommandName]){^self.fail[]}
@@ -87,8 +93,9 @@ pfClass
     ^self.print[Commands:]
     ^self._commands.foreach[k;]{
       $lCommand[^self.getCommand[$k]]
-      ^self.print[$k		$lCommand.help See "$self.name $k --help" for more info.;$.start[  ]]
+      ^self.print[$k^for[i](0;$self._maxHelpCommandLength - ^k.length[]){ }  $lCommand.help;$.start[  ]]
     }
+    ^self.print[See "$self.name command --help" for more info.;$.start[^#0A]]
   }
 
 @print[aLine;aOptions]
@@ -248,6 +255,7 @@ pfConsoleCommand
   ^BASE:create[$aOptions]
 
   $self._subCommands[^hash::create[]]
+  $self._maxHelpSubcommandLength(0)
 
 @assignSubcommand[aCommandDef;aFunction;aOptions]
 ## aCommandDef — имя команды и параметры: [command param1 [param2]]
@@ -268,10 +276,17 @@ pfConsoleCommand
   $self._subCommands.[$lName][
     $.name[$lName]
     $.function[$lFunction]
-
     $.params[$lParams]
+
     $.help[$aOptions.help]
+    $.helpCommand[^aCommandDef.trim[]]
   ]
+
+  $lLen(^self._subCommands.[$lName].helpCommand.length[])
+  ^if($lLen > $self._maxHelpSubcommandLength){
+    $self._maxHelpSubcommandLength($lLen)
+  }
+
 
 @usage[aErrorMessage;aCode]
   ^BASE:usage[$aErrorMessage]{
@@ -279,7 +294,7 @@ pfConsoleCommand
     ^if($self._subCommands){
       ^self.print[Commands:]
       ^self._subCommands.foreach[;v]{
-        ^self.print[$v.name^if(def $v.params){ $v.params}		^if(def $v.help){$v.help}{—};$.start[  ]]
+        ^self.print[$v.helpCommand^for[i](0;$self._maxHelpSubcommandLength - ^v.helpCommand.length[]){ }  ^if(def $v.help){$v.help}{—};$.start[  ]]
       }
       ^self.print[]
     }
