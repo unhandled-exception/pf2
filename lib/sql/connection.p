@@ -192,7 +192,7 @@ pfClass
 
 @table[aQuery;aSQLOptions;aOptions]
 ## aOptions.force — отключить кеширование в памяти
-## aOptions.cacheKey — ключ для кешироапния. Если не задан, то вычисляется автоматически.
+## aOptions.cacheKey — ключ для кеширования. Если не задан, то вычисляется автоматически.
 ## aOptions.log[] — запись, которую надо сделать в логе вместо текста запроса.
   $lQuery[$aQuery]
   $lOptions[^self._getOptions[$lQuery;table;$aSQLOptions;$aOptions]]
@@ -200,7 +200,7 @@ pfClass
 
 @hash[aQuery;aSQLOptions;aOptions]
 ## aOptions.force — отключить кеширование в памяти
-## aOptions.cacheKey — ключ для кешироапния. Если не задан, то вычисляется автоматически.
+## aOptions.cacheKey — ключ для кеширования. Если не задан, то вычисляется автоматически.
 ## aOptions.log[] — запись, которую надо сделать в логе вместо текста запроса.
   $lQuery[$aQuery]
   $lOptions[^self._getOptions[$lQuery;hash;$aSQLOptions;$aOptions]]
@@ -208,7 +208,7 @@ pfClass
 
 @file[aQuery;aSQLOptions;aOptions]
 ## aOptions.force — отключить кеширование в памяти
-## aOptions.cacheKey — ключ для кешироапния. Если не задан, то вычисляется автоматически.
+## aOptions.cacheKey — ключ для кеширования. Если не задан, то вычисляется автоматически.
 ## aOptions.log[] — запись, которую надо сделать в логе вместо текста запроса.
   $lQuery[$aQuery]
   $lOptions[^self._getOptions[$lQuery;file;$aSQLOptions;$aOptions]]
@@ -216,7 +216,7 @@ pfClass
 
 @string[aQuery;aSQLOptions;aOptions]
 ## aOptions.force — отключить кеширование в памяти
-## aOptions.cacheKey — ключ для кешироапния. Если не задан, то вычисляется автоматически.
+## aOptions.cacheKey — ключ для кеширования. Если не задан, то вычисляется автоматически.
 ## aOptions.log[] — запись, которую надо сделать в логе вместо текста запроса.
   $lQuery[$aQuery]
   $lOptions[^self._getOptions[$lQuery;string;$aSQLOptions;$aOptions]]
@@ -224,7 +224,7 @@ pfClass
 
 @double[aQuery;aSQLOptions;aOptions]
 ## aOptions.force — отключить кеширование в памяти
-## aOptions.cacheKey — ключ для кешироапния. Если не задан, то вычисляется автоматически.
+## aOptions.cacheKey — ключ для кеширования. Если не задан, то вычисляется автоматически.
 ## aOptions.log[] — запись, которую надо сделать в логе вместо текста запроса.
   $lQuery[$aQuery]
   $lOptions[^self._getOptions[$lQuery;double;$aSQLOptions;$aOptions]]
@@ -232,7 +232,7 @@ pfClass
 
 @int[aQuery;aSQLOptions;aOptions]
 ## aOptions.force — отключить кеширование в памяти
-## aOptions.cacheKey — ключ для кешироапния. Если не задан, то вычисляется автоматически.
+## aOptions.cacheKey — ключ для кеширования. Если не задан, то вычисляется автоматически.
 ## aOptions.log[] — запись, которую надо сделать в логе вместо текста запроса.
   $lQuery[$aQuery]
   $lOptions[^self._getOptions[$lQuery;int;$aSQLOptions;$aOptions]]
