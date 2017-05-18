@@ -667,7 +667,7 @@ pfClass
 
 @__aggregateSQLExpression[aResultType;aConds]
   $result[^self._selectExpression[
-    ^self.asContext[select]{^self.__getAgrFields[$aConds.fields]}
+    ^self.asContext[select]{^self.__getAgrFields[$aConds.fields;$aConds.sqlOptions]}
   ][$aResultType;$aConds.options;$aConds.sqlOptions]]
 
 @__allSelectFieldsExpression[aResultType;aOptions;aSQLOptions]
@@ -708,7 +708,7 @@ pfClass
   ^if(!def $result.options){$result.options[^hash::create[]]}
   ^if(!def $result.sqlOptions){$result.sqlOptions[^hash::create[]]}
 
-@__getAgrFields[aFields]
+@__getAgrFields[aFields;aSQLOptions]
   $result[^hash::create[]]
   ^if(!$aFields){
 #   Если нам не передали поля, то подставляем все поля модели.
@@ -724,7 +724,7 @@ pfClass
       ]
       ^if(^lField.function.lower[] eq "_fields"){
         ^if(^lField.args.trim[] eq "*"){
-          $lField.expr[^self._allFields[]]
+          $lField.expr[^self._allFields[][$aSQLOptions]]
         }{
            $lSplit[^lField.args.split[,;lv]]
            $lField.expr[^lSplit.menu{^lSplit.piece.match[$self._PFSQLTABLE_AGR_REGEX][]{^if(def $match.1){^self.sqlFieldName[$match.1] AS ^self._builder.quoteIdentifier[^if(def $match.4){$match.4}{$match.1}]}}}[, ]]
