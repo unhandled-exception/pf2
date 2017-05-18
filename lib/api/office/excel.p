@@ -4,6 +4,7 @@
 pfTableToXLS
 
 ## Класс для генерации xml-таблицы для Экселя.
+## XML-формат Экселя — https://msdn.microsoft.com/en-us/library/aa140066(office.10).aspx
 
 @OPTIONS
 locals

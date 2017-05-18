@@ -36,7 +36,10 @@ SQL connection test!
 #    ^json:string[$h]
 
     $i[^db.int{select count(*) from users}]
-#    ^json:string[$i]
+    count: ^json:string[$i]
+
+    $i[^db.int{select count(*) from users where name like '%1%'}]
+    count: ^json:string[$i]
 
     ^drop_tables[$db]
 

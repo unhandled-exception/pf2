@@ -68,7 +68,9 @@ locals
 ## Создает алиас aAliasName для метода aMethod.
 ## aMethod — ссылка на функцию.
   ^pfAssert:isTrue($aMethod is junction)[Переменная aMethod должна содержать ссылку на функцию.]
-  $self.[$aAliasName][$aMethod]
+  ^if(!($self.[$aAliasName] is junction)){
+    $self.[$aAliasName][$aMethod]
+  }
   $result[]
 
 @unsafe[aCode;aCatchCode]
@@ -1068,7 +1070,6 @@ locals
   $aPath[^aPath.trim[both;/\]]
 
   $aBasePath[^if(def $aBasePath){$aBasePath}{$request:document-root}]
-  $aBasePath[^file:dirname[$aBasePath]]
   $aBasePath[^aBasePath.trim[both;/\]]
 
   $lParts[^aPath.split[/]]

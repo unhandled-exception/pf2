@@ -173,26 +173,26 @@ pfClass
 @begin[]
 ## Открывает транзакцию.
   $result[]
-  ^self.void{begin}
+  ^self.void{BEGIN}
 
 @commit[]
 ## Комитит транзакцию.
   $result[]
-  ^self.void{commit}
+  ^self.void{COMMIT}
 
 @rollback[aSavePoint]
 ## Откатывает текущую транзакцию или сейвпоинт.
   $result[]
-  ^self.void{rollback^if(def $aSavePoint){ to ^taint[$aSavePoint]}}
+  ^self.void{ROLLBACK^if(def $aSavePoint){ TO ^taint[$aSavePoint]}}
 
 @release[aSavePoint]
 ## Освобождает сейвпоинт.
   $result[]
-  ^self.void{release savepoint ^taint[$aSavePoint]}
+  ^self.void{RELEASE SAVEPOINT ^taint[$aSavePoint]}
 
 @table[aQuery;aSQLOptions;aOptions]
 ## aOptions.force — отключить кеширование в памяти
-## aOptions.cacheKey — ключ для кешироапния. Если не задан, то вычисляется автоматически.
+## aOptions.cacheKey — ключ для кеширования. Если не задан, то вычисляется автоматически.
 ## aOptions.log[] — запись, которую надо сделать в логе вместо текста запроса.
   $lQuery[$aQuery]
   $lOptions[^self._getOptions[$lQuery;table;$aSQLOptions;$aOptions]]
@@ -200,7 +200,7 @@ pfClass
 
 @hash[aQuery;aSQLOptions;aOptions]
 ## aOptions.force — отключить кеширование в памяти
-## aOptions.cacheKey — ключ для кешироапния. Если не задан, то вычисляется автоматически.
+## aOptions.cacheKey — ключ для кеширования. Если не задан, то вычисляется автоматически.
 ## aOptions.log[] — запись, которую надо сделать в логе вместо текста запроса.
   $lQuery[$aQuery]
   $lOptions[^self._getOptions[$lQuery;hash;$aSQLOptions;$aOptions]]
@@ -208,7 +208,7 @@ pfClass
 
 @file[aQuery;aSQLOptions;aOptions]
 ## aOptions.force — отключить кеширование в памяти
-## aOptions.cacheKey — ключ для кешироапния. Если не задан, то вычисляется автоматически.
+## aOptions.cacheKey — ключ для кеширования. Если не задан, то вычисляется автоматически.
 ## aOptions.log[] — запись, которую надо сделать в логе вместо текста запроса.
   $lQuery[$aQuery]
   $lOptions[^self._getOptions[$lQuery;file;$aSQLOptions;$aOptions]]
@@ -216,7 +216,7 @@ pfClass
 
 @string[aQuery;aSQLOptions;aOptions]
 ## aOptions.force — отключить кеширование в памяти
-## aOptions.cacheKey — ключ для кешироапния. Если не задан, то вычисляется автоматически.
+## aOptions.cacheKey — ключ для кеширования. Если не задан, то вычисляется автоматически.
 ## aOptions.log[] — запись, которую надо сделать в логе вместо текста запроса.
   $lQuery[$aQuery]
   $lOptions[^self._getOptions[$lQuery;string;$aSQLOptions;$aOptions]]
@@ -224,7 +224,7 @@ pfClass
 
 @double[aQuery;aSQLOptions;aOptions]
 ## aOptions.force — отключить кеширование в памяти
-## aOptions.cacheKey — ключ для кешироапния. Если не задан, то вычисляется автоматически.
+## aOptions.cacheKey — ключ для кеширования. Если не задан, то вычисляется автоматически.
 ## aOptions.log[] — запись, которую надо сделать в логе вместо текста запроса.
   $lQuery[$aQuery]
   $lOptions[^self._getOptions[$lQuery;double;$aSQLOptions;$aOptions]]
@@ -232,7 +232,7 @@ pfClass
 
 @int[aQuery;aSQLOptions;aOptions]
 ## aOptions.force — отключить кеширование в памяти
-## aOptions.cacheKey — ключ для кешироапния. Если не задан, то вычисляется автоматически.
+## aOptions.cacheKey — ключ для кеширования. Если не задан, то вычисляется автоматически.
 ## aOptions.log[] — запись, которую надо сделать в логе вместо текста запроса.
   $lQuery[$aQuery]
   $lOptions[^self._getOptions[$lQuery;int;$aSQLOptions;$aOptions]]
@@ -258,9 +258,9 @@ pfClass
 ## Способ получения зависит от типа сервера.
   $result[]
   $lQuery[^switch[$self._serverType]{
-    ^case[sqlite]{select last_insert_rowid()}
-    ^case[mysql]{select last_insert_id()}
-    ^case[pgsql]{select lastval()}
+    ^case[sqlite]{SELECT LAST_INSERT_ROWID()}
+    ^case[mysql]{SELECT LAST_INSERT_ID()}
+    ^case[pgsql]{SELECT LASTVAL()}
   }]
   ^if(def $lQuery){
     $result[^self.string{$lQuery}[$.limit(1)][$.force(true)]]

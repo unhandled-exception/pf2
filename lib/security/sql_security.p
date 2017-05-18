@@ -47,22 +47,22 @@ locals
   $self._sqlFunctions[
     $.mysql[
       $.encrypt[
-        $.hex[hex(aes_encrypt('{data}', '{key}'))]
-        $.base64[to_base64(aes_encrypt('{data}', '{key}'))]
+        $.hex[HEX(AES_ENCRYPT('{data}', '{key}'))]
+        $.base64[TO_BASE64(AES_ENCRYPT('{data}', '{key}'))]
       ]
       $.decrypt[
-        $.hex[aes_decrypt(unhex('{data}'), '{key}')]
-        $.base64[aes_decrypt(from_base64('{data}'), '{key}')]
+        $.hex[AES_DECRYPT(UNHEX('{data}'), '{key}')]
+        $.base64[AES_DECRYPT(FROM_BASE64('{data}'), '{key}')]
       ]
     ]
     $.pgsql[
       $.encrypt[
-        $.hex[encode(encrypt(convert_to('{data}', 'utf8'), convert_to('{key}', 'utf8'), 'aes'), 'hex')]
-        $.base64[encode(encrypt(convert_to('{data}', 'utf8'), convert_to('{key}', 'utf8'), 'aes'), 'base64')]
+        $.hex[ENCODE(ENCRYPT(CONVERT_TO('{data}', 'utf8'), CONVERT_TO('{key}', 'utf8'), 'aes'), 'hex')]
+        $.base64[ENCODE(ENCRYPT(CONVERT_TO('{data}', 'utf8'), CONVERT_TO('{key}', 'utf8'), 'aes'), 'base64')]
       ]
       $.decrypt[
-        $.hex[convert_from(decrypt(decode('{data}', 'base64'), convert_to('{key}', 'utf8'), 'aes'), 'utf8')]
-        $.base64[convert_from(decrypt(decode('{data}', 'base64'), convert_to('{key}', 'utf8'), 'aes'), 'utf8')]
+        $.hex[CONVERT_FROM(DECRYPT(DECODE('{data}', 'base64'), CONVERT_TO('{key}', 'utf8'), 'aes'), 'utf8')]
+        $.base64[CONVERT_FROM(DECRYPT(DECODE('{data}', 'base64'), CONVERT_TO('{key}', 'utf8'), 'aes'), 'utf8')]
       ]
     ]
   ]
@@ -90,7 +90,7 @@ locals
   $lSeralizer[$lFuncs.encrypt.[^self.ifdef[$aOptions.serializer]{$self._serializer}]]
   ^pfAssert:isTrue(def $lSeralizer){Неизвестный метод сериализации "$aOptions.serializer".}
   $result[^self.CSQL.string{
-    select
+    SELECT
       ^self._applyPattern[$lSeralizer;
         $.data[$aString]
         $.key[^self.ifdef[$aOptions.cryptKey]{$self._cryptKey}]
@@ -110,7 +110,7 @@ locals
   $lSeralizer[$lFuncs.decrypt.[^self.ifdef[$aOptions.serializer]{$self._serializer}]]
   ^pfAssert:isTrue(def $lSeralizer){Неизвестный метод сериализации "$aOptions.serializer".}
   $result[^self.CSQL.string{
-    select
+    SELECT
       ^self._applyPattern[$lSeralizer;
         $.data[$aString]
         $.key[^self.ifdef[$aOptions.cryptKey]{$self._cryptKey}]

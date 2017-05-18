@@ -53,7 +53,7 @@ pfSQLTable
       $lConds
       $.[processTime <][^date::now[]]
     ][
-      $.tail[for update]
+      $.tail[FOR UPDATE]
       $.force(true)
     ]]
     ^result.foreach[k;v]{
