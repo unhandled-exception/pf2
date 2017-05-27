@@ -143,10 +143,10 @@ pfClass
 @_createUsersModel[aOptions]
   $result[^pfUsersModel::create[
     $.sql[$CSQL]
-    $.tableName[$self._usersTableName]]
+    $.tableName[$self._usersTableName]
     $.rolesTableName[$self._rolesTableName]
     $.rolesToUsersTableName[$self._rolesToUsersTableName]
-  ]
+  ]]
 
 @processRequest[aAction;aRequest;aController;aProcessOptions] -> []
   $result[]
