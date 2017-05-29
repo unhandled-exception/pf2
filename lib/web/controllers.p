@@ -884,9 +884,14 @@ locals
 
   ^if($aProcessorData is hash){
     $self.redirect[
-      $.location[$aProcessorData.to]
       $.status(^aProcessorData.status.int($defaultStatus))
     ]
+
+    ^if(def $aProcessorData.to){
+      $self.redirect.location[$aProcessorData.to]
+    }(^aProcessorData.contains[action]){
+      $self.redirect.location[^self.controller.linkTo[$aProcessorData.action;$aProcessorData.args]]
+    }
   }{
     $self.redirect[
       $.location[$aProcessorData]
