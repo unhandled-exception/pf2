@@ -87,7 +87,12 @@ pfChainMixin
     $.schema[_schema]
     $.core[_core]
   ]
-  $aOptions.exportFields[^hash::create[$lDefaultModelExportFields] $aOptions.exportFields]
+
+  $aOptions.exportFields[^hash::create[$lDefaultModelExportFields]]
+  ^if(def $aOptions.exportFields){
+    ^aOptions.exportFields.add[$aOptions.exportFields]
+  }
+
   ^BASE:__init__[$aThis;$aOptions]
 
   $aThis._core[$aOptions.core]
