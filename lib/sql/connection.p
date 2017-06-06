@@ -251,7 +251,7 @@ pfClass
 @safeInsert[aInsertCode;aExistsCode]
 ## Выполняет aInsertCode, если в нем произошел exception on duplicate, то выполняет aExistsCode.
 ## Реализует абстракцию insert ... on duplicate key update, которая нативно реализована не во всех СУБД.
-  $result[^try{$aInsertCode}{^if($exception.type eq "sql.execute" && ^exception.comment.match[$self._duplicateKeyExceptionRegex][]){$exception.handled(true)$aExistsCode}}]
+  $result[^try{^self.transaction{^self.savepoint{$aInsertCode}}}{^if($exception.type eq "sql.execute" && ^exception.comment.match[$self._duplicateKeyExceptionRegex][]){$exception.handled(true)$aExistsCode}}]
 
 @lastInsertID[]
 ## Возвращает идентификатор последней вставленной записи.
