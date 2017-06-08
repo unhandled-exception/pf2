@@ -420,6 +420,7 @@ locals
   $self.processors[^hash::create[]]
   ^self.processor[default;pfRouterDefaultProcessor]
   ^self.processor[render;pfRouterRenderProcessor]
+  ^self.processor[redirect;pfRouterRedirectProcessor]
   ^self.processor[call;pfRouterCallProcessor]
 
   $self.routes[^hash::create[]]
@@ -776,7 +777,7 @@ locals
     $result.uri[/$aAction]
 
 #   Старый метод path/to/action.ext -> onPathToAction.ext
-    $lOnAction[^_makeOldActionName[$aAction]]
+    $lOnAction[^self._makeOldActionName[$aAction]]
 
 #   Проверяем, что нам не пытаются передать в коце экшна имя http-метода action/p/o/s/t.
 #   Если пытаются и у нас есть метод onActionPOST, то такой экшн не обрабатываем.
@@ -864,6 +865,44 @@ locals
 
 @process[aAction;aRequest;aPrefix;aOptions]
   $result[^self.controller.[$self.functionName][$aRequest]]
+
+#--------------------------------------------------------------------------------------------------
+
+@CLASS
+pfRouterRedirectProcessor
+
+@BASE
+pfRouterProcessor
+
+@OPTIONS
+locals
+
+@create[aRouter;aProcessorData;aOptions]
+  ^BASE:create[$aRouter;$aProcessorData;$aOptions]
+
+  $defaultStatus(302)
+
+  ^if($aProcessorData is hash){
+    $self.redirect[
+      $.status(^aProcessorData.status.int($defaultStatus))
+    ]
+
+    ^if(def $aProcessorData.to){
+      $self.redirect.location[$aProcessorData.to]
+    }(^aProcessorData.contains[action]){
+      $self.redirect.location[^self.controller.linkTo[$aProcessorData.action;$aProcessorData.args]]
+    }
+  }{
+    $self.redirect[
+      $.location[$aProcessorData]
+      $.status($defaultStatus)
+    ]
+  }
+
+@process[aAction;aRequest;aPrefix;aOptions]
+  $location[^self.router.applyPath[$self.redirect.location;$aRequest;$aOptions.args]]
+
+  $result[^pfResponseRedirect::create[$location;$self.redirect.status]]
 
 #--------------------------------------------------------------------------------------------------
 
