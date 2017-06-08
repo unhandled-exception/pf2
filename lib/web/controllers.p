@@ -825,6 +825,10 @@ pfRouterProcessor
 @OPTIONS
 locals
 
+## ^router.assign[/some/action;render->action.pt]
+## ^router.assign[/some/action;render::action.pt]
+## ^router.assign[/some/action;$.render[$.template[action.pt] $.context[$.var[value]]]]
+
 @create[aRouter;aProcessorData;aOptions]
 ## aProcessorData[string|hash]
 ## aProcessorData.template — имя шаблона
@@ -859,7 +863,11 @@ pfRouterProcessor
 @OPTIONS
 locals
 
+## ^router.assign[/some/action;call->someActionHandler]
+## ^router.assign[/some/action;call::someActionHandler]
+
 @create[aRouter;aProcessorData;aOptions]
+## aProcessorData[function name] — имя функции для экшна
   ^BASE:create[$aRouter;$aProcessorData;$aOptions]
   $self.functionName[$aProcessorData]
 
@@ -877,14 +885,24 @@ pfRouterProcessor
 @OPTIONS
 locals
 
+## ^router.assign[/some/action;redirect->/another/location]
+## ^router.assign[/some/action/:var;redirect->/another/:var/location]
+## ^router.assign[/some/action/:var;redirect->http://some.domain/action]
+## ^router.assign[/some/action;redirect->/another/location <301>]
+## ^router.assign[/some/action;redirect->^linkTo[/redirected] <302>]
+## ^router.assign[/some/action;redirect::/another/location]
+## ^router.assign[/some/action;$.redirect[/another/action] $.status[301]]
+
 @create[aRouter;aProcessorData;aOptions]
+## aProcessorData[string|hash]
+## aProcessorData[$.location $.status(302)]
   ^BASE:create[$aRouter;$aProcessorData;$aOptions]
 
-  $defaultStatus(302)
+  $self._defaultHTTPCode(302)
 
   ^if($aProcessorData is hash){
     $self.redirect[
-      $.status(^aProcessorData.status.int($defaultStatus))
+      $.status(^aProcessorData.status.int($self._defaultHTTPCode))
     ]
 
     ^if(def $aProcessorData.to){
@@ -893,16 +911,17 @@ locals
       $self.redirect.location[^self.controller.linkTo[$aProcessorData.action;$aProcessorData.args]]
     }
   }{
-    $self.redirect[
-      $.location[$aProcessorData]
-      $.status($defaultStatus)
-    ]
+    ^aProcessorData.match[^^\s*(\S+?)\s*(?:<(\d+)>\s*)?^$][]{
+      $self.redirect[
+        $.location[${match.1}]
+        $.status(^match.2.int($self._defaultHTTPCode))
+      ]
+    }
   }
 
 @process[aAction;aRequest;aPrefix;aOptions]
-  $location[^self.router.applyPath[$self.redirect.location;$aRequest;$aOptions.args]]
-
-  $result[^pfResponseRedirect::create[$location;$self.redirect.status]]
+  $lLocation[^self.router.applyPath[$self.redirect.location;$aRequest;$aOptions.args]]
+  $result[^pfResponseRedirect::create[$lLocation;$self.redirect.status]]
 
 #--------------------------------------------------------------------------------------------------
 
