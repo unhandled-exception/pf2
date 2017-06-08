@@ -887,7 +887,7 @@ locals
 
 ## ^router.assign[/some/action;redirect->/another/location]
 ## ^router.assign[/some/action/:var;redirect->/another/:var/location]
-## ^router.assign[/some/action/:var;redirect->http://some.domain/action]
+## ^router.assign[/some/action/:var;redirect->http://some.domain/action/:var]
 ## ^router.assign[/some/action;redirect->/another/location <301>]
 ## ^router.assign[/some/action;redirect->^linkTo[/redirected] <302>]
 ## ^router.assign[/some/action;redirect::/another/location]
