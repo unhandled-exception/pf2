@@ -90,16 +90,25 @@ pfClass
      }
    }
 
-@transaction[aCode;aOptions]
+@transaction[aArg1;aArg2;aArg3]
 ## Организует транзакцию, обеспечивая возможность отката.
 ## ^transaction{aCode}
 ## ^transaction{aCode}[aOptions]
-## ^transaction[aMode]{aCode}[aOptions]
+## ^transaction[aModes]{aCode}[aOptions]
 ## aOptions.disableQueriesLog(false) — отключить лог на время транзакции
 ## aOptions.disableMemoryCache(false) — отелючить кеш в памяти на время транзакции
 ## aOptions.nestedAsSavepoints(false) — заменить вложенные транзакции на сейвпоинты
-  ^self.cleanMethodArgument[]
   $result[]
+
+  ^if(^reflection:is[aArg1;code]){
+    $aCode{$aArg1}
+    $aOptions[^hash::create[$aArg2]]
+  }{
+    $aModes[$aArg1]
+    $aCode{$aArg2}
+    $aOptions[^hash::create[$aArg3]]
+  }
+
   ^self.connect{
     $lEnableQueriesLog($self._enableQueriesLog)
     ^if(^aOptions.disableQueriesLog.bool(false)){$self._enableQueriesLog(false)}
@@ -123,7 +132,7 @@ pfClass
           $result[$aCode]
         }
       }{
-        ^self.begin[]
+        ^self.begin[$aModes]
         ^try{
           $result[$aCode]
           ^self.commit[]
