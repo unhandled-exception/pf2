@@ -543,7 +543,7 @@ locals
       }
     }
   }
-  $result.processor[^ifdef[$result.processor]{^self.createProcessor[default]}]
+  $result.processor[^self.ifdef[$result.processor]{^self.createProcessor[default]}]
 
 @createProcessor[aName;aProcessorData;aOptions]
   $lProcessor[^self.ifcontains[$self.processors;$aName]{$self.processors.default}]
@@ -1203,7 +1203,7 @@ pfResponse
 @create[aLocation;aStatus]
 ## aLocation — полный путь для редиректа или uri
 ## aStatus[302]
-  ^BASE:create[;$.type[redirect] $.status[^ifdef[$aStatus]{302}]]
+  ^BASE:create[;$.type[redirect] $.status[^self.ifdef[$aStatus]{302}]]
   $self.headers.location[^untaint{$aLocation}]
 
 #--------------------------------------------------------------------------------------------------
