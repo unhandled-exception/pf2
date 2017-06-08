@@ -53,6 +53,10 @@
 
 ### [./lib/sql/connection.p](./lib/sql/connection.p)
 * pfSQLConnection
+* pfSQLAnsiDialect
+* pfSQLPostgresDialect
+* pfSQLMySQLDialect
+* pfSQLSqliteDialect
 
 ### [./lib/sql/models/generators/model_form_generators.p](./lib/sql/models/generators/model_form_generators.p)
 * pfTableFormGenerator
@@ -105,6 +109,7 @@
 * pfRouterDefaultProcessor
 * pfRouterRenderProcessor
 * pfRouterCallProcessor
+* pfRouterRedirectProcessor
 * pfRequest
 * pfResponse
 * pfResponseRedirect

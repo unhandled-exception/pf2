@@ -37,7 +37,7 @@ pfClass
 
   $self._builder[^if(def $aOptions.builder){$aOptions.builder}{$self._PFSQLTABLE_BUILDER}]
   ^if(!def $self._builder){
-    $self._builder[^pfSQLBuilder::create[$.quoteStyle[$self._csql.serverType]]]
+    $self._builder[^pfSQLBuilder::create[$.identifierQuoteMark[$self._csql.dialect.identifierQuoteMark]]]
   }
 
   $self._schema[^taint[^aOptions.schema.trim[]]]
@@ -789,12 +789,12 @@ locals
 pfClass
 
 @create[aOptions]
-## aOptions.quoteStyle[mysql|ansi] — стиль «кавычек» для идентификаторов (default: mysql)
+## aOptions.identifierQuoteMark["] — кавычки для идентификаторов
   ^self.cleanMethodArgument[]
   ^BASE:create[$aOptions]
 
-  $self._quote[]
-  ^self.setQuoteStyle[^if(def $aOptions.quoteStyle){^aOptions.quoteStyle.lower[]}]
+  $self._quote[$aOptions.identifierQuoteMark]
+  ^if(!def $self._quote){$self._quote["]}
 
   $self._now[^date::now[]]
   $self._today[^date::today[]]
@@ -803,13 +803,6 @@ pfClass
   $self._PFSQLBUILDER_CSV_REGEX_[^regex::create[((?:\s*"(?:[^^"]*|"{2})*"\s*(?:,|^$))|\s*"[^^"]*"\s*(?:,|^$)|[^^,]+(?:,|^$)|(?:,))][g]]
   $self._PFSQLBUILDER_CSV_QTRIM_REGEX_[^regex::create["(.*)"][]]
   $self._PFSQLBUILDER_PROCESSOR_FIRST_UPPER[^regex::create[^^\s*(\pL)(.*?)^$][]]
-
-@setQuoteStyle[aStyle]
-  $result[]
-  ^switch[$aStyle]{
-    ^case[mysql]{$self._quote[`]}
-    ^case[DEFAULT;ansi]{$self._quote["]}
-  }
 
 #----- Работа с полями -----
 

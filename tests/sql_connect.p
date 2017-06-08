@@ -67,5 +67,5 @@ Finish tests.^#0A
 @insert_data[aDB][locals]
   $result[]
   ^for[i](1;20){
-    ^aDB.void{insert into users (name, uuid) values ("User $i", "^math:uuid[]")}
+    ^aDB.void{insert into users (name, uuid) values ('User $i', '^math:uuid[]')}
   }
