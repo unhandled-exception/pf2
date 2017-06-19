@@ -130,7 +130,7 @@ locals
   ^if(def $self.this.[$self.mixinName]){
     ^throw[mixin.already.applied;Миксин $self.CLASS_NAME уже применен к объекту.]
   }
-  $self.this.[$mixinName][$self]
+  $self.this.[$self.mixinName][$self]
   $lMethods[^if($aOptions.export){$aOptions.export}{^reflection:methods[$self.CLASS_NAME]}]
   $lForeach[^reflection:method[$lMethods;foreach]]
   ^lForeach[m;_]{

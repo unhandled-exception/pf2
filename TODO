@@ -19,9 +19,6 @@ Documentation:
     ☐ Шаблоны
 
 SQL table:
-    ✔ Написать в запросах орма служебные слова прописными. @done (17-03-09 09:22)
-        Берем за основу стиль Джо Селко: зарезервированные и функции — прописными; поля, параметры функций и переменные — строчными. Фигово, что мы прибили горизонтальные отступы вместе с пустыми строками.
-        Поможет если смотреть логи без подсветки. Но надо будет в _allJoin тоже писать джоины прописными.
     ☐ Сделать получение запроса хешем не таблиц, а хешем хешей.
         Если есть PK, то это не проблема.
         Вместо allAsTable сделать $.as[table|hash|hash_table]. Дефолтное — hash
@@ -100,9 +97,6 @@ Generators:
 Console:
   ☐ Алиасы для команд?
      manage.p gen form
-  ✔ Переделать print на console:line @done (17-03-10 07:14)
-      Потеряем вохможность задавать концовку строки. Вывод будет только линейным.
-      Зато память для хранения вывода тратить не нужно.
 
 Auth:
   ☐ В auth.p@pfUserRolesAuth добавить время жизни куки в токен и проверять при авторизации
@@ -112,6 +106,12 @@ Auth:
 
 ＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿
 Archive:
+ ✔ Переделать print на console:line @done (17-03-10 07:14) @project(Console)
+  Потеряем вохможность задавать концовку строки. Вывод будет только линейным.
+  Зато память для хранения вывода тратить не нужно.
+ ✔ Написать в запросах орма служебные слова прописными. @done (17-03-09 09:22) @project(SQL table)
+  Берем за основу стиль Джо Селко: зарезервированные и функции — прописными; поля, параметры функций и переменные — строчными. Фигово, что мы прибили горизонтальные отступы вместе с пустыми строками.
+  Поможет если смотреть логи без подсветки. Но надо будет в _allJoin тоже писать джоины прописными.
  ✔ Добавить менеджеры в стиле Джанго @done (17-03-09 06:02) @project(SQL table)
   ^users.admins.visible.all[]
  ✔ Убрать генератор контролеров из библиотеки @done (17-02-27 09:26) @project(Generators)
@@ -137,6 +137,8 @@ Archive:
  ✔ Перенести метод digest из pf-secrets-app@CoreSecurity, добавить параметры secretKey и disableHMAC. @done (16-12-26 15:23) @project(Auth)
   В psSQLSecurity есть метод digest описан как hmac-digest, но хеширует без hmac. ✔ Добавить параметр cryptKey в pfSQLSecurity.encode/decode @done (16-12-09 12:08) @project(Features)
   В psSQLSecurity есть метод digest описан как hmac-digest, но хеширует без hmac. ✔ Добавить параметр cryptKey в pfSQLSecurity.encode/decode @done (16-12-09 12:08) @project(Features)
-
+  В psSQLSecurity есть метод digest описан как hmac-digest, но хеширует без hmac. ✔ Добавить параметр cryptKey в pfSQLSecurity.encode/decode @done (16-12-09 12:08) @project(Features)
+  В psSQLSecurity есть метод digest описан как hmac-digest, но хеширует без hmac. ✔ Добавить параметр cryptKey в pfSQLSecurity.encode/decode @done (16-12-09 12:08) @project(Features)
   В psSQLSecurity есть метод digest описан как hmac-digest, но хеширует без hmac. ✔ Добавить параметр cryptKey в pfSQLSecurity.encode/decode @done (16-12-09 12:08) @project(Features)
 
+  В psSQLSecurity есть метод digest описан как hmac-digest, но хеширует без hmac. ✔ Добавить параметр cryptKey в pfSQLSecurity.encode/decode @done (16-12-09 12:08) @project(Features)

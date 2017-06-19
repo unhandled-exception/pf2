@@ -15,6 +15,7 @@ locals
 pfClass
 
 @create[aConnectString;aOptions]
+## aOptions.dialect — «диалект» для СУБД. Если не задан, определяем по типу сервера.
 ## aOptions.enableMemoryCache(false) — добавлять результаты выборок из БД в кеш в памяти.
 ## aOptions.enableQueriesLog(false) — включить логирование sql-запросов.
 ## aOptions.nestedAsSavepoints(false) — объединить вложенные транзакции в сейвпоинты.
@@ -22,12 +23,21 @@ pfClass
   ^pfAssert:isTrue(def $aConnectString)[Не задана строка соединения.]
 
   ^BASE:create[]
+  $self.serverType[^aConnectString.left(^aConnectString.pos[:])]
 
   $self._connectString[$aConnectString]
   $self._connectionsCount(0)
   $self._transactionsCount(0)
 
-  $self._serverType[^aConnectString.left(^aConnectString.pos[:])]
+  $self.dialect[$aOptions.dialect]
+  ^if(!def $self.dialect){
+    $self.dialect[^switch[$self.serverType]{
+      ^case[mysql]{^pfSQLMySQLDialect::create[]}
+      ^case[pgsql]{^pfSQLPostgresDialect::create[]}
+      ^case[sqlite]{^pfSQLSQLiteDialect::create[]}
+      ^case[DEFAULT]{^pfSQLAnsiDialect::create[]}
+    }]
+  }
 
   $self._enableMemoryCache[^aOptions.enableMemoryCache.bool(false)]
   $self._memoryCache[]
@@ -42,13 +52,6 @@ pfClass
     $.queries[^hash::create[]]
     $.queriesTime(0)
   ]
-
-# Регулярное вражение, которое проверят эксепшн при дублировании записей в safeInsert.
-  $self._duplicateKeyExceptionRegex[^switch[$self._serverType]{
-    ^case[sqlite]{^regex::create[SQL logic error][i]}
-    ^case[pgsql]{^regex::create[duplicate key value][i]}
-    ^case[DEFAULT]{^regex::create[duplicate entry][i]}
-  }]
 
   $self._nestedAsSavepoints(^aOptions.nestedAsSavepoints.bool(false))
 
@@ -66,9 +69,6 @@ pfClass
     ^self.clearMemoryCache[]
   }
   $result[$self._memoryCache]
-
-@GET_serverType[]
-  $result[$self._serverType]
 
 @GET_stat[]
 ## Возвращает статистику по запросам
@@ -90,13 +90,25 @@ pfClass
      }
    }
 
-@transaction[aCode;aOptions]
+@transaction[aArg1;aArg2;aArg3]
 ## Организует транзакцию, обеспечивая возможность отката.
+## ^transaction{aCode}
+## ^transaction{aCode}[aOptions]
+## ^transaction[aModes]{aCode}[aOptions]
 ## aOptions.disableQueriesLog(false) — отключить лог на время транзакции
 ## aOptions.disableMemoryCache(false) — отелючить кеш в памяти на время транзакции
 ## aOptions.nestedAsSavepoints(false) — заменить вложенные транзакции на сейвпоинты
-  ^self.cleanMethodArgument[]
   $result[]
+
+  ^if(^reflection:is[aArg1;code]){
+    $aCode{$aArg1}
+    $aOptions[^hash::create[$aArg2]]
+  }{
+    $aModes[$aArg1]
+    $aCode{$aArg2}
+    $aOptions[^hash::create[$aArg3]]
+  }
+
   ^self.connect{
     $lEnableQueriesLog($self._enableQueriesLog)
     ^if(^aOptions.disableQueriesLog.bool(false)){$self._enableQueriesLog(false)}
@@ -120,7 +132,7 @@ pfClass
           $result[$aCode]
         }
       }{
-        ^self.begin[]
+        ^self.begin[$aModes]
         ^try{
           $result[$aCode]
           ^self.commit[]
@@ -158,7 +170,7 @@ pfClass
 
   ^self.connect{
     ^if($lHasCode){
-      ^self.void{savepoint ^taint[$lSavepointName]}
+      ^self.void{^self.dialect.savepoint[$lSavepointName]}
       ^try{
         $result[$lSavepointCode]
         ^self.release[$lSavepointName]
@@ -166,29 +178,29 @@ pfClass
          ^self.rollback[$lSavepointName]
        }
     }{
-       ^self.void{savepoint ^taint[$lSavepointName]}
+       ^self.void{^self.dialect.savepoint[$lSavepointName]}
      }
   }
 
-@begin[]
+@begin[aModes]
 ## Открывает транзакцию.
   $result[]
-  ^self.void{BEGIN}
+  ^self.void{^self.dialect.begin[$aModes]}
 
 @commit[]
 ## Комитит транзакцию.
   $result[]
-  ^self.void{COMMIT}
+  ^self.void{^self.dialect.commit[]}
 
 @rollback[aSavePoint]
 ## Откатывает текущую транзакцию или сейвпоинт.
   $result[]
-  ^self.void{ROLLBACK^if(def $aSavePoint){ TO ^taint[$aSavePoint]}}
+  ^self.void{^self.dialect.rollback[$aSavePoint]}
 
 @release[aSavePoint]
 ## Освобождает сейвпоинт.
   $result[]
-  ^self.void{RELEASE SAVEPOINT ^taint[$aSavePoint]}
+  ^self.void{^self.dialect.release[$aSavePoint]}
 
 @table[aQuery;aSQLOptions;aOptions]
 ## aOptions.force — отключить кеширование в памяти
@@ -251,17 +263,14 @@ pfClass
 @safeInsert[aInsertCode;aExistsCode]
 ## Выполняет aInsertCode, если в нем произошел exception on duplicate, то выполняет aExistsCode.
 ## Реализует абстракцию insert ... on duplicate key update, которая нативно реализована не во всех СУБД.
-  $result[^try{$aInsertCode}{^if($exception.type eq "sql.execute" && ^exception.comment.match[$self._duplicateKeyExceptionRegex][]){$exception.handled(true)$aExistsCode}}]
+  ^pfAssert:isTrue(def $self.dialect.duplicateKeyExceptionRegex)[В диалекте]
+  $result[^try{^self.transaction{^self.savepoint{$aInsertCode}}}{^if($exception.type eq "sql.execute" && ^exception.comment.match[$self.dialect.duplicateKeyExceptionRegex][]){$exception.handled(true)$aExistsCode}}]
 
-@lastInsertID[]
+@lastInsertID[aOptions]
 ## Возвращает идентификатор последней вставленной записи.
 ## Способ получения зависит от типа сервера.
   $result[]
-  $lQuery[^switch[$self._serverType]{
-    ^case[sqlite]{SELECT LAST_INSERT_ROWID()}
-    ^case[mysql]{SELECT LAST_INSERT_ID()}
-    ^case[pgsql]{SELECT LASTVAL()}
-  }]
+  $lQuery[^self.dialect.lastInsertID[$aOptions]]
   ^if(def $lQuery){
     $result[^self.string{$lQuery}[$.limit(1)][$.force(true)]]
   }
@@ -338,3 +347,118 @@ pfClass
       ]
     }
   }
+
+#----------------------------------------------------------------------------------------------------------------------
+
+@CLASS
+pfSQLAnsiDialect
+
+## Базовый класс с диалектом ANSI SQL
+## В «диалекты» выносим команды и переменные специфичные для СУБД.
+
+@OPTIONS
+locals
+
+@BASE
+pfClass
+
+@create[aOptions]
+  ^BASE:create[]
+
+  $self.name[ANSI]
+  $self.identifierQuoteMark["]
+
+# Регулярное вражение для проверки исключения в pfSQLConnection.safeInsert.
+  $self.duplicateKeyExceptionRegex[]
+
+@quoteIdentifier[aIdentifier]
+  $result[${self.identifierQuoteMark}${aIdentifier}${self.identifierQuoteMark}]
+
+@begin[aModes]
+  $result[START TRANSACTION^if(def $aModes){ ^taint[$aModes]}]
+
+@commit[]
+  $result[COMMIT]
+
+@rollback[aName]
+  $result[ROLLBACK^if(def $aName){ TO SAVEPOINT ^taint[$aName]}]
+
+@savepoint[aName]
+  $result[SAVEPOINT ^taint[$aName]]
+
+@release[aName]
+  $result[RELEASE SAVEPOINT ^taint[$aName]]
+
+@lastInsertID[aOptions]
+  ^pfAssert:fail[Method not implemented.]
+
+#----------------------------------------------------------------------------------------------------------------------
+
+@CLASS
+pfSQLPostgresDialect
+
+## Диалект Postgres
+
+@OPTIONS
+locals
+
+@BASE
+pfSQLAnsiDialect
+
+@create[aOptions]
+  ^BASE:create[$aOptions]
+
+  $self.name[Postgres]
+  $self.duplicateKeyExceptionRegex[^regex::create[duplicate key value][i]]
+
+@lastInsertID[aOptions]
+  $result[SELECT LASTVAL()]
+
+#----------------------------------------------------------------------------------------------------------------------
+
+@CLASS
+pfSQLMySQLDialect
+
+## Диалект MySQL
+
+@OPTIONS
+locals
+
+@BASE
+pfSQLAnsiDialect
+
+@create[aOptions]
+## aOptions.ansiQuotes(false) — использовать даойные кавычки для идентификаторов.
+  ^BASE:create[$aOptions]
+
+  $self.name[MySQL]
+  $self.identifierQuoteMark[^if(^aOptions.ansiQuotes.bool(false)){"}{`}]
+  $self.duplicateKeyExceptionRegex[^regex::create[duplicate entry][i]]
+
+@lastInsertID[aOptions]
+  $result[SELECT LAST_INSERT_ID()]
+
+#----------------------------------------------------------------------------------------------------------------------
+
+@CLASS
+pfSQLSQLiteDialect
+
+## Диалект SQLite
+
+@OPTIONS
+locals
+
+@BASE
+pfSQLAnsiDialect
+
+@create[aOptions]
+  ^BASE:create[$aOptions]
+
+  $self.name[SQLite]
+  $self.duplicateKeyExceptionRegex[^regex::create[SQL logic error][i]]
+
+@lastInsertID[aOptions]
+  $result[SELECT LAST_INSERT_ROWID()]
+
+@begin[aModes]
+  $result[BEGIN^if(def $aModes){ ^taint[$aModes]} TRANSACTION]

@@ -32,7 +32,7 @@ locals
 ## aOptions.sql — объект для соединениея с БД.
 ## aOptions.secretKey — ключ для подписи и шифрования.
 ## aOptions.cryptKey[aOptions.secretKey] — ключ шифрования. Если не задан, то используем secretKey.
-## aOptions.serializer[base64] — алгоритм сериализации зашифрованного текста (hex|base64)
+## aOptions.serializer[hex] — алгоритм сериализации зашифрованного текста (hex|base64)
 ## aOptions.hashAlgorythm[sha256] — алогритм хеширования по-умолчанию
   ^self.cleanMethodArgument[]
   ^BASE:create[]

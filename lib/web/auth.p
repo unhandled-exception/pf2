@@ -177,9 +177,7 @@ pfClass
 @authenticate[aRequest;aOptions] -> []
   $result[]
   ^try{
-    $lToken[^self._cryptoProvider.parseAndValidateToken[$aRequest.cookie.[$self._authCookieName];
-      $.log[-- Decrypt an auth cookie ($self._authCookieName).]
-    ]]
+    $lToken[^self._parseAuthToken[$aRequest.cookie.[$self._authCookieName]]]
     $lUser[^self.users.fetch[
       $.userID[$lToken.id]
       $.secureToken[$lToken.token]
@@ -200,6 +198,11 @@ pfClass
        $exception.handled(true)
      }
    }
+
+@_parseAuthToken[aToken;aOptions]
+  $result[^self._cryptoProvider.parseAndValidateToken[$aToken;
+    $.log[-- Decrypt an auth cookie ($self._authCookieName).]
+  ]]
 
 @_makeAuthToken[aOptions] -> [serialized binary string]
   $result[]

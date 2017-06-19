@@ -420,6 +420,7 @@ locals
   $self.processors[^hash::create[]]
   ^self.processor[default;pfRouterDefaultProcessor]
   ^self.processor[render;pfRouterRenderProcessor]
+  ^self.processor[redirect;pfRouterRedirectProcessor]
   ^self.processor[call;pfRouterCallProcessor]
 
   $self.routes[^hash::create[]]
@@ -542,7 +543,7 @@ locals
       }
     }
   }
-  $result.processor[^ifdef[$result.processor]{^self.createProcessor[default]}]
+  $result.processor[^self.ifdef[$result.processor]{^self.createProcessor[default]}]
 
 @createProcessor[aName;aProcessorData;aOptions]
   $lProcessor[^self.ifcontains[$self.processors;$aName]{$self.processors.default}]
@@ -776,7 +777,7 @@ locals
     $result.uri[/$aAction]
 
 #   Старый метод path/to/action.ext -> onPathToAction.ext
-    $lOnAction[^_makeOldActionName[$aAction]]
+    $lOnAction[^self._makeOldActionName[$aAction]]
 
 #   Проверяем, что нам не пытаются передать в коце экшна имя http-метода action/p/o/s/t.
 #   Если пытаются и у нас есть метод onActionPOST, то такой экшн не обрабатываем.
@@ -824,6 +825,10 @@ pfRouterProcessor
 @OPTIONS
 locals
 
+## ^router.assign[/some/action;render->action.pt]
+## ^router.assign[/some/action;render::action.pt]
+## ^router.assign[/some/action;$.render[$.template[action.pt] $.context[$.var[value]]]]
+
 @create[aRouter;aProcessorData;aOptions]
 ## aProcessorData[string|hash]
 ## aProcessorData.template — имя шаблона
@@ -858,12 +863,65 @@ pfRouterProcessor
 @OPTIONS
 locals
 
+## ^router.assign[/some/action;call->someActionHandler]
+## ^router.assign[/some/action;call::someActionHandler]
+
 @create[aRouter;aProcessorData;aOptions]
+## aProcessorData[function name] — имя функции для экшна
   ^BASE:create[$aRouter;$aProcessorData;$aOptions]
   $self.functionName[$aProcessorData]
 
 @process[aAction;aRequest;aPrefix;aOptions]
   $result[^self.controller.[$self.functionName][$aRequest]]
+
+#--------------------------------------------------------------------------------------------------
+
+@CLASS
+pfRouterRedirectProcessor
+
+@BASE
+pfRouterProcessor
+
+@OPTIONS
+locals
+
+## ^router.assign[/some/action;redirect->/another/location]
+## ^router.assign[/some/action/:var;redirect->/another/:var/location]
+## ^router.assign[/some/action/:var;redirect->http://some.domain/action/:var]
+## ^router.assign[/some/action;redirect->/another/location <301>]
+## ^router.assign[/some/action;redirect->^linkTo[/redirected] <302>]
+## ^router.assign[/some/action;redirect::/another/location]
+## ^router.assign[/some/action;$.redirect[/another/action] $.status[301]]
+
+@create[aRouter;aProcessorData;aOptions]
+## aProcessorData[string|hash]
+## aProcessorData[$.location $.status(302)]
+  ^BASE:create[$aRouter;$aProcessorData;$aOptions]
+
+  $self._defaultHTTPCode(302)
+
+  ^if($aProcessorData is hash){
+    $self.redirect[
+      $.status(^aProcessorData.status.int($self._defaultHTTPCode))
+    ]
+
+    ^if(def $aProcessorData.to){
+      $self.redirect.location[$aProcessorData.to]
+    }(^aProcessorData.contains[action]){
+      $self.redirect.location[^self.controller.linkTo[$aProcessorData.action;$aProcessorData.args]]
+    }
+  }{
+    ^aProcessorData.match[^^\s*(\S+?)\s*(?:<(\d+)>\s*)?^$][]{
+      $self.redirect[
+        $.location[${match.1}]
+        $.status(^match.2.int($self._defaultHTTPCode))
+      ]
+    }
+  }
+
+@process[aAction;aRequest;aPrefix;aOptions]
+  $lLocation[^self.router.applyPath[$self.redirect.location;$aRequest;$aOptions.args]]
+  $result[^pfResponseRedirect::create[$lLocation;$self.redirect.status]]
 
 #--------------------------------------------------------------------------------------------------
 
@@ -1145,7 +1203,7 @@ pfResponse
 @create[aLocation;aStatus]
 ## aLocation — полный путь для редиректа или uri
 ## aStatus[302]
-  ^BASE:create[;$.type[redirect] $.status[^ifdef[$aStatus]{302}]]
+  ^BASE:create[;$.type[redirect] $.status[^self.ifdef[$aStatus]{302}]]
   $self.headers.location[^untaint{$aLocation}]
 
 #--------------------------------------------------------------------------------------------------
