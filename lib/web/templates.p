@@ -54,11 +54,12 @@ pfClass
   $result[]
   $self.vars[^hash::create[]]
 
-@parseTemplateName[aTemplateName] -> [$.path $.mainFunction]
+@parseTemplateName[aTemplateName;aOptions] -> [$.path $.function]
+## aOptions.defaultFunction — имя функции, если не указано в имени
   $result[^hash::create[]]
   ^aTemplateName.match[$self.PFTEMPLATE_TN_REGEX][]{
     $result.path[$match.1]
-    $result.mainFunction[^self.ifdef[$match.2]{__main__}]
+    $result.function[^self.ifdef[$match.2]{$aOptions.defaultFunction}]
   }
 
 @getTemplate[aTemplateName;aOptions] -> [object]
@@ -93,13 +94,13 @@ pfClass
 ## aOptions.context
 ## aOptions.force(false)
   ^self.cleanMethodArgument[]
-  $lTemp[^self.parseTemplateName[$aTemplateName]]
+  $lTemp[^self.parseTemplateName[$aTemplateName;$.defaultFunction[__main__]]]
   $lObj[^self.getTemplate[$lTemp.path;
     $.force(^aOptions.force.bool(false))
   ]]
   $result[^lObj.__render__[
     $.context[$aOptions.context]
-    $.call[$lTemp.mainFunction]
+    $.call[$lTemp.function]
   ]]
 
 @GET_DEFAULT[aTemplateName] -> [object]
@@ -342,7 +343,7 @@ locals
   ^if(!($self.[$lConstructor] is junction)){
     ^throw[template.method.not.found;Инициализатор "${lConstructor}" не найден в шаблоне $self.__FILE__]
   }
-  ^self.[$lConstructor][]
+  $lCResult[^self.[$lConstructor][]]
 
   $lMethod[^self.ifdef[$aOptions.call]{__main__}]
   ^if(!($self.[$lMethod] is junction)){
@@ -357,13 +358,24 @@ locals
 
 @import[aTemplateName;aOptions]
 ## Динамически импортирует шаблон.
+## aTemplateName[/path/to/template.pt@__init__] — имя шаблона и функция, которую вызываем после импорта
 ## aOptions.forceLoad(false)
   $result[]
-  $lTemp[^self.__TEMPLATE__.storage.load[$aTemplateName;
+  $lTemplate[^self.__TEMPLATE__.parseTemplateName[$aTemplateName]]
+
+  $lTemp[^self.__TEMPLATE__.storage.load[$lTemplate.path;
     $.base[^file:dirname[$self.__FILE__]]
     $.force(^aOptions.forceLoad.bool(false))
   ]]
   ^self.__TEMPLATE__.applyImports[$self;$lTemp.text;$lTemp.path]
+
+  ^if(def $lTemplate.function){
+    ^if($self.[$lTemplate.function] is junction){
+      $lCResult[^self.[$lTemplate.function][]]
+    }{
+      ^throw[template.method.not.found;Метод "${lTemplate.function}" не найден в шаблоне ^file:dirname[$self.__FILE__]/$lTemplate.path]
+    }
+  }
 
 @compact[]
 ## Вызывает принудительную сборку мусора.
