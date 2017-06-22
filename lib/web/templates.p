@@ -295,6 +295,7 @@ locals
     ^BASE:create[$aOptions]
     $self.__TEMPLATE__[$aOptions.template]
     $self.__FILE__[$aOptions.file]
+    $self.__LOCAL_CONTEXT__[]
   }{
     ^reflection:copy[$aOptions.source;$self]
     ^reflection:mixin[$aOptions.source;$.overwrite(true)]
@@ -303,8 +304,8 @@ locals
   }
 
 @GET_DEFAULT[aVarName]
-# Достает переменную из глобального контекста
-  $result[$self.__TEMPLATE__.context]
+# Достает переменную из контекста
+  $result[^if(def $self.__LOCAL_CONTEXT__ && ^self.__LOCAL_CONTEXT__.contains[$aVarName]){$self.__LOCAL_CONTEXT__}{$self.__TEMPLATE__.context}]
   ^switch[$result.[$aVarName].CLASS_NAME]{
     ^case[int;double;bool]{$result($result.[$aVarName])}
     ^case[DEFAULT]{$result[$result.[$aVarName]]}
@@ -314,8 +315,17 @@ locals
   $result[$self.__TEMPLATE__]
 
 @GET___CONTEXT__[]
-# obj.__CONTEXT__ — контект с переменными из контролера
+# Контект с переменными шаблона из контролера
+  $result[^hash::create[$self.__TEMPLATE__.context]]
+  ^result.add[$self.__LOCAL_CONTEXT__]
+
+@GET___GLOBAL__[]
+## Глобальные переменные шаблона
   $result[$self.__TEMPLATE__.context]
+
+@GET___LOCAL__[]
+## Переменные из локальногоконтекста вызова render
+  $result[$self.__LOCAL_CONTEXT__]
 
 @__init__[]
 ## Инициализатор шаблона. Вызываем в __render__ перед __main__
@@ -333,6 +343,7 @@ locals
 
 # Создаем копию шаблона, чтобы ограничить контекст
   $lContext[^reflection:create[$self.CLASS_NAME;__create__;$.source[$self]]]
+  $lContext.__LOCAL_CONTEXT__[^hash::create[$aOptions.context]]
 
   $lConstructor[^self.ifdef[$aOptions.init]{__init__}]
   ^if(!($lContext.[$lConstructor] is junction)){
