@@ -374,7 +374,7 @@ locals
   ^self.__TEMPLATE__.applyImports[$self;$lTemp.text;$lTemp.path]
 
   ^if(def $lTemplate.function){
-    ^if($self.[$lTemplate.function] is junction){
+    ^if(^lTemp.text.match[^^@^taint[$lTemplate.function]\^[][mn]){
       $lCResult[^self.[$lTemplate.function][]]
     }{
       ^throw[template.method.not.found;Метод "${lTemplate.function}" не найден в шаблоне ^file:dirname[$self.__FILE__]/$lTemplate.path]
