@@ -288,6 +288,7 @@ locals
 @__create__[aOptions]
 ## aOptions.template
 ## aOptions.file
+## aOptions.localContext
 ## aOptions.source — сделать клон объекта из source.
   ^self.cleanMethodArgument[]
 
@@ -295,12 +296,13 @@ locals
     ^BASE:create[$aOptions]
     $self.__TEMPLATE__[$aOptions.template]
     $self.__FILE__[$aOptions.file]
-    $self.__LOCAL_CONTEXT__[]
+    $self.__LOCAL_CONTEXT__[$aOptions.localContext]
   }{
     ^reflection:copy[$aOptions.source;$self]
     ^reflection:mixin[$aOptions.source;$.overwrite(true)]
     ^if(^aOptions.contains[template]){$self.__TEMPLATE__[$aOptions.template]}
     ^if(^aOptions.contains[file]){$self.__FILE__[$aOptions.file]}
+    ^if(^aOptions.contains[localContext]){$self.__LOCAL_CONTEXT__[$aOptions.localContext]}
   }
 
 @GET_DEFAULT[aVarName]
@@ -342,8 +344,10 @@ locals
   $result[]
 
 # Создаем копию шаблона, чтобы ограничить контекст
-  $lContext[^reflection:create[$self.CLASS_NAME;__create__;$.source[$self]]]
-  $lContext.__LOCAL_CONTEXT__[^hash::create[$aOptions.context]]
+  $lContext[^reflection:create[$self.CLASS_NAME;__create__;
+    $.source[$self]
+    $.localContext[^hash::create[$aOptions.context]]
+  ]]
 
   $lConstructor[^self.ifdef[$aOptions.init]{__init__}]
   ^if(!($lContext.[$lConstructor] is junction)){
@@ -373,11 +377,10 @@ locals
   ]]
   ^self.__TEMPLATE__.applyImports[$self;$lTemp.text;$lTemp.path]
 
+# Пробуем вызвать инициализатор, если он есть в импортируемом шаблоне
   ^if(def $lTemplate.function){
     ^if(^lTemp.text.match[^^@^taint[$lTemplate.function]\^[][mn]){
       $lCResult[^self.[$lTemplate.function][]]
-    }{
-      ^throw[template.method.not.found;Метод "${lTemplate.function}" не найден в шаблоне ^file:dirname[$self.__FILE__]/$lTemplate.path]
     }
   }
 
