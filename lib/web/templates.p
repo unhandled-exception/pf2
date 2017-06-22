@@ -288,47 +288,41 @@ locals
 @__create__[aOptions]
 ## aOptions.template
 ## aOptions.file
+## aOptions.source — сделать клон объекта из source.
   ^self.cleanMethodArgument[]
-  ^BASE:create[$aOptions]
 
-  $self.__TEMPLATE__[$aOptions.template]
-  $self.__FILE__[$aOptions.file]
-  $self.__LOCAL_CONTEXT__[]
+  ^if(!^aOptions.contains[source]){
+    ^BASE:create[$aOptions]
+    $self.__TEMPLATE__[$aOptions.template]
+    $self.__FILE__[$aOptions.file]
+  }{
+    ^reflection:copy[$aOptions.source;$self]
+    ^reflection:mixin[$aOptions.source;$.overwrite(true)]
+    ^if(^aOptions.contains[template]){$self.__TEMPLATE__[$aOptions.template]}
+    ^if(^aOptions.contains[file]){$self.__FILE__[$aOptions.file]}
+  }
 
 @GET_DEFAULT[aVarName]
-# Получает переменную из глобального контекста или из контекста шаблона.
-  $result[^if(def $self.__LOCAL_CONTEXT__ && ^self.__LOCAL_CONTEXT__.contains[$aVarName]){$self.__LOCAL_CONTEXT__}{$self.__TEMPLATE__.context}]
+# Достает переменную из глобального контекста
+  $result[$self.__TEMPLATE__.context]
   ^switch[$result.[$aVarName].CLASS_NAME]{
     ^case[int;double;bool]{$result($result.[$aVarName])}
     ^case[DEFAULT]{$result[$result.[$aVarName]]}
   }
 
-@SET_DEFAULT[aVarName;aValue]
-# Предотвращаем запись локальных переменных шаблона в объект.
-# Если есть контекст, записываем переменную в контекст.
-# Если контекста нет, игнорируем переменную.
-  $result[^if($self.__LOCAL_CONTEXT__ is hash){
-    ^switch[$aValue.CLASS_NAME]{
-      ^case[int;double;bool]{$self.__LOCAL_CONTEXT__.[$aVarName]($aValue)}
-      ^case[DEFAULT]{$self.__LOCAL_CONTEXT__.[$aVarName][$aValue]}
-    }
-  }]
-
 @GET_TEMPLATE[]
   $result[$self.__TEMPLATE__]
 
-@GET___GLOBAL__[]
+@GET___CONTEXT__[]
+# obj.__CONTEXT__ — контект с переменными из контролера
   $result[$self.__TEMPLATE__.context]
-
-@GET___LOCAL__[]
-  $result[$self.__LOCAL_CONTEXT__]
 
 @__init__[]
 ## Инициализатор шаблона. Вызываем в __render__ перед __main__
   $result[]
 
 @__main__[]
-  ^throw[template.empty;Не задано тело шаблона. [$self.__FILE__]]
+  ^throw[template.empty;Не нашли функцию main (__main__) в шаблоне. [$self.__FILE__]]
 
 @__render__[aOptions]
 ## aOptions.context — переменные шаблона
@@ -336,32 +330,31 @@ locals
 ## aOptions.init[__init__] — имя инициализатора шаблона
   ^self.cleanMethodArgument[]
   $result[]
-  $lOldLocalContext[$self.__LOCAL_CONTEXT__]
-  $self.__LOCAL_CONTEXT__[^hash::create[$aOptions.context]]
+
+# Создаем копию шаблона, чтобы ограничить контекст
+  $lContext[^reflection:create[$self.CLASS_NAME;__create__;$.source[$self]]]
 
   $lConstructor[^self.ifdef[$aOptions.init]{__init__}]
-  ^if(!($self.[$lConstructor] is junction)){
-    ^throw[template.method.not.found;Инициализатор "${lConstructor}" не найден в шаблоне $self.__FILE__]
+  ^if(!($lContext.[$lConstructor] is junction)){
+    ^throw[template.method.not.found;Инициализатор "${lConstructor}" не найден в шаблоне $lContext.__FILE__]
   }
-  $lCResult[^self.[$lConstructor][]]
+  $lCResult[^lContext.[$lConstructor][]]
 
   $lMethod[^self.ifdef[$aOptions.call]{__main__}]
-  ^if(!($self.[$lMethod] is junction)){
-    ^throw[template.method.not.found;Метод "${lMethod}" не найден в шаблоне $self.__FILE__]
+  ^if(!($lContext.[$lMethod] is junction)){
+    ^throw[template.method.not.found;Метод "${lMethod}" не найден в шаблоне $lContext.__FILE__]
   }
-  $result[^self.[$lMethod][]]
-
-  $self.__LOCAL_CONTEXT__[$lOldLocalContext]
+  $result[^lContext.[$lMethod][]]
 
 @include[aTemplateName;aOptions]
   $result[^self.__TEMPLATE__.render[$aTemplateName;$aOptions]]
 
 @import[aTemplateName;aOptions]
 ## Динамически импортирует шаблон.
-## aTemplateName[/path/to/template.pt@__init__] — имя шаблона и функция, которую вызываем после импорта
+## aTemplateName[/path/to/template.pt@__init__] — имя шаблона и функция, которую вызываем после импорта. Результат в шаблон не попадет
 ## aOptions.forceLoad(false)
   $result[]
-  $lTemplate[^self.__TEMPLATE__.parseTemplateName[$aTemplateName]]
+  $lTemplate[^self.__TEMPLATE__.parseTemplateName[$aTemplateName;$.defaultFunction[__init__]]]
 
   $lTemp[^self.__TEMPLATE__.storage.load[$lTemplate.path;
     $.base[^file:dirname[$self.__FILE__]]
