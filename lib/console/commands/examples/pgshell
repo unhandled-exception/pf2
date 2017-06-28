@@ -1,0 +1,4 @@
+#!/bin/sh
+
+# Вызываем psql по реквизитам из строки подключения в конфигурации проекта.
+`~/project/manage.p sql psql_shell_command`

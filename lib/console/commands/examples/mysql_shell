@@ -1,4 +1,0 @@
-#!/bin/sh
-
-# Вызываем mysql-shell по реквизитом из строки подключения в конйигурации проекта.
-`./manage.p sql mysql_shell_command`

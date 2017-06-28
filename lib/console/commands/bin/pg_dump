@@ -1,0 +1,12 @@
+#!/bin/sh
+if [ -n "$CGI_MANAGE_PGSQL_DUMP_FILE" ]; then
+  if [ "$CGI_MANAGE_PGSQL_DUMP_ARCHIVER" = "gzip" ]; then
+    pg_dump $* | gzip > $CGI_MANAGE_PGSQL_DUMP_FILE
+  elif [ "$CGI_MANAGE_PGSQL_DUMP_ARCHIVER" = "bzip2" ]; then
+    pg_dump $* | bzip2 > $CGI_MANAGE_PGSQL_DUMP_FILE
+  else
+    pg_dump $* > $CGI_MANAGE_PGSQL_DUMP_FILE
+  fi
+else
+   pg_dump $*
+fi
