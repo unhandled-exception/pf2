@@ -1,0 +1,4 @@
+#!/bin/sh
+
+# Вызываем оболочку mysql по реквизитам из строки подключения в конфигурации проекта.
+`~/project/manage.p sql mysql_shell_command`
