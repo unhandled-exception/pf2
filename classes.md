@@ -56,7 +56,7 @@
 * pfSQLAnsiDialect
 * pfSQLPostgresDialect
 * pfSQLMySQLDialect
-* pfSQLSqliteDialect
+* pfSQLSQLiteDialect
 
 ### [./lib/sql/models/generators/model_form_generators.p](./lib/sql/models/generators/model_form_generators.p)
 * pfTableFormGenerator
