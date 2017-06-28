@@ -27,7 +27,7 @@ pfClass
   $self.name[$args.name]
 
   $self.help[$aOptions.help]
-  $self._maxHelpCommandLength(0)
+  $self._maxHelpCommandLength(10)
 
 @assignCommand[aCommandName;aClassDef;aOptions]
   $result[]
@@ -43,11 +43,6 @@ pfClass
   $self._commands.[$aCommandName][
     $.moduleName[$lModuleName]
   ]
-
-  $lLen(^lModuleName.length[])
-  ^if($lLen > $self._maxHelpCommandLength){
-    $self._maxHelpCommandLength($lLen)
-  }
 
 @getCommand[aCommandName]
   ^if(!def $aCommandName || !^self._commands.contains[$aCommandName]){^self.fail[]}
@@ -93,7 +88,7 @@ pfClass
     ^self.print[Commands:]
     ^self._commands.foreach[k;]{
       $lCommand[^self.getCommand[$k]]
-      ^self.print[$k^for[i](0;$self._maxHelpCommandLength - ^k.length[]){ }  $lCommand.help;$.start[  ]]
+      ^self.print[  $k^if(^k.length[] <= $self._maxHelpCommandLength){^for[i](1;$self._maxHelpCommandLength - ^k.length[]){ }}{^#0A  ^for[i](1;$self._maxHelpCommandLength){ }}  $lCommand.help]
     }
     ^self.print[See "$self.name command --help" for more info.;$.start[^#0A]]
   }
@@ -255,7 +250,7 @@ pfConsoleCommand
   ^BASE:create[$aOptions]
 
   $self._subCommands[^hash::create[]]
-  $self._maxHelpSubcommandLength(0)
+  $self._maxHelpSubcommandLength(10)
 
 @assignSubcommand[aCommandDef;aFunction;aOptions]
 ## aCommandDef — имя команды и параметры: [command param1 [param2]]
@@ -282,19 +277,13 @@ pfConsoleCommand
     $.helpCommand[^aCommandDef.trim[]]
   ]
 
-  $lLen(^self._subCommands.[$lName].helpCommand.length[])
-  ^if($lLen > $self._maxHelpSubcommandLength){
-    $self._maxHelpSubcommandLength($lLen)
-  }
-
-
 @usage[aErrorMessage;aCode]
   ^BASE:usage[$aErrorMessage]{
     $aCode
     ^if($self._subCommands){
       ^self.print[Commands:]
       ^self._subCommands.foreach[;v]{
-        ^self.print[$v.helpCommand^for[i](0;$self._maxHelpSubcommandLength - ^v.helpCommand.length[]){ }  ^if(def $v.help){$v.help}{—};$.start[  ]]
+        ^self.print[  $v.helpCommand^if(^v.helpCommand.length[] <= $self._maxHelpSubcommandLength){^for[i](1;$self._maxHelpSubcommandLength - ^v.helpCommand.length[]){ }}{^#0A  ^for[i](1;$self._maxHelpSubcommandLength){ }}  $v.help]
       }
       ^self.print[]
     }

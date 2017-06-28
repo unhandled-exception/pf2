@@ -52,6 +52,8 @@ pfConsoleCommandWithSubcommands
     $.help[Run a VACUUM ANALYZE command.]
   ]
 
+  $self._maxHelpSubcommandLength(18)
+
 @dump[aArgs;aSwitches]
 ## aArgs.1 — имя файда с дампом
 ## aSwitches.gzip
