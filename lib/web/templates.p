@@ -151,11 +151,17 @@ locals
     $.template[$self]
     $.file[$aTemplatePath]
   ]]
-  ^self.applyImports[$result;$aTemplateText;$aTemplatePath]
+  ^self.applyImports[$result;$aTemplateText;$aTemplatePath;
+    $.static(true)
+  ]
 
-@applyImports[aObject;aTemplateText;aTemplatePath] -> []
+@applyImports[aObject;aTemplateText;aTemplatePath;aOptions] -> []
 ## Ищем и компилируем импорты
+## aOptions.static(false) — статический импорт
+## aOptions.init[__init__] — инициализатор
   $result[]
+  $lStatic(^aOptions.static.bool(false))
+  $lInit[^if(def $aOptions.init){$aOptions.init}{__init__}]
 
   $lImports[^aTemplateText.match[$self.PFTEMPLATE_IMPORTS_REGEX]]
   $lBase[^file:dirname[$aTemplatePath]]
@@ -163,11 +169,15 @@ locals
 
   ^lImports.menu{
     $lImportName[^lImports.1.trim[both; ]]
-    ^if($lImportName eq $lTemplateName){^throw[temlate.import.recursive;Нельзя импортировать шаблон "$aTemplatePath" самого в себя.]}
+    ^if($lImportName eq $lTemplateName){^throw[template.import.recursive;Нельзя импортировать шаблон "$aTemplatePath" самого в себя.]}
     $lTempl[^self.storage.load[$lImportName;$.base[$lBase]]]
 
+    ^if($lStatic && ^lTempl.text.match[^^@^taint[$lInit]\^[][nm]){
+      ^throw[template.import.static.init;Нельзя импортировать шаблон "$lImportName" статически;Шаблон содержит метод-инициализатор "$lInit". Подключите шаблон в @main или @__init__ в главном шаблоне.]
+    }
+
 #   Рекурсивно обрабатываем импорты
-    ^self.applyImports[$aObject;$lTempl.text;$lTempl.path]
+    ^self.applyImports[$aObject;$lTempl.text;$lTempl.path;$aOptions]
   }
 
   ^process[$aObject]{^if(!^aTemplateText.match[$self.PFTEMPLATE_FUNCTION_REGEX]){@__main__[]^#0A}^taint[as-is][$aTemplateText]}[
