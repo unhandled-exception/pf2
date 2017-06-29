@@ -167,6 +167,7 @@ pfConsoleCommandWithSubcommands
   $lOptions[^self._defaultPsqlOptions[]]
   ^lOptions.append{--schema-only}
   ^lOptions.append{--no-acl}
+  ^lOptions.append{--no-owner}
 
   ^if(!^self.CSQL.int{
       select count(*)
