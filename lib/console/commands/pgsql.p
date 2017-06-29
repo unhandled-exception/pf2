@@ -39,6 +39,9 @@ pfConsoleCommandWithSubcommands
   ^self.assignSubcommand[schema [file_name] [--no-owner] [--clean] [--no-acl];$schema;
     $.help[Dump a database schema.]
   ]
+    ^self.assignSubcommand[table_schema table_name;$table_schema;
+    $.help[Dump a clean table schema.]
+  ]
   ^self.assignSubcommand[settings;$settings][
     $.help[Show connection settings.]
   ]
@@ -150,6 +153,43 @@ pfConsoleCommandWithSubcommands
     }{
        ^self.print[$lSchemaDump]
      }
+  }{
+    ^self.print[Error $lPgdump.status: $lPgdump.stderr]
+  }
+
+@table_schema[aArgs;aSwitches]
+## aArgs.1 — имя таблицы
+  ^if(!def $aArgs.1){
+    ^self.usage[]
+    ^return[]
+  }
+
+  $lOptions[^self._defaultPsqlOptions[]]
+  ^lOptions.append{--schema-only}
+  ^lOptions.append{--no-acl}
+
+  ^if(!^self.CSQL.int{
+      select count(*)
+        from information_schema.tables
+       where table_schema not in ('pg_catalog', 'information_schema')
+             and table_name = '^taint[$aArgs.1]'
+  }){
+    ^self.print[Table "$aArgs.1" not found.]
+    ^return[]
+  }
+  ^lOptions.append{-t}
+  ^lOptions.append{$aArgs.1}
+
+  $lPgdump[^file::exec[$self._pgdumpBin;$lEnv;$lOptions]]
+  ^if($lPgdump.status == 0){
+    $lSchemaDump[$lPgdump.text]
+
+#   Отрезаем комментарии и лишние команды SET, удаляем пустые строки
+    $lSchemaDump[^lSchemaDump.match[^^(?:--|SET)\s.*^$][gm][]]
+    $lSchemaDump[^lSchemaDump.match[\n{2,}][g][^#0A^#0A]]
+    $lSchemaDump[^lSchemaDump.match[^^\s+][][]]
+
+    ^self.print[$lSchemaDump]
   }{
     ^self.print[Error $lPgdump.status: $lPgdump.stderr]
   }
