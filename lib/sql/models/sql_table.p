@@ -281,7 +281,7 @@ pfClass
 ## aOptions.offset
 ## Для поддержки специфики СУБД:
 ##   aSQLOptions.tail — концовка запроса
-##   aSQLOptions.selectОptions — модификатор после select (distinct, sql_no_cache и т.п.)
+##   aSQLOptions.selectOptions — модификатор после select (distinct, sql_no_cache и т.п.)
 ##   aSQLOptions.skipFields — пропустить поля
 ##   aSQLOptions.force — отменить кеширование результата запроса
 ##   + Все опции pfSQL.
@@ -673,7 +673,7 @@ pfClass
 @__allSelectFieldsExpression[aResultType;aOptions;aSQLOptions]
   $result[
     ^self.asContext[select]{
-     ^if(def $aSQLOptions.selectОptions){$aSQLOptions.selectОptions}
+     ^if(def $aSQLOptions.selectOptions){$aSQLOptions.selectOptions}
      ^if(^aOptions.contains[selectFields]){
        $aOptions.selectFields
      }{
