@@ -232,7 +232,6 @@ pfClass
 @catch<http.404>[aRequest;aException]
   $lNotFoundFunctions[
     $.nf_c[/NOTFOUND]
-    $.on[onNOTFOUND]
   ]
 
   $result[]
@@ -458,11 +457,11 @@ locals
   $self.processors.[$aName][$lProcessor]
 
 @module[aName;aClassDef;aArgs] -> []
-## Алиас для controller.assignModule, если удобнее писать ^router.assignModule[...]
+## Алиас для controller.assignModule, если удобнее писать ^router.module[...]
   $result[^self.controller.assignModule[$aName;$aClassDef;$aArgs]]
 
 @middleware[aObject;aConstructorOptions] -> []
-## Алиас для controller.assignMiddleware, если удобнее писать ^router.assignMiddleware[...]
+## Алиас для controller.assignMiddleware, если удобнее писать ^router.middleware[...]
   $result[^self.controller.assignMiddleware[$aObject;$aConstructorOptions]]
 
 @assign[aPattern;aRouteTo;aOptions] -> []
@@ -775,44 +774,16 @@ locals
   ^if(def $aAction){
     $result.uri_m[/$aAction<${lMethod}>]
     $result.uri[/$aAction]
-
-#   Старый метод path/to/action.ext -> onPathToAction.ext
-    $lOnAction[^self._makeOldActionName[$aAction]]
-
-#   Проверяем, что нам не пытаются передать в коце экшна имя http-метода action/p/o/s/t.
-#   Если пытаются и у нас есть метод onActionPOST, то такой экшн не обрабатываем.
-    ^if(def $lOnAction){
-      $lActionMethod[^lOnAction.match[$self.__pfRouterDefaultProcessor__.httpMethods]]
-      ^if(def $lActionMethod.1 && $self.controller.[$lOnAction] is junction
-      ){
-         $lOnAction[]
-       }
-    }
-
-    ^if(def $lOnAction){
-      $result.on_m[${lOnAction}^lMethod.upper[]]
-      $result.on[$lOnAction]
-    }
   }{
 #    Рутовый маршрут
      $result.index_u_m[/INDEX<${lMethod}>]
      $result.index_slash_m[/<${lMethod}>]
      $result.index_u[/INDEX]
      $result.index_slash[/]
-     $result.on_index[onINDEX]
    }
 
 # Дефолтный маршрут
   $result.default[/DEFAULT]
-  $result.on_default[onDEFAULT]
-
-@_makeOldActionName[aAction]
-## Формирует имя метода для экшна.
-  $aAction[^aAction.lower[]]
-  $lSplitted[^pfString:rsplit[$aAction;[/\.]]]
-  ^if($lSplitted){
-    $result[on^lSplitted.menu{$lStr[$lSplitted.piece]$lFirst[^lStr.left(1)]^lFirst.upper[]^lStr.mid(1)}]
-  }
 
 #--------------------------------------------------------------------------------------------------
 

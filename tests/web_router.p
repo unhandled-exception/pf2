@@ -77,7 +77,7 @@ pfController
   $result[^self.dispatch[$aAction;$lReq]]
   $result[$result.body]
 
-@INDEX[aRequest]
+@/[aRequest]
   $result[Index page]
 
 @/reverse[aRequest]
@@ -89,7 +89,7 @@ pfController
     template prefix: $self.templatePrefix
   ]
 
-@NOTFOUND[aRequest]
+@/NOTFOUND[aRequest]
   $result[Manager not found.]
 
 @/users[aRequest]
@@ -110,7 +110,7 @@ locals
   ^BASE:create[$aOptions]
   ^router.assign[account/:clientID;account]
 
-@INDEX[aRequest]
+@/INDEX[aRequest]
   $result[Vars: $aRequest.var1, $aRequest.var2 Action — $self.action Prefix — $self.uriPrefix MountTo — $self.mountTo]
 
 @/reverse[aRequest]
@@ -122,7 +122,7 @@ locals
     template prefix: $self.templatePrefix
   ]
 
-@NOTFOUND[aRequest]
+@/NOTFOUND[aRequest]
   $result[Mount module not found. Vars: $aRequest.var1, $aRequest.var2 Action — $self.action Prefix — $self.uriPrefix MountTo — $self.mountTo]
 
 @/about[aRequest]
@@ -155,7 +155,7 @@ locals
 
   ^router.assign[:clientID/*trap;client]
 
-@INDEX[aRequest]
+@/[aRequest]
   $result[Sub module's Index page. Filter — $aRequest.filter]
 
 @root[aRequest]
@@ -172,7 +172,7 @@ locals
     template prefix: $self.templatePrefix
   ]
 
-@NOTFOUND[aRequest]
+@/NOTFOUND[aRequest]
   $result[Sub module not found.]
 
 @/client[aRequest]

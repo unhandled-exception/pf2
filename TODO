@@ -1,6 +1,7 @@
 # Задачи для PF2
 
-# Используем для задач плагин https://github.com/aziz/PlainTasks
+# Список «хотелок». Задачи лучше заводить в трекере на Гитхабе.
+# В файде используем плагин для Саблайма https://github.com/aziz/PlainTasks
 
 Features:
   ☐ Выпилить pfAntiFlood из библиотеки?

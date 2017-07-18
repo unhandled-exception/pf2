@@ -52,7 +52,7 @@ pfController
     $result[$result.body]
   }
 
-@INDEX[aRequest]
+@/[aRequest]
   request type — $aRequest.CLASS_NAME
   action - "$aRequest.ACTION"
   path - "$aRequest.PATH"
@@ -67,7 +67,7 @@ pfController
   link to pager — ^linkTo[paged/], ^linkTo[pager]
   linkTo to pager page — ^linkTo[paged;$.page[789]], ^linkTo[pager;$.page[789]]
 
-@NOTFOUND[aRequest]
+@/NOTFOUND[aRequest]
   Not found!
   action - "$aRequest.ACTION"
   path - "$aRequest.PATH"

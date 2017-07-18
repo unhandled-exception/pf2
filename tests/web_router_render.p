@@ -48,7 +48,7 @@ pfController
 
   ^router.assign[/bot/;render::bot.pt]
 
-@NOTFOUND[aRequest]
+@/NOTFOUND[aRequest]
   The page is not found.
 
 @run[aRequest;aOptions]
