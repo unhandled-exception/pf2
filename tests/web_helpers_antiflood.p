@@ -1,4 +1,4 @@
-#!../../../cgi-bin/parser3.cgi
+#!/usr/bin/env parser3
 
 @USE
 pf2/lib/web/helpers/antiflood.p

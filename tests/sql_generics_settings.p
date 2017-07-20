@@ -1,4 +1,4 @@
-#!../../../cgi-bin/parser3.cgi
+#!/usr/bin/env parser3
 
 @USE
 pf2/lib/sql/models/generics/settings/sql_settings.p
