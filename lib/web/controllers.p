@@ -14,7 +14,7 @@ locals
 pfClass
 
 @create[aOptions]
-## aOptions.mountTo[/] — место монтирования. Вручную передавать не нужно — это сделает assignModule.
+## aOptions.mountTo[/] — место монтирования. Вручную надо передавать только для рутового модуля, если он смонтирован не в корень сайта.
 ## aOptions.mountToWhere
 ## aOptions.parentModule — ссылка на объект-контейнер.
 ## aOptions.appendSlash(true) — нужно ли добавлять к урлам слеш.
@@ -45,7 +45,7 @@ pfClass
   $self._parentController[$aOptions.parentController]
   $self._rootController[^self.ifdef[$aOptions.rootController]{$self}]
 
-  $self.mountTo[^self.ifdef[^aOptions.mountTo.trim[end;/]]{/}]
+  $self.mountTo[/^aOptions.mountTo.trim[both;/]]
   $self.mountToWhere[^hash::create[$aOptions.mountToWhere]]
   $self._compiledMountTo[^self.router.compilePattern[$aOptions.mountTo;$.asPrefix(true)]]
 
@@ -98,7 +98,13 @@ pfClass
   $result[]
   $aRequest[^self.ifdef[$aRequest]{^self.ifdef[$self.request]{^pfRequest::create[$.useXForwarded(^aOptions.useXForwarded.bool(false))]}}]
   $self.asRoot(true)
-  $lResponse[^self.dispatch[$aRequest.ACTION;$aRequest]]
+
+  $lAction[/^aRequest.PATH.trim[both;/]]
+  ^if($self.mountTo ne "/"){
+    $lAction[^lAction.mid(^self.mountTo.length[])]
+  }
+
+  $lResponse[^self.dispatch[$lAction;$aRequest;$.prefix[$self.mountTo]]]
   ^if(^aOptions.returnResponse.bool(false)){
     $result[$lResponse]
   }{
