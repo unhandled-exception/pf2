@@ -278,10 +278,7 @@ pfClass
   ^if(!^aOptions.passPost.bool(false)){
     $lPostFunctions[
       $.resp[response<^result.type.lower[]>]
-      $.post_t[post^result.type.upper[]]
-      $.resp_d[response<DEFAULT>]
       $.resp_ast[response<*>]
-      $.post_d[postDEFAULT]
     ]
     ^lPostFunctions.foreach[_;name]{
       ^if($self.[$name] is junction){
