@@ -946,7 +946,7 @@ locals
    }
 
   $self.isSECURE(^self.ifcontains[$aOptions;isSECURE](^self.ENV.HTTPS.lower[] eq "on" || $self.PORT eq "443"))
-  $self.HOST[$self.HOST^if($self.PORT ne "80" && ($self.isSECURE && $self.PORT ne "443")){:$self.PORT}]
+  $self.HOST[$self.HOST^if(!^self.HOST.match[:\d+^$] && $self.PORT ne "80" && ($self.isSECURE && $self.PORT ne "443")){:$self.PORT}]
 
   $self.SCHEME[http^if($self.isSECURE){s}]
 

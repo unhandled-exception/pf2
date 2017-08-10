@@ -452,7 +452,7 @@ static
 
       $result.host[$lMatches.4]
       $result.port[$lMatches.5]
-      $result.netloc[$lMatches.4^if(def $match.5){:$match.5}]
+      $result.netloc[$lMatches.4^if(def $lMatches.5){:$lMatches.5}]
       $result.path[$lMatches.6]
 
       $lPos(^lMatches.7.pos[?])
