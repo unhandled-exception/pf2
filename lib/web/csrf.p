@@ -41,6 +41,7 @@ pfMiddleware
 ## aOptions.pathExempt[hash<$.name[regexp]>] — хеш с регулярными выражениями для путей в урлах, которые не надо обрабатывать в мидлваре.
 ## aOptions.trustedOrigins[hash<$.name[host.name]>] — хеш с именами доменов с которых могут идти небезопасные запросы. Используются при проверке рефереров.
 ## aOptions.requestVarName[CSRF] — имя переменной в запросе со ссылкой на мидлваре.
+## aOptions.exceptionHandler[function[request;exception]->response] — ссылка на функцию-обработчик исключения. Если не задана, то возвращаем ошибку сами
   ^self.cleanMethodArgument[]
   ^BASE:create[$aOptions]
 
@@ -61,6 +62,11 @@ pfMiddleware
   $self._trustedOrigins[^hash::create[$aOptions.trustedOrigins]]
 
   $self._requestVarName[^self.ifdef[$aOtpions.requestVarName]{CSRF}]
+
+  ^if(^aOptions.contains[exceptionHandler]){
+    ^pfAssert:isTrue($aOptions.exceptionHandler is junction)[Обработчик исключения для CSRF-мидлваре должен быть функцией.]
+    $self._exceptionHandler[$aOptions.exceptionHandler]
+  }
 
   $self._tokenSecret[]
   $self._tokenSerializer[base64]
@@ -125,7 +131,7 @@ pfMiddleware
         ^if(!def $self._requestToken.secret
             || $lFormTokenData.secret ne $self._requestToken.secret
         ){
-          ^throw[security.invalid.token]
+          ^throw[csrf.invalid.token;$self.REASON_BAD_TOKEN]
         }
         $self._formToken[$lFormTokenData]
 
@@ -135,14 +141,14 @@ pfMiddleware
         ^if($aRequest.isSECURE){
           $lReferer[^aRequest.header[referer]]
           ^if(!def $lReferer){
-            ^throw[security.invalid.referer;$self.REASON_NO_REFERER]
+            ^throw[csrf.invalid.referer;$self.REASON_NO_REFERER]
           }
           $lReferer[^pfString:parseURL[^lReferer.lower[]]]
           ^if(!$lReferer){
-            ^throw[security.invalid.referer;$self.REASON_MALFORMED_REFERER]
+            ^throw[csrf.invalid.referer;$self.REASON_MALFORMED_REFERER]
           }
           ^if($lReferer.protocol ne "https"){
-            ^throw[security.invalid.referer;$self.REASON_INSECURE_REFERER]
+            ^throw[csrf.invalid.referer;$self.REASON_INSECURE_REFERER]
           }
 
           $lGoodReferer[$self._cookieDomain]
@@ -164,22 +170,24 @@ pfMiddleware
             }
           }
           ^if(!$lValidReferer){
-            ^throw[security.invalid.referer;$self.REASON_BAD_REFERER]
+            ^throw[csrf.invalid.referer;$self.REASON_BAD_REFERER]
           }
         }
 
 #       Удаляем поле с токеном из request.form
         ^aRequest.form.delete[$self._formFieldName]
       }{
-        ^if($exception.type eq "security.invalid.token"){
+        ^if($self._exceptionHandler is junction){
           $exception.handled(true)
           $self.isValidRequest(false)
-          $result[^pfResponse::create[$self.REASON_BAD_TOKEN;$.status[403]]]
-        }
-        ^if($exception.type eq "security.invalid.referer"){
+          $result[^self._exceptionHandler[$aRequest;$exception]]
+        }($exception.type eq "csrf.invalid.referer"
+          || $exception.type eq "csrf.invalid.token"
+          || $exception.type eq "security.invalid.token"
+        ){
           $exception.handled(true)
           $self.isValidRequest(false)
-          $result[^pfResponse::create[$exception.source;$.status[403]]]
+          $result[^pfResponse::create[^if($exception.type eq "security.invalid.token"){$self.REASON_BAD_TOKEN}{$exception.source};$.status[403]]]
         }
       }
     }
@@ -229,7 +237,7 @@ pfMiddleware
       $self._requestToken[$lData]
       $self._tokenSecret[$lData.secret]
     }{
-      ^if($exception.type eq "security.invalid.token"){
+      ^if($exception.type eq "csrf.invalid.token"){
         $exception.handled(true)
       }
     }
