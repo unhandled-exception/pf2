@@ -292,7 +292,7 @@ pfClass
   $result[<div class="form-group row">
       <div class="offset-sm-3 col-sm-9">
         <input type="submit" id="f-sub" value="Сохранить" class="btn btn-primary" />
-        или <a href="^^linkTo^[/^]" class="action">Ничего не менять</a>
+        <a href="^^linkTo^[/^]" class="btn btn-outline-primary ml-2">Ничего не менять</a>
       </div>
     </div>
   ]
@@ -361,7 +361,7 @@ pfClass
   ^self.cleanMethodArgument[]
   $result[<div class="form-group">
       <input type="submit" id="f-sub" value="Сохранить" class="btn btn-primary" />
-        или <a href="^^linkTo^[/^]" class="action">Ничего не менять</a>
+      <a href="^^linkTo^[/^]" class="btn btn-outline-primary ml-2">Ничего не менять</a>
     </div>
   ]
 

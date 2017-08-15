@@ -279,7 +279,6 @@ pfMiddleware
 ## aOptions.sslRedirectExempt[hash<$.name[regexp]>] — хеш с регулярными выражениями для путей в урлах, которые не надо редиректить. Решудяркой может быть строка или объект regex. По-умолчанию регулярки case-insensiteve, если надо иное, то явно создаем regex-объект.
 ## aOptions.xframeOptions(false) — включить заголовок X-Frame-Options  для защиты от кликджекинга. https://developer.mozilla.org/ru/docs/Web/HTTP/Headers/X-Frame-Options
 ## aOptions.xframeOptionsValue[SAMEORIGIN] — тип блокировки (значение заголовка:  SAMEORIGIN, DENY и т.д.)
-
   ^self.cleanMethodArgument[]
   $self.enabled(^aOptions.enable.bool(true))
 
