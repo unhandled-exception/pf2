@@ -237,7 +237,7 @@ pfMiddleware
       $self._requestToken[$lData]
       $self._tokenSecret[$lData.secret]
     }{
-      ^if($exception.type eq "csrf.invalid.token"){
+      ^if($exception.type eq "security.invalid.token"){
         $exception.handled(true)
       }
     }
