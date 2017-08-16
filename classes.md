@@ -48,6 +48,9 @@
 * pfConsoleCommand
 * pfConsoleCommandWithSubcommands
 
+### [./lib/debug/unhandled_exception.p](./lib/debug/unhandled_exception.p)
+* pfUnhandledExceptionDebug
+
 ### [./lib/net/curl_file.p](./lib/net/curl_file.p)
 * pfCurlFile
 

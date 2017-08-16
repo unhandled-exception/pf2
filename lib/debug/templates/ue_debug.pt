@@ -1,0 +1,164 @@
+@__main__[aException;aStack;aOptions]
+<!DOCTYPE html>
+<html>
+  <head>
+    ^self._html_head[Unhandled exception]
+    ^self._css_styles[]
+  </head>
+  <body>
+    <div class="container-fluid">
+      ^self._print_request[$aOptions.request]
+
+      <div class="mb-4">
+        <h1><span class="small">^taint[$aException.type]:</span> ^taint[$aException.source]</h1>
+        <p class="lead">^taint[html][$aException.comment]</p>
+      </div>
+    </div>
+
+    <div class="container-fluid mb-4">
+      ^self._print_stack[$aStack]
+    </div>
+
+    <div class="container-fluid mb-4">
+      ^self._print_resources[$aOptions.resources]
+    </div>
+
+    ^self._js_links[]
+  </body>
+</html>
+
+@_print_request[aRequest]
+  ^if(!$aRequest){^return[]}
+  <div class="mb-2">
+    <p class="mb-1">[$aRequest.method] <a href="$aRequest.url" class="link">$aRequest.url</a></p>
+    <p>$aRequest.remoteIP ($aRequest.userAgent)</p>
+  </div>
+
+@_print_resources[aRes]
+  ^if(!$aRes){^return[]}
+  <div class="mb-5">
+    <h5>Resources</h5>
+    <p>Time: ^eval($aRes.utime + $aRes.stime) (utime: ^aRes.utime.format[%.6f], stime: ^aRes.stime.format[%.6f]).<br />
+    Memory: $aRes.used KB, free: $aRes.free KB (total: ^aRes.allocated.format[%.0f] KB, after gc: ^aRes.allocatedSinceCompact.format[%.0f] KB)
+    </p>
+  </div>
+
+@_print_stack[aStack]
+  <h5>Stack trace</h5>
+  $lLen($aStack)
+  <table class="table table-sm">
+    <tbody>
+      ^aStack.foreach[no;line]{
+        $lUID[^math:uuid[]]
+        $lSnippet[^self._getSnippet[$line.file;$line.lineno]]
+        <tr class="row-hover" data-toggle="collapse" data-target="#$lUID">
+          <td class="w-15">$line.name</td>
+          <td class="w-5">${line.lineno}:${line.colno}</td>
+          <td class="w-80">^self._normalizePath[$line.file]</td>
+        </tr>
+        ^if(def $lSnippet){
+          <tr id="$lUID" class="collapse ^if(^line.line[] == 1){show}">
+            <td colspan="4">
+              ^self._print_snippet[$lSnippet]
+            </td>
+          </tr>
+        }
+      }
+    </tbody>
+  </table>
+
+@_print_snippet[aSnippet]
+  <div class="code-snippet">
+    ^aSnippet.lines.foreach[;code_line]{
+      $lLine($aSnippet.firstLine + ^code_line.offset[])
+      <div class="code-snippet-line ^if($lLine == $aSnippet.line){bg-light}"><pre class="mb-0"><code class="parser3"><span class="code-snippet-lineno">${lLine}:</span>^taint[html][$code_line.line]</code></pre></div>
+    }
+  </div>
+
+@_html_head[aTitle]
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta/css/bootstrap.min.css">
+#   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+  <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css">
+
+@_js_links[]
+  <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.11.0/umd/popper.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta/js/bootstrap.min.js"></script>
+
+  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.4.0/languages/parser3.min.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+
+@_css_styles[]
+  <style>
+    html{
+      font-size: 14px;
+    }
+
+    body{
+      background-color: #f5efe6;
+      color: #000;
+      padding: 1rem;
+    }
+
+    a{color: #0C67D7;}
+    a:hover{color: #EA4000;}
+
+    a.action, a.link{text-decoration: underline;}
+    a.nodecor{text-decoration: none}
+
+    .code-snippet{
+      padding: 0.5rem;
+      background-color: white;
+      margin-bottom: 1rem;
+    }
+
+    .code-snippet-line:hover .hljs{
+      background-color: #f5efe6;
+    }
+    .code-snippet-lineno{
+      margin-right: 1rem;
+      min-width: 3.5rem;
+      text-align: right;
+      display: inline-block;
+      color: #555;
+    }
+    .code-snippet-lineno .hljs-number{
+      color: #555;
+    }
+
+    .hljs{
+      padding: 0;
+      background-color: white;
+    }
+    .bg-light .hljs{
+      background-color: #f5efe6;
+    }
+
+    .table td{border-top: none;}
+    .table tr.row-hover:hover td{
+      color: #EA4000;
+      cursor: pointer;
+    }
+
+    .w-5{width: 5% !important;}
+    .w-10{width: 10% !important;}
+    .w-15{width: 15% !important;}
+    .w-20{width: 20% !important;}
+    .w-25{width: 25% !important;}
+    .w-30{width: 30% !important;}
+    .w-35{width: 35% !important;}
+    .w-40{width: 40% !important;}
+    .w-45{width: 45% !important;}
+    .w-50{width: 50% !important;}
+    .w-55{width: 55% !important;}
+    .w-60{width: 60% !important;}
+    .w-65{width: 65% !important;}
+    .w-70{width: 70% !important;}
+    .w-75{width: 74% !important;}
+    .w-80{width: 80% !important;}
+    .w-85{width: 85% !important;}
+    .w-90{width: 90% !important;}
+    .w-95{width: 95% !important;}
+  </style>
