@@ -10,8 +10,10 @@
       ^self._print_request[$aOptions.request]
 
       <div class="mb-4">
-        <h1><span class="small">^taint[$aException.type]:</span> ^taint[$aException.source]</h1>
-        <p class="lead">^taint[html][$aException.comment]</p>
+        <h1><span class="small">^taint[$aException.type]:</span><br />
+            ^taint[$aException.source]
+        </h1>
+        <p class="lead">^untaint[html]{^aException.comment.match[\n+][g][<br />]}</p>
       </div>
     </div>
 

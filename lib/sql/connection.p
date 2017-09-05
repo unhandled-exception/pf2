@@ -115,7 +115,6 @@ pfClass
 
     $lEnableMemoryCache($self._enableMemoryCache)
     ^if(^aOptions.disableMemoryCache.bool(false)){$self._enableMemoryCache(false)}
-
     ^self._transactionsCount.inc(1)
 
     $lOldNestedAsSavepoints($self._nestedAsSavepoints)
