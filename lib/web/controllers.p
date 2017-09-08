@@ -954,6 +954,8 @@ locals
   $self.REFERER[^self.header[Referer]]
   $self.isLOCALREFERER(^self.REFERER.pos[${self.SCHEME}://$self.HOST] == 0)
 
+  $self.isAJAX(^self.ifdef[$aOptions.isAJAX](^self.headers.X_REQUESTED_WITH.pos[XMLHttpRequest] > -1))
+
   $self.REMOTE_IP[^self.ifdef[$aOptions.REMOTE_IP]{$ENV.REMOTE_ADDR}]
   $self.DOCUMENT_ROOT[^self.ifcontains[$aOptions;DOCUMENT_ROOT]{$request:document-root}]
 
@@ -978,9 +980,6 @@ locals
 
 @GET_BODY_FILE[]
   $result[^if(def $self._BODY_FILE){$self._BODY_FILE}{$self.request:body-file}]
-
-@GET_isAJAX[]
-  $result(^self.ifdef[$aOptions.isAJAX](^self.headers.[X_REQUESTED_WITH].pos[XMLHttpRequest] > -1))
 
 @GET_clientAcceptsJSON[]
   $result(^self.headers.ACCEPT.pos[application/json] >= 0)
