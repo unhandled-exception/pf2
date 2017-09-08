@@ -518,7 +518,8 @@ pfClass
   }
   ^self.asContext[group]{
     ^switch(true){
-      ^case($lOrder is hash){$result[^lOrder.foreach[k;v]{^if(^self._fields.contains[$k]){^self.sqlFieldName[$k] ^if(^v.lower[] eq "desc"){DESC}{ASC}}}[, ]]}
+      ^case($lOrder is hash){
+        $result[^lOrder.foreach[k;v]{^if(^self._fields.contains[$k]){^self.sqlFieldName[$k] ^switch[^v.lower[]]{^case[desc;-]{DESC} ^case[asc;+]{ASC}}}}[, ]]}
       ^case[DEFAULT]{$result[^lOrder.trim[]]}
     }
   }
