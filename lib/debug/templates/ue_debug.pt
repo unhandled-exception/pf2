@@ -14,11 +14,13 @@
             ^taint[$aException.source]
         </h1>
         <p class="lead">^untaint[html]{^aException.comment.match[\n+][g][<br />]}</p>
+        <p>^self._normalizePath[$aException.file] (${aException.lineno}:${aException.colno}):</p>
+        ^_print_snippet[^self._getSnippet[$aException.file;$aException.lineno]]
       </div>
     </div>
 
     <div class="container-fluid mb-4">
-      ^self._print_stack[$aStack]
+      ^self._print_stack[$aException;$aStack]
     </div>
 
     <div class="container-fluid mb-4">
@@ -45,7 +47,7 @@
     </p>
   </div>
 
-@_print_stack[aStack]
+@_print_stack[aException;aStack]
   <h5>Stack trace</h5>
   $lLen($aStack)
   <table class="table table-sm">
@@ -59,7 +61,7 @@
           <td class="w-80">^self._normalizePath[$line.file]</td>
         </tr>
         ^if(def $lSnippet){
-          <tr id="$lUID" class="collapse ^if(^line.line[] == 1){show}">
+          <tr id="$lUID" class="collapse ^if(^line.line[] == 1 && $aException.file ne $line.file){show}">
             <td colspan="4">
               ^self._print_snippet[$lSnippet]
             </td>
@@ -70,12 +72,14 @@
   </table>
 
 @_print_snippet[aSnippet]
-  <div class="code-snippet">
-    ^aSnippet.lines.foreach[;code_line]{
-      $lLine($aSnippet.firstLine + ^code_line.offset[])
-      <div class="code-snippet-line ^if($lLine == $aSnippet.line){bg-light}"><pre class="mb-0"><code class="parser3"><span class="code-snippet-lineno">${lLine}:</span>^taint[html][$code_line.line]</code></pre></div>
-    }
-  </div>
+  ^if(def $aSnippet){
+    <div class="code-snippet">
+      ^aSnippet.lines.foreach[;code_line]{
+        $lLine($aSnippet.firstLine + ^code_line.offset[])
+        <div class="code-snippet-line ^if($lLine == $aSnippet.line){bg-light}"><pre class="mb-0"><code class="parser3"><span class="code-snippet-lineno">${lLine}:</span>^taint[html][$code_line.line]</code></pre></div>
+      }
+    </div>
+  }
 
 @_html_head[aTitle]
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
@@ -89,7 +93,7 @@
   <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta/js/bootstrap.min.js"></script>
 
   <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
-  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.4.0/languages/parser3.min.js"></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/parser3.min.js"></script>
   <script>hljs.initHighlightingOnLoad();</script>
 
 @_css_styles[]
