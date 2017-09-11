@@ -203,7 +203,10 @@ pfMiddleware
   </div>
 
 @_getSQLTime[]
-  $result(^self.sqlStat.queriesTime.double(0))
+  $result(0)
+  ^if(def $self._sql){
+    $result(^self._sql.stat.queriesTime.double(0))
+  }
 
 @_sqlInfo[]
   ^if(def $self._sql){

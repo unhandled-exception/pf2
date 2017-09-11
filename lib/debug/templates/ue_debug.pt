@@ -11,7 +11,7 @@
 
       <div class="mb-4">
         <h1><span class="small">^taint[$aException.type]:</span><br />
-            ^taint[$aException.source]
+            ^untaint[html]{^aException.source.match[\n+][g][<br />]}
         </h1>
         <p class="lead">^untaint[html]{^aException.comment.match[\n+][g][<br />]}</p>
         <p>^self._normalizePath[$aException.file] (${aException.lineno}:${aException.colno}):</p>
