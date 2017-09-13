@@ -4,6 +4,7 @@
 pfPDFKit
 
 ## Класс-обертка для генерации pdf-файлов через wkhtmltopdf.
+## https://wkhtmltopdf.org/
 
 @OPTIONS
 locals
