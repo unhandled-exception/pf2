@@ -27,7 +27,7 @@ pfClass
   $self._CSQL[$aOptions.sql]
 
   $self._schema[$aOptions.schema]
-  $self._tableName[^if(def $self._schema){`$self._schema`.}`^taint[^if(def $aOptions.tableName){$aOptions.tableName}{settings}]`]
+  $self._tableName[^if(def $self._schema){^self._CSQL.dialect.quoteIdentifier[$self._schema].}^taint[^self._CSQL.dialect.quoteIdentifier[^if(def $aOptions.tableName){$aOptions.tableName}{settings}]]]
 
   $self._ignoreKeyCase(^aOptions.ignoreKeyCase.bool(false))
 
@@ -35,8 +35,8 @@ pfClass
   $self._valueColumn[^taint[^if(def $aOptions.valueColumn){$aOptions.valueColumn}{value}]]
 
   $self._vars[^self._CSQL.hash{
-    select distinct ^if($self._ignoreKeyCase){upper(`$self._keyColumn`)}{`$self._keyColumn`} as `key`,
-                    `$self._valueColumn` as value
+    select ^if($self._ignoreKeyCase){upper(^self._CSQL.dialect.quoteIdentifier[$self._keyColumn])}{^self._CSQL.dialect.quoteIdentifier[$self._keyColumn]} as ^self._CSQL.dialect.quoteIdentifier[key],
+                    ^self._CSQL.dialect.quoteIdentifier[$self._valueColumn] as ^self._CSQL.dialect.quoteIdentifier[value]
                from $self._tableName
         }[$.type[string]]]
 
@@ -61,9 +61,9 @@ pfClass
   $result[]
   $lKey[^if($self._ignoreKeyCase){^aKey.upper[]}{$aKey}]
   ^self._CSQL.safeInsert{
-    ^self._CSQL.void{insert into $self._tableName (`$self._keyColumn`, `$self._valueColumn`) values ("$lKey", "$aValue")}
+    ^self._CSQL.void{insert into $self._tableName (^self._CSQL.dialect.quoteIdentifier[$self._keyColumn], ^self._CSQL.dialect.quoteIdentifier[$self._valueColumn]) values ('^taint[$lKey]', '^taint[$aValue]')}
   }{
-    ^self._CSQL.void{update $self._tableName set `$self._valueColumn` = "$aValue" where `$self._keyColumn` = "$lKey"}
+    ^self._CSQL.void{update $self._tableName set ^self._CSQL.dialect.quoteIdentifier[$self._valueColumn] = '^taint[$aValue]' where ^self._CSQL.dialect.quoteIdentifier[$self._keyColumn] = '^taint[$lKey]'}
    }
   $self._vars.[$lKey][$aValue]
 
