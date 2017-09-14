@@ -101,7 +101,7 @@ pfClass
 
 @create[aOptions]
 ## aOptions.sql
-## aOptions.cryptoProvider
+## aOptions.cryptoProvider — объект для шифрования токенов и паролей (например, pfSQLSecurityCrypt)
 ## aOptions.userFieldName[currentUser] — имя поля с объектом user в объекте запроса
 ## aOptions.usersTableName
 ## aOptions.rolesTableName
@@ -114,7 +114,9 @@ pfClass
 ## aOptions.expires[days(365)|date|session] — срок жизни куки. По-умолчанию ставим ограничение куку на год.
   ^self.cleanMethodArgument[]
   $self.CSQL[$aOptions.sql]
+
   $self._cryptoProvider[$aOptions.cryptoProvider]
+  ^pfAssert:isTrue(def $self._cryptoProvider){Не передан объект с криптовровайдером.}
 
   $self._userFieldName[^ifdef[$aOptions.userFieldName]{currentUser}]
   $self._request[]
@@ -143,6 +145,7 @@ pfClass
 @_createUsersModel[aOptions]
   $result[^pfUsersModel::create[
     $.sql[$CSQL]
+    $.cryptoProvider[$self._cryptoProvider]
     $.tableName[$self._usersTableName]
     $.rolesTableName[$self._rolesTableName]
     $.rolesToUsersTableName[$self._rolesToUsersTableName]
@@ -299,7 +302,7 @@ pfModelTable
 
 @create[aOptions]
 ## aOptions.tableName[auth_users]
-## aOptions.cryptoProvider
+## aOptions.cryptoProvider — объект для шифрования токенов и паролей (например, pfSQLSecurityCrypt)
 ## aOptions.rolesTableName
 ## aOptions.rolesModel[pfRolesModel[$.tableName[$aOptions.rolesTableName]]]
 ## aOptions.rolesToUsersTableName
@@ -309,6 +312,7 @@ pfModelTable
   ]
 
   $self._cryptoProvider[$aOptions.cryptoProvider]
+  ^pfAssert:isTrue(def $self._cryptoProvider){Не передан объект с криптовровайдером.}
 
   ^self.addFields[
     $.userID[$.dbField[user_id] $.processor[int] $.primary(true) $.widget[none]]
@@ -345,6 +349,26 @@ pfModelTable
 @fetch[aOptions;aSQLOptions]
 ## Перекрыть в наследниеке, если надо достать еще какие-то данные о пользователе
   $result[^self.one[$aOptions;$aSQLOptions]]
+
+@new[aData;aSQLOptions] -> [userID]
+## aData.password
+  $aData[^self._makeCredentials[$aData]]
+  $result[^BASE:new[$aData;$aSQLOptions]]
+
+@modify[aUserID;aData] -> []
+## aData.password
+  $aData[^self._makeCredentials[$aData]]
+  $result[^BASE:modify[$aUserID;$aData]]
+
+@_makeCredentials[aData]
+## aData.password
+## Генерируем хеш пароля и secureToken, если нам передали aData.password и не передали хеш пароля и токен.
+  $result[^hash::create[$aData]]
+  ^if(def $aData.password && !def $aData.passwordHash && !def $aData.secureToken){
+    $lPasswordHash[^self.makePasswordHash[$aData.password]]
+    $result.passwordHash[$lPasswordHash]
+    $result.secureToken[^self._cryptoProvider.digest[$lPasswordHash|^math:uuid[]]]
+  }
 
 @delete[aUserID]
   $result[^self.modify[$aUserID;$.isActive(false)]]
