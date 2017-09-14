@@ -21,12 +21,8 @@ CREATE TABLE auth_users
 (
     user_id SERIAL PRIMARY KEY NOT NULL,
     login VARCHAR(250) NOT NULL,
-    name VARCHAR(250) DEFAULT NULL::character varying,
-    job VARCHAR(250) DEFAULT NULL::character varying,
-    phone VARCHAR(250) DEFAULT NULL::character varying,
-    password_hash VARCHAR(45) DEFAULT NULL::character varying,
+    password_hash VARCHAR(250) DEFAULT NULL::character varying,
     secure_token VARCHAR(250) DEFAULT NULL::character varying,
-    can_access_from_inet SMALLINT DEFAULT 0 NOT NULL,
     is_admin SMALLINT DEFAULT 0 NOT NULL,
     is_active SMALLINT DEFAULT 1 NOT NULL,
     created_at TIMESTAMP,
