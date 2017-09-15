@@ -934,6 +934,10 @@ locals
   $self.URI[^self.ifcontains[$aOptions;URI]{$request:uri}]
   $self.QUERY[^self.ifcontains[$aOptions;QUERY]{$request:query}]
   $self.PATH[^self.URI.left(^self.URI.pos[?])]
+  ^pfClass:unsafe{
+#   Раскодируем неанглийские буквы в PATH.
+    $self.PATH[^taint[^string:unescape[uri][$self.PATH]]]
+  }
 
   $self.ACTION[^self.ifcontains[$aOptions;ACTION]{^self.PATH.trim[/]}]
 

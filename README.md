@@ -13,16 +13,16 @@ PF2 помогает разработчикам писать веб-прилож
 
 В [папку с классами](http://www.parser.ru/docs/lang/app1pathclass.htm) загрузите библиотеку. Папка должна называться pf2. Папку со своими классами и классами pf2 положите вне веб пространства.
 
-auto.p
+В auto.p прописываем путь к папке в которую положим pf2:
 ```
 $CLASS_PATH[^table::create{path
-/../classes/
+/../vendor/
 }]
 ```
 
-Устанавливаем pf2
+Устанавливаем pf2 в папку /../vendor/pf2 вне веб-пространства:
 ```
-cd ~/mysite.ru/classes
+cd ~/mysite.ru/vendor
 git clone https://github.com/unhandled-exception/pf2.git
 ```
 
@@ -73,13 +73,17 @@ locals
   ]
 ```
 
-Попробуйте открыть страницы mysite.ru/, mysite.ru/hello/world/, mysite,ru/hello/pf2, mysite.ru/404.
+Попробуйте открыть страницы mysite.ru/, mysite.ru/hello/world/, mysite.ru/hello/Иванопуло, mysite.ru/404.
 
 ## Примеры
 
 ### [pf2-secrets-app](https://github.com/unhandled-exception/pf2-secrets-app)
 
 Законченное приложение на pf2 с моделями, контролерами и шаблонами. Сайт помогает пользователям передавать секретные сообщения коллегам и друзьям через интернет. Сообщение защищаем пин-кодом и уничтожаем как только получатель откроет ссылку и введет правильный пин-код.
+
+### [pf2-project-template](https://github.com/unhandled-exception/pf2-project-template)
+
+Шаблон приложения на pf2. Это не готовое приложение, а один из возможных способов организации приложения на pf2.
 
 ## Документация
 
