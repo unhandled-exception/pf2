@@ -255,7 +255,13 @@ pfClass
   ^pfAssert:isTrue(def $aFileName){Не задано имя шаблона.}
   $result[$.fullPath[] $.searchedPath[^hash::create[]]]
 
-  ^if(def $aOptions.base){
+# Если aFileName начинается с /, то ищем только по searchPath
+  $lFindFromRootOnly(^aFileName.left(1) eq "/")
+
+# Если aFileName начинается с ./, то ищем только от aOptions.base
+  $lFindFromBaseOnly(^aFileName.left(2) eq "./")
+
+  ^if(def $aOptions.base && !$lFindFromRootOnly){
     $lFullPath[$aOptions.base/$aFileName]
     ^if(-f $lFullPath){
       $result.fullPath[$lFullPath]
@@ -264,7 +270,7 @@ pfClass
     }
   }
 
-  ^if(!def $result.fullPath){
+  ^if(!def $result.fullPath && !$lFindFromBaseOnly){
     ^self.searchPath.foreach[_;v]{
       $lFullPath[$v.path/$aFileName]
       ^if(-f $lFullPath){
