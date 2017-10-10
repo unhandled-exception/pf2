@@ -12,7 +12,8 @@ CREATE TABLE `tags` (
   `created_at` datetime DEFAULT NULL,
   `updated_at` datetime DEFAULT NULL,
   PRIMARY KEY (`tag_id`),
-  KEY `tree` (`thread_id`,`parent_id`)
+  KEY `tree` (`thread_id`,`parent_id`),
+  UNIQUE `uq_title` (`title`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 CREATE TABLE `tags_content` (

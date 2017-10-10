@@ -1,7 +1,7 @@
 #PF2 library
 
 @USE
-pf/sql/models/sql_table.p
+pf2/lib/sql/models/sql_table.p
 
 
 @CLASS
@@ -67,53 +67,64 @@ pfClass
   $result[$self._counters]
 
 @assignTags[aContent;aTags;aOptions]
-## Тегирует контент (можно протегировать сразу много объектов по куче тегов)
-## aContent — string|int|hash|table. Для хеша id берем из ключа, для таблицы из колонки.
+## Тегирует контент по тегам
+## aContent — string|int
 ## aOptions.contentTableColumn[contentID] — имя колонки в таблице с контентом, содержащее ID
-## aTags — string|table|hash
-## aOptions.tagsTableColumn[tagID] — имя колонки в таблице с тегами, содержащее tagID
+## aTags — string
 ## aOptions.mode[new|append] — заново протегировать контент или добавить теги к уже существующим
 ## aOptions.contentType
 ## TODO:
 ## aOptions.appendParents(false) - добавить родительские теги
   ^self.cleanMethodArgument[]
-  ^CSQL.transaction{
-    $lTags[$aTags]
-    ^if($aTags is string){
+  $lTags[]
+  ^switch[$aTags.CLASS_NAME]{
+    ^case[string]{
 #     Если передали строку, то достаем из нее теги и добавляем, при необходимости
       $lTags[^hash::create[]]
-      $lAllTags[^tags.all[]]
+      $lAllTags[^self.tags.aggregate[
+        _fields(tagID);
+        lower($self.tags.title) as title
+      ][
+        $.asHashOn[title]
+      ]]
       $lTagsParts[^aTags.split[$self._tagsSeparator;lv;title]]
       ^lTagsParts.foreach[k;v]{
-        $lTagTitle[^tags.normalizeString[$v.title]]
-        ^if(^lAllTags.locate[lowerTitle;^lTagTitle.lower[]]){
-          $lTags.[$lAllTags.tagID][$lAllTags.title]
+        $lTagTitle[^self.tags.normalizeString[^v.title.lower[]]]
+        ^if(^lAllTags.contains[$lTagTitle]){
+          $lNewTagID[$lAllTags.[$lTagTitle].tagID]
         }{
-           $lNewTagID[^tags.new[^tags.assignSlug[$.title[$lTagTitle]]]]
-           $lTags.[$lNewTagID][$lTagTitle]
-         }
+          $lNewTagID[^self.tags.new[
+            $.title[$v.title]
+          ]]
+        }
+        $lTags.[$lNewTagID][$v.title]
       }
     }
-
-    $lContentType[^aOptions.contentType.int($self._contentType)]
-    ^if(!def $aOptions.mode || $aOptions.mode eq "new"){
-#     Удаляем старые связи тегов и контента
-      ^content.deleteAll[
-        $.[contentID in][$aContent]
-        $.contentType[$lContentType]
-      ]
+    ^case[DEFAULT]{
+      ^throw[dont.implemented]
     }
-    ^lTags.foreach[lTagID;lTagTitle]{
-#     Тегируем контент
-      ^switch[$aContent.CLASS_NAME]{
-        ^case[table;hash]{^throw[not.implemented]}
-        ^case[string;int]{
-          ^content.newOrModify[
-            $.tagID[$lTagID]
-            $.contentID[$aContent]
-            $.contentType[$lContentType]
-          ]
-        }
+  }
+
+  $lContentType[^aOptions.contentType.int($self._contentType)]
+  ^if(!def $aOptions.mode || $aOptions.mode eq "new"){
+#   Удаляем старые связи тегов и контента
+    ^content.deleteAll[
+      $.[contentID in][$aContent]
+      $.contentType[$lContentType]
+    ]
+  }
+  ^lTags.foreach[lTagID;lTagTitle]{
+#   Тегируем контент
+    ^switch[$aContent.CLASS_NAME]{
+      ^case[table;hash]{
+        ^throw[dont.implemented]
+      }
+      ^case[string;int]{
+        ^content.newOrModify[
+          $.tagID[$lTagID]
+          $.contentID[$aContent]
+          $.contentType[$lContentType]
+        ]
       }
     }
   }
@@ -169,8 +180,29 @@ pfSQLTable
   }
   $result[$self._transliter]
 
-@delete[aTagID]
-  $result[^self.modify[$aTagID;$.isActive(false)]]
+@new[aData;aSQLOptions]
+## Добавляем тег, если его нет и возвращаем ID
+## aData.title
+## aData.slug[transliter.toURL[title]]
+  $aData[^hash::create[$aData]]
+  $aData.title[$aData.title]
+  $aData[^self.assignSlug[$aData]]
+  ^self.CSQL.safeInsert{
+    $result[^BASE:new[$aData]]
+  }{
+    $result[^self.one[
+      $.where[lower($self.title) = ^self.fieldValue[title;^aData.title.lower[]]]
+    ]]
+    $result[$result.tagID]
+  }
+
+@delete[aTagID;aOptions]
+## aOptions.force(false) — удалить из таблицы
+  ^if(^aOptions.force.bool(false)){
+    $result[^BASE:delete[$aTagID]]
+  }{
+    $result[^self.modify[$aTagID;$.isActive(false)]]
+  }
 
 @restore[aTagID]
   $result[^self.modify[$aTagID;$.isActive(true)]]
@@ -180,8 +212,8 @@ pfSQLTable
     $aField[$self._fields.[$aField]]
   }
   $result[^switch[$aField.processor]{
-    ^case[tag_title]{"^taint[^self.normalizeString[$aValue]]"}
-    ^case[tag_lower_title]{"^taint[^self.normalizeString[^aValue.lower[]]]"}
+    ^case[tag_title]{'^taint[^self.normalizeString[$aValue]]'}
+    ^case[tag_lower_title]{'^taint[^self.normalizeString[^aValue.lower[]]]'}
     ^case[DEFAULT]{^BASE:fieldValue[$aField;$aValue]}
   }]
 
@@ -193,7 +225,7 @@ pfSQLTable
   ^self.cleanMethodArgument[]
   $lData[^hash::create[$aData]]
   ^if(!^lData.contains[slug] || (^lData.contains[slug] && !def ^lData.slug.trim[])){
-    $lData.slug[^transliter.toURL[$lData.title]]
+    $lData.slug[^self.transliter.toURL[^self.normalizeString[$lData.title]]]
   }
   $result[$lData]
 
@@ -248,7 +280,7 @@ pfSQLTable
     _fields(tagID, contentType);
     count(*) as cnt;
     $aOptions
-    $.groupBy[$.tagID[asc] $.contentType[asc]]
+    $.groupBy[$.tagID[] $.contentType[]]
   ]]
 
 #--------------------------------------------------------------------------------

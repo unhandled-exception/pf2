@@ -56,7 +56,7 @@ pfClass
   }{
      ^switch[$exception.type]{
        ^case[console.app.usage]{
-          $exception.handled(true)
+         $exception.handled(true)
          ^self.usage[$exception.comment]
        }
        ^case[console.command.usage]{
