@@ -480,6 +480,9 @@ pfClass
     }
   ]]
 
+@_allWith[aOptions]
+  $result[]
+
 @_allJoinFields[aOptions]
   $result[]
 
@@ -623,7 +626,9 @@ pfClass
     $lOrder[^self._allOrder[$aOptions]]
     $lHaving[^if(^aOptions.contains[having]){$aOptions.having}{^self._allHaving[$aOptions]}]
   }
+  $lWith[^self._allWith[$aOptions]]
   $result[
+       ^if(def ^lWith.trim[]){WITH $lWith}
        SELECT $aFields
          FROM ^if(def $self.SCHEMA){^self._builder.quoteIdentifier[$self.SCHEMA].}^self._builder.quoteIdentifier[$self.TABLE_NAME] AS ^self._builder.quoteIdentifier[$self.TABLE_ALIAS]
               ^self.asContext[where]{^if(^aOptions.contains[join]){$aOptions.join}{^self._allJoin[$aOptions]}}
