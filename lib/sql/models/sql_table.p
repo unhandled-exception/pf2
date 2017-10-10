@@ -37,7 +37,7 @@ pfClass
 
   $self._builder[^if(def $aOptions.builder){$aOptions.builder}{$self._PFSQLTABLE_BUILDER}]
   ^if(!def $self._builder){
-    $self._builder[^pfSQLBuilder::create[$.identifierQuoteMark[$self._csql.dialect.identifierQuoteMark]]]
+    $self._builder[^pfSQLBuilder::create[$self._csql.dialect]]
   }
 
   $self._schema[^taint[^aOptions.schema.trim[]]]
@@ -789,13 +789,14 @@ locals
 @BASE
 pfClass
 
-@create[aOptions]
-## aOptions.identifierQuoteMark["] — кавычки для идентификаторов
+@create[aDialect;aOptions]
   ^self.cleanMethodArgument[]
   ^BASE:create[$aOptions]
 
-  $self._quote[$aOptions.identifierQuoteMark]
-  ^if(!def $self._quote){$self._quote["]}
+  ^pfAssert:isTrue(def $aDialect){Не задан объект с sql-диалектом.}
+  $self.dialect[$aDialect]
+
+  $self._quote[$self.dialect.identifierQuoteMark]
 
   $self._now[^date::now[]]
   $self._today[^date::today[]]
@@ -918,7 +919,7 @@ pfClass
       ^case[uint;auto_uint]{^try{$lVal($aValue)}{^if(^aField.contains[default]){$exception.handled(true) $lVal($aField.default)}}^lVal.format[^if(def $aField.format){$aField.format}{%u}]}
       ^case[int;auto_int]{^try{$lVal($aValue)}{^if(^aField.contains[default]){$exception.handled(true) $lVal($aField.default)}}^lVal.format[^if(def $aField.format){$aField.format}{%d}]}
       ^case[double;auto_double]{^if(^aField.contains[default]){$lValue(^aValue.double($aField.default))}{$lValue(^aValue.double[])}^lValue.format[^if(def $aField.format){$aField.format}{%.16g}]}
-      ^case[bool;auto_bool]{^if(^aValue.bool(^if(^aField.contains[default]){$aField.default}{false})){1}{0}}
+      ^case[bool;auto_bool]{^if(^aValue.bool(^if(^aField.contains[default]){$aField.default}{false})){'1'}{'0'}}
       ^case[now;auto_now]{^if(def $aValue){'^if($aValue is date){^aValue.sql-string[]}{^taint[$aValue]}'}{$lNow[^date::now[]]'^lNow.sql-string[]'}}
       ^case[curtime;auto_curtime]{'^if(def $aValue){^if($aValue is date){^aValue.sql-string[time]}{^taint[$aValue]}}{$lNow[^date::now[]]^lNow.sql-string[time]}'}
       ^case[curdate;auto_curdate]{'^if(def $aValue){^if($aValue is date){^aValue.sql-string[date]}{^taint[$aValue]}}{$lNow[^date::now[]]^lNow.sql-string[date]}'}
@@ -989,9 +990,9 @@ pfClass
   ^pfAssert:isTrue(def $aTableName){Не задано имя таблицы.}
   ^pfAssert:isTrue(def $aFields){Не задан список полей.}
   ^self.cleanMethodArgument[aData;aOptions]
-  $lOpts[^if(^aOptions.ignore.bool(false)){ignore}]
-  $result[INSERT $lOpts INTO ^if(def $aOptions.schema){${self._quote}${aOptions.schema}${self._quote}.}${self._quote}${aTableName}${self._quote} (^self.fieldsList[$aFields;^hash::create[$aOptions] $.data[$aData]]) VALUES (^self.setExpression[$aFields;$aData;^hash::create[$aOptions] $.skipNames(true)])]
-
+  $lOptions[^hash::create[]]
+  $lOptions.ignore(^aOptions.ignore.bool(false))
+  $result[^self.dialect.insertStatement[^if(def $aOptions.schema){${self._quote}${aOptions.schema}${self._quote}.}${self._quote}${aTableName}${self._quote};^self.fieldsList[$aFields;^hash::create[$aOptions] $.data[$aData]];^self.setExpression[$aFields;$aData;^hash::create[$aOptions] $.skipNames(true)];$lOptions]]
 
 @updateStatement[aTableName;aFields;aData;aWhere;aOptions]
 ## Строит выражение для update

@@ -391,6 +391,9 @@ pfClass
 @lastInsertID[aOptions]
   ^pfAssert:fail[Method not implemented.]
 
+@insertStatement[aRelName;aColumnsExp;aValuesExp;aOptions]
+  $result[INSERT INTO $aRelName ($aColumnsExp) VALUES ($aValuesExp)]
+
 #----------------------------------------------------------------------------------------------------------------------
 
 @CLASS
@@ -412,6 +415,13 @@ pfSQLAnsiDialect
 
 @lastInsertID[aOptions]
   $result[SELECT LASTVAL()]
+
+@insertStatement[aRelName;aColumnsExp;aValuesExp;aOptions]
+## aOptions.ignore(false) — не вставлять при дублировании строк
+  ^if(^aOptions.ignore.bool(false)){
+    $lTail[ON CONFLICT DO NOTHING]
+  }
+  $result[INSERT INTO $aRelName ($aColumnsExp) VALUES ($aValuesExp)^if(def $lTail){ $lTail}]
 
 #----------------------------------------------------------------------------------------------------------------------
 
@@ -437,6 +447,13 @@ pfSQLAnsiDialect
 @lastInsertID[aOptions]
   $result[SELECT LAST_INSERT_ID()]
 
+@insertStatement[aRelName;aColumnsExp;aValuesExp;aOptions]
+## aOptions.ignore(false) — не вставлять при дублировании строк
+  ^if(^aOptions.ignore.bool(false)){
+    $lOption[IGNORE]
+  }
+  $result[INSERT ^if(def $lOption){ $lOption}INTO $aRelName ($aColumnsExp) VALUES ($aValuesExp)]
+
 #----------------------------------------------------------------------------------------------------------------------
 
 @CLASS
@@ -461,3 +478,10 @@ pfSQLAnsiDialect
 
 @begin[aModes]
   $result[BEGIN^if(def $aModes){ ^taint[$aModes]} TRANSACTION]
+
+@insertStatement[aRelName;aColumnsExp;aValuesExp;aOptions]
+## aOptions.ignore(false) — не вставлять при дублировании строк
+  ^if(^aOptions.ignore.bool(false)){
+    $lOption[OR IGNORE]
+  }
+  $result[INSERT ^if(def $lOption){ $lOption}INTO $aRelName ($aColumnsExp) VALUES ($aValuesExp)]
