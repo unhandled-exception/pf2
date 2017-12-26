@@ -1033,7 +1033,7 @@ locals
   $lName[^aHeaderName.trim[both; :]]
   $lName[^lName.replace[-;_]]
   $lName[^lName.replace[ ;_]]
-  $result[$headers.[^lName.upper[]]]
+  $result[$self.headers.[^lName.upper[]]]
   ^if(!def $result){
     $result[$aDefaultValue]
   }
