@@ -476,7 +476,7 @@ locals
   ^self.cleanMethodArgument[]
   $result[]
   $lCompiledPattern[^self.compilePattern[$aPattern;$aOptions]]
-  $lRouteTo[^self._makeRouteTo[$aRouteTo]]
+  $lRouteTo[^self._makeRouteTo[$aRouteTo;$aOptions]]
   $lRoute[
     $.pattern[$lCompiledPattern.pattern]
     $.regexp[$lCompiledPattern.regexp]
@@ -488,7 +488,7 @@ locals
 
     $.defaults[^hash::create[$aOptions.defaults]]
     $.where[^hash::create[$aOptions.where]]
-    $.as[^self.trimPath[^self.ifdef[$aOptions.as]{$lRouteTo.routeTo}]]
+    $.as[$lRouteTo.as]
   ]
   $lRoute.processor[$lRouteTo.processor]
   $self.routes.[^math:uid64[]][$lRoute]
@@ -506,7 +506,7 @@ locals
     $self._reverseIndex.[$lRoute.as].[^math:uid64[]][$lRoute]
   }
 
-@_makeRouteTo[aRouteTo] -> [$.routeTo[] $.processor[] $.appendToReverseIndex(true)]
+@_makeRouteTo[aRouteTo;aOptions] -> [$.routeTo[] $.processor[] $.appendToReverseIndex(true)]
   $result[
     $.routeTo[]
     $.appendToReverseIndex(true)
@@ -514,14 +514,18 @@ locals
   ^if($aRouteTo is pfRouterProcessor){
     $result.processor[$aRouteTo]
     $result.appendToReverseIndex(false)
+    $result.as[$aOptions.as]
   }($aRouteTo is hash){
     $result.processor[^self.createProcessor[^aRouteTo.at[first;key];^aRouteTo.at[first;value]]]
     $result.appendToReverseIndex(false)
+    $result.as[^self.ifdef[$aOptions.as]{$aRouteTo.as}]
   }{
     $lParsedRouteTo[^aRouteTo.match[$self._pfRouterProcessorRegexp]]
     $result.routeTo[$lParsedRouteTo.2]
     $result.processor[^self.createProcessor[$lParsedRouteTo.1;$lParsedRouteTo.2]]
+    $result.as[^self.ifdef[$aOptions.as]{$result.routeTo}]
   }
+  $result.as[^self.trimPath[$result.as]]
 
 @route[aAction;aRequest;aOptions] -> [$.action $.args $.request $.processor $.defaults]
 ## Выполняет поиск и преобразование пути по списку маршрутов
