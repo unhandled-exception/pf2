@@ -143,7 +143,11 @@ pfMiddleware
           ^if(!def $lReferer){
             ^throw[csrf.invalid.referer;$self.REASON_NO_REFERER]
           }
-          $lReferer[^pfString:parseURL[^lReferer.lower[]]]
+
+#         При парсинге реферера считаем, что нам никогда не приходит реферер 
+#         с логином и паролем. Потому что в гет-параметрах могут запросто передать @,
+#         что сразу ломает проверку реферера.
+          $lReferer[^pfString:parseURL[^lReferer.lower[];$.skipAuth(true)]]
           ^if(!$lReferer){
             ^throw[csrf.invalid.referer;$self.REASON_MALFORMED_REFERER]
           }

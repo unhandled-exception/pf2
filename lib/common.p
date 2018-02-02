@@ -428,8 +428,11 @@ static
     }
   }
 
-@parseURL[aURL]
+@parseURL[aURL;aOptions]
 ## Разбирает url
+## aOptions.skipAuth(false) — не парсить юзернейм и пароль. Хак, для случая,
+## когда в get-параметрах передадут имейл.
+## TODO: Примитивный разбор url регулярками в parseURL надо менять!
 ## result[$.protocol $.user $.password $.host $.port $.path $.options $.nameless $.url $.hash]
 ## result.options — таблица со столбцом piece
   $result[^hash::create[]]
@@ -437,15 +440,19 @@ static
     $lMatches[^aURL.match[
        ^^
        (?:([a-zA-Z\-0-9]+?)\:(?://)?)?   # 1 — protocol
-       (?:(\S+?)(?:\:(\S+))?@)?          # 2 — user, 3 — password
+       ^if(!^aOptions.skipAuth.bool(false)){
+         (?:(\S+?)(?:\:(\S+?))?@)?       # 2 — user, 3 — password
+       }{
+         ()()
+       }
        (?:([a-z0-9\-\.]*?[a-z0-9]))      # 4 — host
        (?:\:(\d+))?                      # 5 — port
        (/[^^\s\?]*)?                     # 6 — path
        (?:\?(\S*?))?                     # 7 — options
        (?:\#(\S*))?                      # 8 — hash (#)
        ^$
-          ][xi]]
-   ^if($lMatches){
+    ][xi]]
+    ^if($lMatches){
       $result.protocol[$lMatches.1]
       $result.user[$lMatches.2]
       $result.password[$lMatches.3]
