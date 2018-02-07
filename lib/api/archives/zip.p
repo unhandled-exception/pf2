@@ -44,13 +44,14 @@ pfClass
 ## aOptions.convertLF(false)
 ## aOptions.charset[$request:charset]
 ## aOptions.ignoreCase(false)
+## aOptions.password
   ^self.cleanMethodArgument[]
   ^self._cleanLastError[]
-  $lExec[^file::exec[^if($aOptions.mode eq "binary"){binary}{text};$self._unzipPath;$.charset[^if(def $aOptions.charset){$aOptions.charset}{$request:charset}];-p;^if(^aOptions.convertLF.bool(false)){-a};^if(^aOptions.ignoreCase.bool(false)){-C};^pfOS:absolutePath[$aZipFile];$aFileName]]
+  $lExec[^file::exec[^if($aOptions.mode eq "binary"){binary}{text};$self._unzipPath;$.charset[^if(def $aOptions.charset){$aOptions.charset}{$request:charset}];-p;^if(^aOptions.convertLF.bool(false)){-a};^if(^aOptions.ignoreCase.bool(false)){-C};^if(def $aOptions.password){-P};^if(def $aOptions.password){$aOptions.password};^pfOS:absolutePath[$aZipFile];$aFileName]]
   ^if($lExec.status){
     ^self._error(true)[$lExec.status;$lExec.text;$lExec.stderr]
   }
-  $result[$lExec]
+  $result[^file::create[$lExec;$.name[$aFileName]]]
 
 @test[aZipFile;aOptions]
   ^self._cleanLastError[]

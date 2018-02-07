@@ -1,2 +1,6 @@
 #!/bin/sh
-unzip $*
+if [ -f /usr/local/bin/unzip ] ; then
+  /usr/local/bin/unzip $*
+else
+  unzip $*
+fi
