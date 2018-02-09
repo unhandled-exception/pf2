@@ -51,7 +51,7 @@ pfConsoleCommandWithSubcommands
   ^self.assignSubcommand[psql_shell_command;$psql_shell_command;
     $.help[Make a postgres shell command.]
   ]
-  ^self.assignSubcommand[vacuum [prefix];$vacuum;
+  ^self.assignSubcommand[vacuum [prefix] [--cluster];$vacuum;
     $.help[Run a VACUUM ANALYZE command.]
   ]
 
@@ -244,6 +244,12 @@ pfConsoleCommandWithSubcommands
            }
      order by table_schema, table_name
   }]
+
+  ^if($lTables && ^aSwitches.contains[cluster]){
+    ^self.print[Cluster tables.]
+    ^CSQL.void{CLUSTER}
+  }
+
   ^self.print[Vacuum and analyze tables:]
   ^lTables.foreach[t;v]{
     ^self.print[— ${v.table_schema}.${t}]
