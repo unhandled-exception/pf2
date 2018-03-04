@@ -27,6 +27,7 @@ pfClass
 ##   aOptions.primaryKey
 ##   aOptions.skipOnInsert[$.field(bool)]
 ##   aOptions.skipOnUpdate[$.field(bool)]
+##   aOptions.skipOnSelect[$.field(bool)]
   ^self.cleanMethodArgument[]
   ^BASE:create[$aOptions]
   $self.__options[^hash::create[$aOptions]]
@@ -54,6 +55,7 @@ pfClass
 
   $self._skipOnInsert[^hash::create[^if(def $aOptions.skipOnInsert){$aOptions.skipOnInsert}]]
   $self._skipOnUpdate[^hash::create[^if(def $aOptions.skipOnUpdate){$aOptions.skipOnUpdate}]]
+  $self._skipOnSelect[^hash::create[^if(def $aOptions.skipOnSelect){$aOptions.skipOnSelect}]]
 
   $self._defaultResultType[^if(^aOptions.allAsTable.bool(false)){table}{hash}]
 
@@ -106,6 +108,7 @@ pfClass
 ## aOptions.sequence(true) — последовательность формирует БД (автоинкремент; только для первичного ключа)
 ## aOptions.skipOnInsert(false) — пропустить при вставке
 ## aOptions.skipOnUpdate(false) — пропустить при обновлении
+## aOptions.skipOnSelect(false) — пропустить при селекте
 ## aOptions.label[aFieldName] — текстовое название поля (например, для форм)
 ## aOptions.comment — описание поля
 ## aOptions.widget — название html-виджета для редактирования поля.
@@ -153,6 +156,9 @@ pfClass
        $self._primaryKey[$aFieldName]
      }
    }
+  ^if(^aOptions.skipOnSelect.bool(false)){
+    $self._skipOnSelect.[$aFieldName](true)
+  }
   $self._fields.[$aFieldName][$lField]
   ^if(def $lField.plural){
     $self._plurals.[$lField.plural][$lField]
@@ -473,11 +479,13 @@ pfClass
 
 @_allFields[aOptions;aSQLOptions]
   ^self.cleanMethodArgument[aOptions;aSQLOptions]
+  $lSkipFields[^hash::create[$self._skipOnSelect]]
+  ^if(^aSQLOptions.contains[skipFields]){
+    ^lSkipFields.add[$aSQLOptions.skipFields]
+  }
   $result[^self._builder.selectFields[$self._fields;
     $.tableAlias[$self.TABLE_ALIAS]
-    ^if(^aSQLOptions.contains[skipFields]){
-      $.skipFields[$aSQLOptions.skipFields]
-    }
+    $.skipFields[$lSkipFields]
   ]]
 
 @_allWith[aOptions]
@@ -729,13 +737,9 @@ pfClass
         $.alias[$match.4]
       ]
       ^if(^lField.function.lower[] eq "_fields"){
-        ^if(^lField.args.trim[] eq "*"){
-          $lField.expr[^self._allFields[][$aSQLOptions]]
-        }{
-           $lSplit[^lField.args.split[,;lv]]
-           $lField.expr[^lSplit.menu{^lSplit.piece.match[$self._PFSQLTABLE_AGR_REGEX][]{^if(def $match.1){^self.sqlFieldName[$match.1] AS ^self._builder.quoteIdentifier[^if(def $match.4){$match.4}{$match.1}]}}}[, ]]
-           $lField.alias[]
-         }
+        $lSplit[^lField.args.split[,;lv]]
+        $lField.expr[^lSplit.menu{^lSplit.piece.match[$self._PFSQLTABLE_AGR_REGEX][]{^if($match.1 eq "*"){^self._allFields[][$aSQLOptions]}(def $match.1){^self.sqlFieldName[$match.1] AS ^self._builder.quoteIdentifier[^if(def $match.4){$match.4}{$match.1}]}}}[, ]]
+        $lField.alias[]
       }
       $result.[^result._count[]][$lField]
     }
