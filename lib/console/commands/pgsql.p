@@ -33,7 +33,7 @@ pfConsoleCommandWithSubcommands
   $self._settings[^self._parseConnectString[$self.CSQL.connectString]]
   ^pfAssert:isTrue($self._settings){"$self.CSQL.connectString" is an invalid connect string.}
 
-  ^self.assignSubcommand[dump file_name.sql [--gzip|--bzip2] [--tables=t1,tp*] [--ignore=t1,tp*] [--only-data] [--no-owner] [--clean] [--no-acl];$dump][
+  ^self.assignSubcommand[dump file_name.sql [--gzip|--bzip2] [--tables=t1,tp*] [--ignore=t1,tp*] [--only-data] [--no-owner] [--clean] [--no-acl] [--format=plain] [--jobs=n] [--lock-wait-timeout=n];$dump][
     $.help[Dump data to file.]
   ]
   ^self.assignSubcommand[schema [file_name] [--no-owner] [--clean] [--no-acl];$schema;
@@ -67,6 +67,9 @@ pfConsoleCommandWithSubcommands
 ## aSwitches.no-owner — убрать владльца из схемы
 ## aSwitches.clean — выдать команды на очистку базы
 ## aSwitches.no-acl — не выдавать grant/revoke-команды.
+## aSwitches.format[plain] — формат дампа (plain|custom|directory|tar)
+## aSwitches.jobs(1) — количество потоков для форматов custom и directory
+## aSwitches.lock-timeout — таймаут ожидания лока базы в милисекундах
   $lFile[^aArgs.1.trim[]]
   ^if(def $lFile){
     $lOptions[^self._defaultPsqlOptions[]]
@@ -87,6 +90,20 @@ pfConsoleCommandWithSubcommands
       }
     }
 
+    ^if(^aSwitches.[jobs].int(0) > 0){
+      ^lOptions.append{--jobs=$aSwitches.jobs}
+    }
+
+    ^if(def $aSwitches.format){
+      ^lOptions.append{--format=$aSwitches.format}
+    }{
+      $aSwitches.format[plain]
+    }
+
+    ^if(^aSwitches.[lock-wait-timeout].int(0)){
+      ^lOptions.append{--lock-wait-timeout=$aSwitches.[lock-wait-timeout]}
+    }
+
     ^if(^aSwitches.contains[tables]){
       $lTables[^aSwitches.tables.trim[both;"]]
       $lTables[^lTables.split[,;lv]]
@@ -105,7 +122,12 @@ pfConsoleCommandWithSubcommands
 
 
     $lEnv[^hash::create[]]
-    $lEnv.CGI_MANAGE_PGSQL_DUMP_FILE[^if(^lFile.left(1) ne "/"){$self._rootPath/$lFile}{$lFile}]
+    ^if($aSwitches.format eq "plain"){
+      $lEnv.CGI_MANAGE_PGSQL_DUMP_FILE[^if(^lFile.left(1) ne "/"){$self._rootPath/$lFile}{$lFile}]
+    }{
+      ^lOptions.append{--file=^if(^lFile.left(1) ne "/"){$self._rootPath/$lFile}{$lFile}}
+    }
+
     ^if(^aSwitches.contains[gzip]){
       $lEnv.CGI_MANAGE_PGSQL_DUMP_ARCHIVER[gzip]
     }(^aSwitches.contains[bzip2]){
@@ -116,7 +138,7 @@ pfConsoleCommandWithSubcommands
     ^if($lPgdump.status == 0){
 
       $lNow[^date::now[]]
-      ^self.print[Database have dumped to file $lFile at ^lNow.iso-string[].]
+      ^self.print[Database have dumped to $lFile at ^lNow.iso-string[].]
     }{
        ^self.print[Error $lPgdump.status: $lPgdump.stderr]
      }
