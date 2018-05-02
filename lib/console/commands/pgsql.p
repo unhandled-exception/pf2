@@ -255,6 +255,10 @@ pfConsoleCommandWithSubcommands
   ^self.print[psql ^lOptions.foreach[_;v]{$v.opt}[ ]]
 
 @vacuum[aArgs;aSwitches]
+# Отключаем ограничения на запросы
+  ^CSQL.void{SET statement_timeout = 0}
+
+# Достаем таблицы для вакуума
   $lTables[^self.CSQL.hash{
     select table_name,
            table_catalog,
