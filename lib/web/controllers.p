@@ -945,15 +945,34 @@ locals
 
   $self.ACTION[^self.ifcontains[$aOptions;ACTION]{^self.PATH.trim[/]}]
 
-  ^if(^aOptions.useXForwarded.bool(false)){
-     $self.HOST[^self.ifdef[$aOptions.HOST]{^self.header[X-Forwarded-Host]{$self.ENV.SERVER_NAME}}]
-     $self.PORT[^self.ifdef[$aOptions.PORT]{^self.header[X-Forwarded-Port]{^self.ENV.SERVER_PORT.int(80)}}]
+  ^if(def $aOptions.HOST){
+    $self.HOST[$aOptions.HOST]
   }{
-     $self.HOST[^self.ifdef[$aOptions.HOST]{^self.header[Host]{$self.ENV.SERVER_NAME}}]
-     $self.PORT[^self.ifdef[$aOptions.PORT]{^self.ENV.SERVER_PORT.int(80)}]
-   }
+    $self.HOST[^self.header[Host]{$self.ENV.SERVER_NAME}]
+    ^if(^aOptions.useXForwarded.bool(false)
+      && def ^self.header[X-Forwarded-Host]
+    ){
+       $self.HOST[^self.header[X-Forwarded-Host]]
+    }
+  }
+  $self.HOST[^self.HOST.trim[]]
+  $self.DOMAIN[^self.HOST.match[^^(.+?):\d+^$][]{$match.1}]
+
+  ^if(def $aOptions.PORT){
+    $aOptions.PORT
+  }{
+#   Порт может приходить в X-Forwarded-Port, Host, env.SERVER_PORT
+    ^self.HOST.match[^^.+?:(\d+)^$][]{$lHostPort[$match.1]}
+    $self.PORT[^ifdef[$lHostPort]{^self.ENV.SERVER_PORT.int(80)}]
+    ^if(^aOptions.useXForwarded.bool(false)
+      && def ^self.header[X-Forwarded-Port]
+    ){
+      $self.PORT[^self.header[X-Forwarded-Port]]
+    }
+  }
 
   $self.isSECURE(^self.ifcontains[$aOptions;isSECURE](^self.ENV.HTTPS.lower[] eq "on" || $self.PORT eq "443"))
+
   $self.HOST[$self.HOST^if(!^self.HOST.match[:\d+^$] && $self.PORT ne "80" && ($self.isSECURE && $self.PORT ne "443")){:$self.PORT}]
 
   $self.SCHEME[http^if($self.isSECURE){s}]
