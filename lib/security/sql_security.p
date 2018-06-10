@@ -10,9 +10,7 @@ pfSQLSecurityCrypt
 
 ## Шифрование и работа с токенами.
 ## Вызывает функции шифрования через sql-серверы.
-## Сервер должен пожжерживать функции шифрования и сераилизации в текстовый формат.
-
-## Поддерживает шифрование через MySQL и Postgres.
+## Умеет шифровать через MySQL и Postgres.
 
 ## MySQL:
 ## Сериализация токенов в base64 доступна начиная с MySQL 5.6.10 и MariaDB 10.0.5.
@@ -29,16 +27,16 @@ pfClass
 locals
 
 @create[aOptions]
-## aOptions.sql — объект для соединениея с БД.
-## aOptions.secretKey — ключ для подписи и шифрования.
-## aOptions.cryptKey[aOptions.secretKey] — ключ шифрования. Если не задан, то используем secretKey.
+## aOptions.sql — объект для соединения с БД
+## aOptions.secretKey — ключ для подписи и шифрования
+## aOptions.cryptKey[aOptions.secretKey] — ключ шифрования. Если не задан, то используем secretKey
 ## aOptions.serializer[hex] — алгоритм сериализации зашифрованного текста (hex|base64)
 ## aOptions.hashAlgorythm[sha256] — алогритм хеширования по-умолчанию
   ^self.cleanMethodArgument[]
   ^BASE:create[]
 
-  ^pfAssert:isTrue(def $aOptions.sql){На задан объект для доступа к sql-серверу.}
-  ^pfAssert:isTrue(def $aOptions.secretKey){Не задан секретный ключ.}
+  ^pfAssert:isTrue(def $aOptions.sql){На задан объект для доступа к sql-серверу}
+  ^pfAssert:isTrue(def $aOptions.secretKey){Не задан секретный ключ}
 
   $self.CSQL[$aOptions.sql]
   $self._secretKey[$aOptions.secretKey]
@@ -101,10 +99,9 @@ locals
   ]]
 
 @decrypt[aString;aOptions]
-## Расшифровывает строку, закодированную методом encrypt.
-## aOptions.cryptKey[_cryptKey]
-## aOptions.cryptKey[default crypt key]
-## aOptions.log — запись в sql-лог.
+## Расшифровывает строку, закодированную методом encrypt
+## aOptions.cryptKey[self._cryptKey]
+## aOptions.log — запись в sql-лог
   ^self.cleanMethodArgument[]
   $lFuncs[$self._sqlFunctions.[$self.CSQL.serverType]]
   $lSeralizer[$lFuncs.decrypt.[^self.ifdef[$aOptions.serializer]{$self._serializer}]]
@@ -121,13 +118,13 @@ locals
   ]]
 
 @signString[aString] -> [signature.$aString]
-## Добавляет в начало строки цифровую подпись подпись hash/hmac/base64.
+## Добавляет в начало строки цифровую подпись hash/hmac/base64.
   $lSignature[^math:digest[$self._hashAlgorythm;$aString;$.hmac[$self._secretKey] $.format[base64]]]
   $result[${lSignature}.$aString]
 
 @validateSignatureAndReturnString[aSignString] -> [string] <security.invalid.signature>
-## Проверяет цифровую подпись и возвращает строку без подписи.
-## Если проверка подписи не прошла, выбрасывает исключение security.invalid.signature.
+## Проверяет цифровую подпись и возвращает строку без подписи
+## Если не удалось проверить подпись, выбрасывает исключение
   $result[]
   $lPos(^aSignString.pos[.])
   $lSignature[^aSignString.left($lPos)]
@@ -139,11 +136,11 @@ locals
    }
 
 @makeToken[aData;aOptions]
-## Формирует зашифрованный токен из данных и подписывает его с помощью sha256/hmac.
-## aData[hash] — данные сериализуются в json.
+## Формирует зашифрованный токен из данных и подписывает его с помощью sha256/hmac
+## aData[hash] — данные сериализуются в json
 ## aOptions.skipSign(false) — не подписывать токен
 ## aOptions.serializer[default algorythm]
-## aOptions.log — запись в sql-лог.
+## aOptions.log — запись в sql-лог
   ^self.cleanMethodArgument[]
   $result[^json:string[$aData]]
   ^if(!^aOptions.skipSign.bool(false)){
@@ -152,11 +149,11 @@ locals
   $result[^self.encrypt[$result;$.serializer[$aOptions.serializer] $.log[$aOptions.log]]]
 
 @parseAndValidateToken[aToken;aOptions] -> [hash] <security.invalid.token>
-## Расшифровывает и валидирует токен, сформированный функцией makeToken.
-## Возвращает хеш с данными токена или выбрасывает исключение.
-## aOptions.skipSign(false) — не провирять подпись
+## Расшифровывает и валидирует токен, сформированный функцией makeToken
+## Возвращает хеш с данными токена или выбрасывает исключение
+## aOptions.skipSign(false) — не проверять подпись
 ## aOptions.serializer[default algorythm]
-## aOptions.log — запись в sql-лог.
+## aOptions.log — запись в sql-лог
   ^self.cleanMethodArgument[]
   ^try{
     ^if(!def $aToken){
