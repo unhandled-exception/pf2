@@ -411,7 +411,7 @@ pfSQLAnsiDialect
   ^BASE:create[$aOptions]
 
   $self.name[Postgres]
-  $self.duplicateKeyExceptionRegex[^regex::create[duplicate key value][i]]
+  $self.duplicateKeyExceptionRegex[^regex::create[(?:duplicate key value|повторяющееся значение ключа)][i]]
 
 @lastInsertID[aOptions]
   $result[SELECT LASTVAL()]

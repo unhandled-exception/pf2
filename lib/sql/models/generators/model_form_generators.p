@@ -239,7 +239,7 @@ pfClass
   ^BASE:create[]
 
 @formWidget[aBlock]
-  $result[<form action="" method="post" class="form-horizontal form-default">
+  $result[<form action="" method="post">
     ^^REQUEST.CSRF.tokenField^[^]
     $aBlock
   </form>]
@@ -314,7 +314,7 @@ pfClass
   ^BASE:create[]
 
 @formWidget[aBlock]
-  $result[<form action="" method="post" class="form-horizontal form-default">
+  $result[<form action="" method="post">
     ^^REQUEST.CSRF.tokenField^[^]
     $aBlock
   </form>]
@@ -340,7 +340,6 @@ pfClass
     <div class="form-group">
       <div class="form-check">
         <label class="form-check-label"><input type="$aType" name="$aField.name" id="f-${aField.name}1" value="1" ^^if($lVarName){checked="true"} class="form-check-input" /> $aField.label</label>
-        </div>
       </div>
     </div>]
 
