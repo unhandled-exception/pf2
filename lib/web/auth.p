@@ -185,6 +185,8 @@ pfClass
       $.userID[$lToken.id]
       $.secureToken[$lToken.token]
       $.isActive(true)
+    ][
+      $.log[-- Fetch user for authenticate (userID == $lToken.id)]
     ]]
     ^if($lUser){
       ^self._currentUser.delete[]
@@ -229,6 +231,8 @@ pfClass
   $lUser[^self.users.fetch[
     $.login[$aRequest.[$lLoginField]]
     $.isActive(true)
+  ][
+    $.log[-- Fetch user for login (login == $lLoginField)]
   ]]
   ^if($lUser){
     $lPasswordHash[^self.users.makePasswordHash[$aRequest.[$lPasswordField];$lUser.passwordHash]]
