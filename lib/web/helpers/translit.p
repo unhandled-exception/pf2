@@ -139,16 +139,16 @@ pfClass
 ф	f
 ы	y
 э	e
-й	j
-х	h
-ё	e
+й	y
+х	kh
+ё	yo
 ж	zh
 ц	ts
 ч	ch
 ш	sh
 щ	sch
-ю	ju
-я	ja}]
+ю	yu
+я	ya}]
 
   $self._vowel[аеёиоуыэюя]
 
