@@ -57,6 +57,10 @@ pfConsoleCommandWithSubcommands
 
   $self._maxHelpSubcommandLength(18)
 
+@usage[]
+  $respone:status[2]
+  ^BASE:usage[]
+
 @dump[aArgs;aSwitches]
 ## aArgs.1 — имя файда с дампом
 ## aSwitches.gzip
@@ -135,12 +139,13 @@ pfConsoleCommandWithSubcommands
     }
 
     $lPgdump[^file::exec[$self._pgdumpBin;$lEnv;$lOptions]]
-    ^if($lPgdump.status == 0){
+    $response:status[$lPgdump.status]
 
+    ^if($lPgdump.status == 0){
       $lNow[^date::now[]]
       ^self.print[Database have dumped to $lFile at ^lNow.iso-string[].]
     }{
-       ^self.print[Error $lPgdump.status: $lPgdump.stderr]
+       ^self.print[$lPgdump.stderr]
      }
   }{
      ^self.usage[]
@@ -168,6 +173,8 @@ pfConsoleCommandWithSubcommands
 
   $lFile[^aArgs.1.trim[]]
   $lPgdump[^file::exec[$self._pgdumpBin;$lEnv;$lOptions]]
+  $response:status[$lPgdump.status]
+
   ^if($lPgdump.status == 0){
     $lSchemaDump[$lPgdump.text]
     ^if(def $lFile){
@@ -176,7 +183,7 @@ pfConsoleCommandWithSubcommands
        ^self.print[$lSchemaDump]
      }
   }{
-    ^self.print[Error $lPgdump.status: $lPgdump.stderr]
+     ^self.print[$lPgdump.stderr]
   }
 
 @table_schema[aArgs;aSwitches]
@@ -204,6 +211,8 @@ pfConsoleCommandWithSubcommands
   ^lOptions.append{$aArgs.1}
 
   $lPgdump[^file::exec[$self._pgdumpBin;$lEnv;$lOptions]]
+  $response:status[$lPgdump.status]
+
   ^if($lPgdump.status == 0){
     $lSchemaDump[$lPgdump.text]
 
@@ -214,7 +223,7 @@ pfConsoleCommandWithSubcommands
 
     ^self.print[$lSchemaDump]
   }{
-    ^self.print[Error $lPgdump.status: $lPgdump.stderr]
+     ^self.print[$lPgdump.stderr]
   }
 
 @settings[aArgs;aSwitches]
