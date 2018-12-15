@@ -57,9 +57,9 @@ pfConsoleCommandWithSubcommands
 
   $self._maxHelpSubcommandLength(18)
 
-@usage[]
-  $respone:status[2]
-  ^BASE:usage[]
+@usage[aErrorMessage]
+  $response:status[2]
+  ^BASE:usage[aErrorMessage]
 
 @dump[aArgs;aSwitches]
 ## aArgs.1 — имя файда с дампом
@@ -72,7 +72,7 @@ pfConsoleCommandWithSubcommands
 ## aSwitches.clean — выдать команды на очистку базы
 ## aSwitches.no-acl — не выдавать grant/revoke-команды.
 ## aSwitches.format[plain] — формат дампа (plain|custom|directory|tar)
-## aSwitches.jobs(1) — количество потоков для форматов custom и directory
+## aSwitches.jobs(1) — количество потоков для формата directory
 ## aSwitches.lock-timeout — таймаут ожидания лока базы в милисекундах
   $lFile[^aArgs.1.trim[]]
   ^if(def $lFile){
