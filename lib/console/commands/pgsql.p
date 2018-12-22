@@ -59,7 +59,7 @@ pfConsoleCommandWithSubcommands
 
 @usage[aErrorMessage]
   $response:status[2]
-  ^BASE:usage[aErrorMessage]
+  ^BASE:usage[$aErrorMessage]
 
 @dump[aArgs;aSwitches]
 ## aArgs.1 — имя файда с дампом

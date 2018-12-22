@@ -64,6 +64,7 @@ pfClass
          ^lCommand.usage[$exception.comment]
        }
      }
+     $response:status[2]
    }
   $result[^pfConsoleAppStdout:stdout[]]
 
@@ -294,5 +295,5 @@ pfConsoleCommand
   ^if(^self._subCommands.contains[$aArgs.0]){
     $result[^self._subCommands.[$aArgs.0].function[$aArgs;$aSwitches]]
   }{
-     ^self.fail[]
+     ^self.fail["$aArgs.0" is an unknown command]
    }
