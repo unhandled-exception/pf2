@@ -265,7 +265,8 @@ pfConsoleCommandWithSubcommands
 
 @vacuum[aArgs;aSwitches]
 # Отключаем ограничения на запросы
-  ^CSQL.void{SET statement_timeout = 0}
+  ^self.CSQL.void{SET statement_timeout = 0}
+  ^self.CSQL.void{SET lock_timeout = 36000000}
 
 # Достаем таблицы для вакуума
   $lTables[^self.CSQL.hash{
@@ -282,13 +283,13 @@ pfConsoleCommandWithSubcommands
 
   ^if($lTables && ^aSwitches.contains[cluster]){
     ^self.print[Cluster tables.]
-    ^CSQL.void{CLUSTER}
+    ^self.CSQL.void{CLUSTER}
   }
 
   ^self.print[Vacuum and analyze tables:]
   ^lTables.foreach[t;v]{
     ^self.print[— ${v.table_schema}.${t}]
-    ^CSQL.void{VACUUM ANALYZE "^taint[${v.table_schema}]"."^taint[${t}]"}
+    ^self.CSQL.void{VACUUM ANALYZE "^taint[${v.table_schema}]"."^taint[${t}]"}
   }
   ^self.print[Done.]
 
