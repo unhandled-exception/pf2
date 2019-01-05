@@ -23,7 +23,7 @@ pfClass
   ^self.cleanMethodArgument[]
   ^BASE:create[$aOptions]
 
-  ^pfAssert:isTrue(def $aOptions.sql)[Не задан класс для соединения с СУБД.]
+  ^self.assert(def $aOptions.sql)[Не задан класс для соединения с СУБД.]
   $self._CSQL[$aOptions.sql]
 
   $self._schema[$aOptions.schema]

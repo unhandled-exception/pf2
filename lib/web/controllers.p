@@ -145,7 +145,7 @@ pfClass
 ## aObject[class def|middleware object] — определение класса или вызов конструктора
 ## aConstructorOptions
   $result[]
-  ^pfAssert:isTrue(def $aObject){A middleware object not defined.}
+  ^self.assert(def $aObject){A middleware object not defined.}
   ^if($aObject is string){
      $lMiddleware[^pfString:parseClassDef[$aObject]]
      ^if(def $lMiddleware.package){
@@ -416,7 +416,7 @@ locals
 
 @create[aController;aOptions]
   ^BASE:create[]
-  ^pfAssert:isTrue(def $aController)[Не задан контролер для роутера.]
+  ^self.assert(def $aController)[Не задан контролер для роутера.]
   $self.controller[$aController]
 
   $self.processors[^hash::create[]]

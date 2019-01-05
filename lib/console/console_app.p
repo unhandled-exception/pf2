@@ -258,16 +258,16 @@ pfConsoleCommand
 ## aFunction — имя или ссылка на функцию с командой
 ## aOptions.help — описание команды для usage.
   $result[]
-  ^pfAssert:isTrue(def $aCommandDef){Не задано имя команды.}
-  ^pfAssert:isTrue($aFunction is junction || def $aFunction){На задано имя или ссылка на функцию с командой.}
+  ^self.assert(def $aCommandDef){Не задано имя команды.}
+  ^self.assert($aFunction is junction || def $aFunction){На задано имя или ссылка на функцию с командой.}
 
   $lParsedCommand[^aCommandDef.match[^^\s*(\S+)\s*(.*?)\s*^$][]]
   $lName[$lParsedCommand.1]
   $lParams[$lParsedCommand.2]
-  ^pfAssert:isTrue(!^self._subCommands.contains[$lName]){Субкоманда "$lName" уже задана.}
+  ^self.assert(!^self._subCommands.contains[$lName]){Субкоманда "$lName" уже задана.}
 
   $lFunction[^if($aFunction is junction){$aFunction}{$self.[$aFunction]}]
-  ^pfAssert:isTrue($lFunction is junction){Не найдена функция для команды "$lName".}
+  ^self.assert($lFunction is junction){Не найдена функция для команды "$lName".}
 
   $self._subCommands.[$lName][
     $.name[$lName]

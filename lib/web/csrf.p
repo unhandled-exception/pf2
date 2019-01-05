@@ -45,7 +45,7 @@ pfMiddleware
   ^self.cleanMethodArgument[]
   ^BASE:create[$aOptions]
 
-  ^pfAssert:isTrue(def $aOptions.cryptoProvider){Не задан объект для шифрования csrf-токенов (options.cryptoProvider).}
+  ^self.assert(def $aOptions.cryptoProvider){Не задан объект для шифрования csrf-токенов (options.cryptoProvider).}
   $self._cryptoProvider[$aOptions.cryptoProvider]
 
   $self._cookieAge[^self.ifdef[$aOptions.cookieAge]{365}]
@@ -64,7 +64,7 @@ pfMiddleware
   $self._requestVarName[^self.ifdef[$aOtpions.requestVarName]{CSRF}]
 
   ^if(^aOptions.contains[exceptionHandler]){
-    ^pfAssert:isTrue($aOptions.exceptionHandler is junction)[Обработчик исключения для CSRF-мидлваре должен быть функцией.]
+    ^self.assert($aOptions.exceptionHandler is junction)[Обработчик исключения для CSRF-мидлваре должен быть функцией.]
     $self._exceptionHandler[$aOptions.exceptionHandler]
   }
 

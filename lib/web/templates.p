@@ -252,7 +252,7 @@ pfClass
 @find[aFileName;aOptions] -> [$.fullPath $.searchedPath[hash<$.uid_key[full/path.to.pt] ...>]]
 ## aOptions.base — базовый путь от которого ищем шаблон
   ^self.cleanMethodArgument[]
-  ^pfAssert:isTrue(def $aFileName){Не задано имя шаблона.}
+  ^self.assert(def $aFileName){Не задано имя шаблона.}
   $result[$.fullPath[] $.searchedPath[^hash::create[]]]
 
 # Если aFileName начинается с /, то ищем только по searchPath

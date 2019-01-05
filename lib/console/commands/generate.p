@@ -36,7 +36,7 @@ pfConsoleCommandWithSubcommands
     $.semantic[pfTableFormGeneratorSemanticUIWidgets]
   ]
   $self._defaultFormWidget[^if(def $aOptions.formWidgets){$aOptions.formWidgets}{bootstrap3}]
-  ^pfAssert:isTrue(^_formWidgets.contains[$self._defaultFormWidget]){"$self._defaultFormWidget" is an unknown form widgets type.}
+  ^self.assert(^_formWidgets.contains[$self._defaultFormWidget]){"$self._defaultFormWidget" is an unknown form widgets type.}
 
   $self._modelClassPrefix[$aOptions.modelClassPrefix]
 

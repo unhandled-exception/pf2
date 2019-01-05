@@ -20,7 +20,7 @@ pfSQLTable
 ## aOptions.interval(0.0) — интервал в минутах между попытками обработки задач.
 ##                          Если ноль, то используем 2 в степени attempt минут.
   ^BASE:create[$aTableName;$aOptions]
-  ^pfAssert:isTrue($CSQL.serverType eq "mysql")[Очередь поддерживает работу только с MySQL.]
+  ^self.assert($CSQL.serverType eq "mysql")[Очередь поддерживает работу только с MySQL.]
 
   $self._defaultResultType[table]
 

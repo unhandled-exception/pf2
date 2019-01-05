@@ -18,6 +18,11 @@ locals
 
 @create[aOptions]
 
+@assert[aCondition;aComment] -> [] | throws: assert.fail
+  $result[]
+  ^if(!$aCondition){
+    ^throw[assert.fail;An incorrect assertion;^self.ifdef[$aComment]{Assertion failed exception.}]
+  }
 
 @cleanMethodArgument[aName1;aName2;aName3;aName4;aName5;aName6;aName7;aName8;aName9;aName10]
 ## Метод проверяет пришел ли вызывающему методу параметр с именем aName[1-10].
@@ -30,11 +35,12 @@ locals
     ^if(!def $caller.[$lName] || ($caller.[$lName] is string && !def ^caller.[$lName].trim[])){$caller.[$lName][^hash::create[]]}
   }
 
-@defProperty[aPropertyName;aVarName;aType]
+@defProperty[aPropertyName;aVarName;aType] -> []
 ## Добавляет в объект свойство с именем aPropertyName
 ## ссылающееся на переменную $aVarName[_$aPropertyName].
 ## aType[read] — тип свойства (read|full: только для чтения|чтение/запись)
-  ^pfAssert:isTrue(def $aPropertyName)[Не определено имя свойства]
+  $result[]
+  ^self.assert(def $aPropertyName)[Не определено имя свойства]
   $lVarName[^if(def $aVarName){$aVarName}{_$aPropertyName}]
 
   ^process[$self]{@GET_$aPropertyName^[^]
@@ -52,26 +58,25 @@ locals
       }
     }
   }
-  $result[]
 
-@defReadProperty[aPropertyName;aVarName]
+@defReadProperty[aPropertyName;aVarName] -> []
 # Добавляет свойство только для чтения.
+  $result[]
   ^self.defProperty[$aPropertyName;$aVarName]
-  $result[]
 
-@defReadWriteProperty[aPropertyName;aVarName]
+@defReadWriteProperty[aPropertyName;aVarName] -> []
 # Добавляет свойство для чтения/записи.
-  ^self.defProperty[$aPropertyName;$aVarName;full]
   $result[]
+  ^self.defProperty[$aPropertyName;$aVarName;full]
 
-@alias[aAliasName;aMethod]
+@alias[aAliasName;aMethod] -> []
 ## Создает алиас aAliasName для метода aMethod.
 ## aMethod — ссылка на функцию.
-  ^pfAssert:isTrue($aMethod is junction)[Переменная aMethod должна содержать ссылку на функцию.]
+  $result[]
+  ^self.assert($aMethod is junction)[Переменная aMethod должна содержать ссылку на функцию.]
   ^if(!($self.[$aAliasName] is junction)){
     $self.[$aAliasName][$aMethod]
   }
-  $result[]
 
 @unsafe[aCode;aCatchCode]
 ## Выполняет код и принудительно обрабатывает все exceptions.

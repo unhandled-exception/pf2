@@ -21,7 +21,7 @@ pfClass
 ## aOptions.shortNumber[]
 ## aOptions.timeout(15)
   ^self.cleanMethodArgument[]
-  ^pfAssert:isTrue(def $aOptions.serviceID)[Не задано имя пользователя (serviceID).]
+  ^self.assert(def $aOptions.serviceID)[Не задано имя пользователя (serviceID).]
 
   ^BASE:create[$aOptions]
   $self._serviceID[$aOptions.serviceID]
@@ -39,9 +39,9 @@ pfClass
 ## aMessage
 ## result[$.status[bool] $.smsID[table] $.comment[] <$.badPhone(bool)>] - результат операции
   ^self.cleanMethodArgument[]
-  ^pfAssert:isTrue(def $aMessage)[Не задан текст сообщения.]
-  ^pfAssert:isTrue(def $aPhone)[Не задан получатель сообщения.]
-  ^pfAssert:isTrue(^aPhone.length[] <= 11)[Неверный номер телефона "$aPhone".]
+  ^self.assert(def $aMessage)[Не задан текст сообщения.]
+  ^self.assert(def $aPhone)[Не задан получатель сообщения.]
+  ^self.assert(^aPhone.length[] <= 11)[Неверный номер телефона "$aPhone".]
   $result[]
   ^try{
     $lResp[^pfCFile:load[text;$self._url;

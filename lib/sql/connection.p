@@ -20,7 +20,7 @@ pfClass
 ## aOptions.enableQueriesLog(false) — включить логирование sql-запросов.
 ## aOptions.nestedAsSavepoints(false) — объединить вложенные транзакции в сейвпоинты.
   ^self.cleanMethodArgument[]
-  ^pfAssert:isTrue(def $aConnectString)[Не задана строка соединения.]
+  ^self.assert(def $aConnectString)[Не задана строка соединения. не задано регулярное выражение для поиска дублирования ключей]
 
   ^BASE:create[]
   $self.serverType[^aConnectString.left(^aConnectString.pos[:])]
@@ -262,7 +262,7 @@ pfClass
 @safeInsert[aInsertCode;aExistsCode]
 ## Выполняет aInsertCode, если в нем произошел exception on duplicate, то выполняет aExistsCode.
 ## Реализует абстракцию insert ... on duplicate key update, которая нативно реализована не во всех СУБД.
-  ^pfAssert:isTrue(def $self.dialect.duplicateKeyExceptionRegex)[В диалекте]
+  ^self.assert(def $self.dialect.duplicateKeyExceptionRegex)[В диалекте не задано регулярное выражение для поиска дублирования ключей]
   $result[^try{^self.transaction{^self.savepoint{$aInsertCode}}}{^if($exception.type eq "sql.execute" && ^exception.comment.match[$self.dialect.duplicateKeyExceptionRegex][]){$exception.handled(true)$aExistsCode}}]
 
 @lastInsertID[aOptions]

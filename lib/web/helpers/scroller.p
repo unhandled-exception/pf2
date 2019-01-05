@@ -27,10 +27,10 @@ pfClass
 @create[aItemsCount;aItemsPerPage;aCurrentPage;aOptions]
 ## aOptions.formName[page] — название элемента формы через который передается номер страницы.
 ## aOptions.direction[forward|backward] — направление нумерации страниц
-  ^pfAssert:isTrue(def $aItemsCount)[Не задано количество элементов скролера.]
-  ^pfAssert:isTrue($aItemsCount >= 0)[Количество элементов скролера не может быть меньше нуля.]
-  ^pfAssert:isTrue(def $aItemsPerPage)[Не задано количество элементов на странице скролера.]
-  ^pfAssert:isTrue($aItemsPerPage >= 1)[Количество элементов на странице скролера не может быть меньше 1.]
+  ^self.assert(def $aItemsCount)[Не задано количество элементов скролера.]
+  ^self.assert($aItemsCount >= 0)[Количество элементов скролера не может быть меньше нуля.]
+  ^self.assert(def $aItemsPerPage)[Не задано количество элементов на странице скролера.]
+  ^self.assert($aItemsPerPage >= 1)[Количество элементов на странице скролера не может быть меньше 1.]
 
   ^self.cleanMethodArgument[]
   $self._directions[$.forward(1) $.backward(-1) $._default(1)]

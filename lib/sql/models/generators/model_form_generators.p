@@ -37,7 +37,7 @@ pfClass
 
 @generate[aModel;aOptions]
 ## aOptions.argName
-  ^pfAssert:isTrue($aModel is pfSQLTable)[Модель "$aModel.CLASS_NAME" должна быть наследником pfSQLTable.]
+  ^self.assert($aModel is pfSQLTable)[Модель "$aModel.CLASS_NAME" должна быть наследником pfSQLTable.]
   $aOptions[^hash::create[$aOptions]]
   $aOptions.argName[^if(def $aOptions.agrName){$aOptions.argName}{$self._defaultArgName}]
   $result[^hash::create[]]

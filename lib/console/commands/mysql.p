@@ -31,7 +31,7 @@ pfConsoleCommandWithSubcommands
   $self._rootPath[^self.ifdef[$aOptions.rootPath]{$request:document-root}]
 
   $self._settings[^self._parseConnectString[$self.CSQL.connectString]]
-  ^pfAssert:isTrue($self._settings){"$self.CSQL.connectString" is an invalid connect string.}
+  ^self.assert($self._settings){"$self.CSQL.connectString" is an invalid connect string.}
 
   ^self.assignSubcommand[databases [prefix];$databases][
     $.help[Show available schemas.]

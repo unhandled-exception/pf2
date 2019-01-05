@@ -21,7 +21,7 @@ pfClass
   ^self.cleanMethodArgument[]
   ^BASE:create[]
 
-  ^pfAssert:isTrue(def $aKey)[Не задан ключ для Yandex SpeechKit API.]
+  ^self.assert(def $aKey)[Не задан ключ для Yandex SpeechKit API.]
   $self._apiKey[$aKey]
   $self._apiURL[^if(def $aOptions.apiURL){$aOptions.apiURL}{https://tts.voicetech.yandex.net/generate}]
   $self._timeout(^aOptions.timeout.int(10))
@@ -43,7 +43,7 @@ pfClass
 ## aOptions.ill(false)
 ## aOptions.robot(false)
   ^self.cleanMethodArgument[]
-  ^pfAssert:isTrue(def $aText)[Не задан текст для генерации голоса.]
+  ^self.assert(def $aText)[Не задан текст для генерации голоса.]
   $lForm[
     ^self._makeAPIOptions[$aOptions;$self._generatorDefaults]
     $.key[$self._apiKey]

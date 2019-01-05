@@ -32,7 +32,7 @@ pfClass
 ## aOptions.alarmCall(false) — звонок-оповещение пользователя о выставлении счета.
   ^self.cleanMethodArgument[]
   ^BASE:create[$aOptions]
-  ^pfAssert:isTrue(def $aOptions.shopID)[Не задан shopID (login) магазина.]
+  ^self.assert(def $aOptions.shopID)[Не задан shopID (login) магазина.]
 
   $self._shopID[$aOptions.shopID]
   $self._password[$aOptions.password]
@@ -94,9 +94,9 @@ pfClass
 ## aOptions.ignorePrefix(false) — не вставлять префикс перед номером счета.
   ^self.cleanMethodArgument[aBill]
   ^self.cleanMethodArgument[]
-  ^pfAssert:isTrue(def $aBill.phone)[Не задан номер телефона.]
-  ^pfAssert:isTrue(def $aBill.txnID)[Не задан номер транзакции (счета).]
-  ^pfAssert:isTrue($aBill.amount > 0)[Сумма счета должна быть положительной.]
+  ^self.assert(def $aBill.phone)[Не задан номер телефона.]
+  ^self.assert(def $aBill.txnID)[Не задан номер транзакции (счета).]
+  ^self.assert($aBill.amount > 0)[Сумма счета должна быть положительной.]
 
   $result[]
   $lOptions[^hash::create[$self._options]]
@@ -132,7 +132,7 @@ pfClass
 ## aTxnID — номер счета
 ## aOptions.ignorePrefix(false) — не вставлять префикс перед номером счета.
   ^self.cleanMethodArgument[]
-  ^pfAssert:isTrue(def $aTxnID)[Не задан номер транзакции (счета).]
+  ^self.assert(def $aTxnID)[Не задан номер транзакции (счета).]
 
   $result[]
   $lOptions[^hash::create[$self._options]]
@@ -165,7 +165,7 @@ pfClass
 ## result<hash>[$.[txnID][$.status $.amount $.isPaid $.isCanceled $.rawID]]
 ##      — ключ — номер счета без префикса (если не задан ignorePrefix)
   ^self.cleanMethodArgument[]
-  ^pfAssert:isTrue(def $aIDS)[Не заданы номера транзакций (счетов).]
+  ^self.assert(def $aIDS)[Не заданы номера транзакций (счетов).]
 
   $result[^hash::create[]]
   $lOptions[^hash::create[$self._options]]

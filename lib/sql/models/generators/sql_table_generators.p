@@ -20,7 +20,7 @@ pfClass
 ## aOptions.schema[] — схема в БД
 ## aOptions.classPrefix[] — префикс класса
   ^self.cleanMethodArgument[]
-  ^pfAssert:isTrue(def $aOptions.sql)[Не задан объект для соединения к СУБД.]
+  ^self.assert(def $aOptions.sql)[Не задан объект для соединения к СУБД.]
   ^BASE:create[]
 
   $self._sql[$aOptions.sql]
@@ -121,7 +121,7 @@ pfSQLModelGenerator
 @create[aTableName;aOptions]
   ^self.cleanMethodArgument[]
   ^BASE:create[$aTableName;$aOptions]
-  ^pfAssert:isTrue($CSQL.serverType eq "mysql")[Класс умеет получать описания таблиц только из MySQL.]
+  ^self.assert($CSQL.serverType eq "mysql")[Класс умеет получать описания таблиц только из MySQL.]
 
 @_hasTable[]
   $result(
@@ -239,7 +239,7 @@ pfSQLModelGenerator
 @create[aTableName;aOptions]
   ^self.cleanMethodArgument[]
   ^BASE:create[$aTableName;$aOptions]
-  ^pfAssert:isTrue($CSQL.serverType eq "pgsql")[Класс умеет получать описания таблиц только из Postgres.]
+  ^self.assert($CSQL.serverType eq "pgsql")[Класс умеет получать описания таблиц только из Postgres.]
 
 @_hasTable[]
   $result(

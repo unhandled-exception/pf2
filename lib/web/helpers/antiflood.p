@@ -227,8 +227,8 @@ pfAntiFloodStorage
 ## aOptions.expires(15*60) — сколько секунд хранить пару ключ/значение
 ## aOptions.autoCleanup(true) — автоматически очищать неиспользуемые пары
   ^self.cleanMethodArgument[]
-  ^pfAssert:isTrue(def $aOptions.sql)[Не задан sql-класс.]
-  ^pfAssert:isTrue(def $aOptions.cryptoProvider)[Не задан класс для шифрования токена.]
+  ^self.assert(def $aOptions.sql)[Не задан sql-класс.]
+  ^self.assert(def $aOptions.cryptoProvider)[Не задан класс для шифрования токена.]
 
   ^BASE:create[$aOptions]
 

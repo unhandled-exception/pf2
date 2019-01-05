@@ -35,8 +35,8 @@ locals
   ^self.cleanMethodArgument[]
   ^BASE:create[]
 
-  ^pfAssert:isTrue(def $aOptions.sql){На задан объект для доступа к sql-серверу}
-  ^pfAssert:isTrue(def $aOptions.secretKey){Не задан секретный ключ}
+  ^self.assert(def $aOptions.sql){На задан объект для доступа к sql-серверу}
+  ^self.assert(def $aOptions.secretKey){Не задан секретный ключ}
 
   $self.CSQL[$aOptions.sql]
   $self._secretKey[$aOptions.secretKey]
@@ -68,7 +68,7 @@ locals
   $self._serializer[^self.ifdef[$aOptions.serializer]{hex}]
   $self._hashAlgorythm[^self.ifdef[$aOptions.hashAlgorythm]{sha256}]
 
-  ^pfAssert:isTrue(^self._sqlFunctions.contains[$self.CSQL.serverType]){Неизвестный тип sql-сервера — "${self.CSQL.serverType}". Класс $self.CLASS_NAME поддерживает шифрование через серверы ^self._sqlFunctions.foreach[k;]{"$k"}[, ]}
+  ^self.assert(^self._sqlFunctions.contains[$self.CSQL.serverType]){Неизвестный тип sql-сервера — "${self.CSQL.serverType}". Класс $self.CLASS_NAME поддерживает шифрование через серверы ^self._sqlFunctions.foreach[k;]{"$k"}[, ]}
 
   $self._pattern[^regex::create[\{(.+?)\}][g]]
 
@@ -86,7 +86,7 @@ locals
   ^self.cleanMethodArgument[]
   $lFuncs[$self._sqlFunctions.[$self.CSQL.serverType]]
   $lSeralizer[$lFuncs.encrypt.[^self.ifdef[$aOptions.serializer]{$self._serializer}]]
-  ^pfAssert:isTrue(def $lSeralizer){Неизвестный метод сериализации "$aOptions.serializer".}
+  ^self.assert(def $lSeralizer){Неизвестный метод сериализации "$aOptions.serializer".}
   $result[^self.CSQL.string{
     SELECT
       ^self._applyPattern[$lSeralizer;
@@ -105,7 +105,7 @@ locals
   ^self.cleanMethodArgument[]
   $lFuncs[$self._sqlFunctions.[$self.CSQL.serverType]]
   $lSeralizer[$lFuncs.decrypt.[^self.ifdef[$aOptions.serializer]{$self._serializer}]]
-  ^pfAssert:isTrue(def $lSeralizer){Неизвестный метод сериализации "$aOptions.serializer".}
+  ^self.assert(def $lSeralizer){Неизвестный метод сериализации "$aOptions.serializer".}
   $result[^self.CSQL.string{
     SELECT
       ^self._applyPattern[$lSeralizer;

@@ -116,7 +116,7 @@ pfClass
   $self.CSQL[$aOptions.sql]
 
   $self._cryptoProvider[$aOptions.cryptoProvider]
-  ^pfAssert:isTrue(def $self._cryptoProvider){Не передан объект с криптовровайдером.}
+  ^self.assert(def $self._cryptoProvider){Не передан объект с криптовровайдером.}
 
   $self._userFieldName[^ifdef[$aOptions.userFieldName]{currentUser}]
   $self._request[]
@@ -316,7 +316,7 @@ pfModelTable
   ]
 
   $self._cryptoProvider[$aOptions.cryptoProvider]
-  ^pfAssert:isTrue(def $self._cryptoProvider){Не передан объект с криптовровайдером.}
+  ^self.assert(def $self._cryptoProvider){Не передан объект с криптовровайдером.}
 
   ^self.addFields[
     $.userID[$.dbField[user_id] $.processor[int] $.primary(true) $.widget[none]]
@@ -397,11 +397,11 @@ pfModelTable
 ## Разрешает пользователю воспользоваться правом aPermission.
 ## aOptions.ignoreNonExists(false) - не выдает ошибку, если права нет в системе
   $result[]
-  ^pfAssert:isTrue(def $aUser.userID)[Не задан userID.]
+  ^self.assert(def $aUser.userID)[Не задан userID.]
   $aPermisson[^permissions.processName[$aPermission]]
   $lHasPermission(^permissions.contains[$aPermission])
   $lIgnoreNonExists(^aOptions.ignoreNonExists.bool(false))
-  ^pfAssert:isTrue(!$lIgnoreNonExists || $lHasPermission)[Неизвестное право "$aPermission".]
+  ^self.assert(!$lIgnoreNonExists || $lHasPermission)[Неизвестное право "$aPermission".]
   ^if($lHasPermission){
     ^if(!^_grants.contains[$aUser.userID]){
       $self._grants.[$aUser.userID][^hash::create[]]
@@ -413,11 +413,11 @@ pfModelTable
 ## Запрещает пользователю воспользоваться правом aPermission.
 ## aOptions.ignoreNonExists(false) - не выдает ошибку, если права нет в системе
   $result[]
-  ^pfAssert:isTrue(def $aUser.userID)[Не задан userID.]
+  ^self.assert(def $aUser.userID)[Не задан userID.]
   $aPermisson[^permissions.processName[$aPermission]]
   $lHasPermission(^permissions.contains[$aPermission])
   $lIgnoreNonExists(^aOptions.ignoreNonExists.bool(false))
-  ^pfAssert:isTrue(!$lIgnoreNonExists || $lHasPermission)[Неизвестное право "$aPermission".]
+  ^self.assert(!$lIgnoreNonExists || $lHasPermission)[Неизвестное право "$aPermission".]
   $lUserGrants[$self._grants.[$aUser.userID]]
   ^if($lUserGrants && def $aPermission){
     ^lUserGrants.delete[$aPermission]
@@ -521,21 +521,21 @@ pfClass
 ## aPermission[[group:]permission]
   $result[]
   $aName[^self.processName[$aName]]
-  ^pfAssert:isTrue(def $aName)[Не задано имя права.]
-  ^pfAssert:isFalse(^self._permissions.contains[$aName])[Право "$aName" уже создано.]
+  ^self.assert(def $aName)[Не задано имя права.]
+  ^self.assert(!^self._permissions.contains[$aName])[Право "$aName" уже создано.]
 
   $lPermission[^self.parsePermisson[$aName]]
   $self._permissions.[$aName][$.title[^ifdef[$aTitle]{$aName}]]
 
-  ^pfAssert:isTrue(!def $lPermission.group || ^self._groups.contains[$lPermission.group])[Неизвестная группа прав "$lPermission.group".]
+  ^self.assert(!def $lPermission.group || ^self._groups.contains[$lPermission.group])[Неизвестная группа прав "$lPermission.group".]
   $self._groups.[^ifdef[$lPermission.group]{DEFAULT}].permissions.[$aName][1]
 
 @group[aName;aTitle;aOptions] -> []
 ## Добавляет в систему группу
   $result[]
   $aName[^self.processName[$aName]]
-  ^pfAssert:isTrue(def $aName)[Не задано имя группы прав.]
-  ^pfAssert:isFalse(^self._groups.contains[$aName])[Группа прав "$aName" уже создана.]
+  ^self.assert(def $aName)[Не задано имя группы прав.]
+  ^self.assert(!^self._groups.contains[$aName])[Группа прав "$aName" уже создана.]
 
   $self._groups.[$aName][$.title[^ifdef[$aTitle]{$aName}] $.permissions[^hash::create[]]]
 

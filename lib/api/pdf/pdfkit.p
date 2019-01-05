@@ -24,7 +24,7 @@ pfClass
   ^BASE:create[]
 
   $self._binPath[^if(def $aOptions.binPath){$aOptions.binPath}{^file:dirname[$self.__PFPDFKIT_FILESPEC__]/bin/wkhtmltopdf}]
-  ^pfAssert:isTrue(-f $self._binPath){Не найден исполнимый файл "$self._binPath".}
+  ^self.assert(-f $self._binPath){Не найден исполнимый файл "$self._binPath".}
 
   $self._stylesheets[^hash::create[]]
 
@@ -62,17 +62,17 @@ pfClass
     ^case[hash]{
       ^if(def $aSource.fileName){
         $lSourceFile[$aSource.fileName]
-        ^pfAssert:isTrue(-f $lSourceFile){${self.CLASS_NAME}: Не найден файл "$lSourceFile".}
+        ^self.assert(-f $lSourceFile){${self.CLASS_NAME}: Не найден файл "$lSourceFile".}
         $lSourceFile[file://${request:document-root}/$lSourceFile]
       }{
          $lSourceFile[$aSource.url]
        }
-      ^pfAssert:isTrue(def $lSourceFile){Не задано имя html-файла или адрес страницы.}
+      ^self.assert(def $lSourceFile){Не задано имя html-файла или адрес страницы.}
     }
   }
 
   $lDestFile[$aOptions.toFile]
-  ^pfAssert:isTrue(-d ^file:dirname[$lDestFile]){${self.CLASS_NAME}: Необходимо создать папку "^file:dirname[$lDestFile]".}
+  ^self.assert(-d ^file:dirname[$lDestFile]){${self.CLASS_NAME}: Необходимо создать папку "^file:dirname[$lDestFile]".}
 
   $lArgs[^hash::create[$self._options]]
   ^if(def $lText){
@@ -84,7 +84,7 @@ pfClass
   ^if(def $lDestFile){$result[]}
 
 @appendStylesheet[aStylesheet]
-  ^pfAssert:isTrue(-f $aStylesheet){${self.CLASS_NAME}: Не найдена таблица стилей "$aStylesheet".}
+  ^self.assert(-f $aStylesheet){${self.CLASS_NAME}: Не найдена таблица стилей "$aStylesheet".}
   $self._stylesheets.[^eval($self._stylesheets + 1)][$aStylesheet]
 
 @_exec[aInpFile;aOutFile;aArgs;aStdin]

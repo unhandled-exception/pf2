@@ -31,7 +31,7 @@ pfConsoleCommandWithSubcommands
   $self._rootPath[^self.ifdef[$aOptions.rootPath]{$request:document-root}]
 
   $self._settings[^self._parseConnectString[$self.CSQL.connectString]]
-  ^pfAssert:isTrue($self._settings){"$self.CSQL.connectString" is an invalid connect string.}
+  ^self.assert($self._settings){"$self.CSQL.connectString" is an invalid connect string.}
 
   ^self.assignSubcommand[dump file_name.sql [--gzip|--bzip2] [--tables=t1,tp*] [--ignore=t1,tp*] [--only-data] [--no-owner] [--clean] [--no-acl] [--format=plain] [--jobs=n] [--lock-wait-timeout=n];$dump][
     $.help[Dump data to file.]

@@ -31,7 +31,7 @@ pfClass
 ## aOptions.skipHeader(false) — не генерировать заголовок.
 ## aOptions.charset[$_charset]
   ^self.cleanMethodArgument[]
-  ^pfAssert:isTrue($aData is table)[Параметр aData должен быть таблицей.]
+  ^self.assert($aData is table)[Параметр aData должен быть таблицей.]
   $lCharset[^if(def $aOptions.charset){$aOptions.charset}{$self._charset}]
   $lFields[^if(^aOptions.contains[fields]){$aOptions.fields}{^self._makeFields[$aData]}]
 

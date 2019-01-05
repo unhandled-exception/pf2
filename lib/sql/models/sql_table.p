@@ -33,7 +33,7 @@ pfClass
   $self.__options[^hash::create[$aOptions]]
 
   $self._csql[^if(def $aOptions.sql){$aOptions.sql}{$self._PFSQLTABLE_CSQL}]
-  ^pfAssert:isTrue(def $self._csql){Не задан объект для работы с SQL-сервером.}
+  ^self.assert(def $self._csql){Не задан объект для работы с SQL-сервером.}
   $self.CSQL[$self._csql]
 
   $self._builder[^if(def $aOptions.builder){$aOptions.builder}{$self._PFSQLTABLE_BUILDER}]
@@ -114,8 +114,8 @@ pfClass
 ## aOptions.widget — название html-виджета для редактирования поля.
   $result[]
   ^self.cleanMethodArgument[]
-  ^pfAssert:isTrue(def $aFieldName){Не задано имя поля таблицы.}
-  ^pfAssert:isTrue(!^self._fields.contains[$aFieldName]){Поле «${aFieldName}» в таблице уже существует.}
+  ^self.assert(def $aFieldName){Не задано имя поля таблицы.}
+  ^self.assert(!^self._fields.contains[$aFieldName]){Поле «${aFieldName}» в таблице уже существует.}
 
   $lField[^hash::create[]]
 
@@ -198,7 +198,7 @@ pfClass
 @addScope[aName;aConditions]
 ## Добавлет новый скоуп в модель
   $result[]
-  ^pfAssert:isTrue(def ^aName.trim[]){На задано имя скоупа.}
+  ^self.assert(def ^aName.trim[]){На задано имя скоупа.}
   $self._scopes.[$aName][^hash::create[$aConditions]]
 
 #----- Свойства -----
@@ -207,7 +207,7 @@ pfClass
   $result[$self._schema]
 
 @GET_TABLE_NAME[]
-  ^pfAssert:isTrue(def $self._tableName){Не задано имя таблицы в классе $self.CLASS_NAME}
+  ^self.assert(def $self._tableName){Не задано имя таблицы в классе $self.CLASS_NAME}
   $result[$self._tableName]
 
 @GET_TABLE_ALIAS[]
@@ -257,7 +257,7 @@ pfClass
 #----- Выборки -----
 
 @get[aPrimaryKeyValue;aOptions]
-  ^pfAssert:isTrue(def $aPrimaryKeyValue){Не задано значение первичного ключа}
+  ^self.assert(def $aPrimaryKeyValue){Не задано значение первичного ключа}
   $result[^self.one[$.[$self._primaryKey][$aPrimaryKeyValue]]]
 
 @one[aOptions;aSQLOptions]
@@ -311,7 +311,7 @@ pfClass
 ## Выполняет несколько запросов и объединяет их в один результат.
 ## Параметр aSQLOptions не поддерживается!
 ## Тип результата берем из самого первого условия.
-  ^pfAssert:isTrue($aConds){Надо задать как-минимум одно условие выборки.}
+  ^self.assert($aConds){Надо задать как-минимум одно условие выборки.}
   $result[]
   $lResultType[^self.__getResultType[^hash::create[$aConds.0]]]
 
@@ -385,8 +385,8 @@ pfClass
 
 @modify[aPrimaryKeyValue;aData]
 ## Изменяем запись с первичныйм ключем aPrimaryKeyValue в таблице
-  ^pfAssert:isTrue(def $self._primaryKey){Не определен первичный ключ для таблицы ${TABLE_NAME}.}
-  ^pfAssert:isTrue(def $aPrimaryKeyValue){Не задано значение первичного ключа}
+  ^self.assert(def $self._primaryKey){Не определен первичный ключ для таблицы ${TABLE_NAME}.}
+  ^self.assert(def $aPrimaryKeyValue){Не задано значение первичного ключа}
   ^self.cleanMethodArgument[aData]
   $result[^self.CSQL.void{
     ^self.asContext[update]{^self.__normalizeWhitespaces{
@@ -406,7 +406,7 @@ pfClass
 ## Работает только для таблиц с первичным ключем.
   $result[]
   ^self.cleanMethodArgument[aSQLOptions]
-  ^pfAssert:isTrue(def $self._primaryKey){Не определен первичный ключ для таблицы ${TABLE_NAME}.}
+  ^self.assert(def $self._primaryKey){Не определен первичный ключ для таблицы ${TABLE_NAME}.}
   ^self.CSQL.safeInsert{
      $result[^self.new[$aData;$aSQLOptions]]
   }{
@@ -416,8 +416,8 @@ pfClass
 
 @delete[aPrimaryKeyValue]
 ## Удаляем запись из таблицы с первичныйм ключем aPrimaryKeyValue
-  ^pfAssert:isTrue(def $self._primaryKey){Не определен первичный ключ для таблицы ${TABLE_NAME}.}
-  ^pfAssert:isTrue(def $aPrimaryKeyValue){Не задано значение первичного ключа}
+  ^self.assert(def $self._primaryKey){Не определен первичный ключ для таблицы ${TABLE_NAME}.}
+  ^self.assert(def $aPrimaryKeyValue){Не задано значение первичного ключа}
   $result[^self.CSQL.void{
     ^self.asContext[update]{^self.__normalizeWhitespaces{
       DELETE FROM ^if(def $self.SCHEMA){^self._builder.quoteIdentifier[$self.SCHEMA].}^self._builder.quoteIdentifier[$self.TABLE_NAME] WHERE $self.PRIMARYKEY = ^self.fieldValue[$self._fields.[$self._primaryKey];$aPrimaryKeyValue]
@@ -428,9 +428,9 @@ pfClass
 ## Увеличивает или уменьшает значение счетчика в поле aFieldName на aValue
 ## aValue(1) — положитетельное или отрицательное число
 ## По-умолчанию увеличивает значение поля на единицу
-  ^pfAssert:isTrue(def $self._primaryKey){Не определен первичный ключ для таблицы ${TABLE_NAME}.}
-  ^pfAssert:isTrue(def $aPrimaryKeyValue){Не задано значение первичного ключа.}
-  ^pfAssert:isTrue(^self.hasField[$aFieldName]){Не найдено поле "$aFieldName" в таблице.}
+  ^self.assert(def $self._primaryKey){Не определен первичный ключ для таблицы ${TABLE_NAME}.}
+  ^self.assert(def $aPrimaryKeyValue){Не задано значение первичного ключа.}
+  ^self.assert(^self.hasField[$aFieldName]){Не найдено поле "$aFieldName" в таблице.}
   $aValue(^if(def $aValue){$aValue}{1})
   $lFieldName[^self._builder.sqlFieldName[$self._fields.[$aFieldName]]]]
   $result[^self.CSQL.void{
@@ -553,7 +553,7 @@ pfClass
   $result[^self._builder.array[$aField;$aValues;$aOptions $.valueFunction[$self.fieldValue]]]
 
 @sqlFieldName[aFieldName]
-  ^pfAssert:isTrue(^self._fields.contains[$aFieldName]){Неизвестное поле «${aFieldName}».}
+  ^self.assert(^self._fields.contains[$aFieldName]){Неизвестное поле «${aFieldName}».}
   $lField[$self._fields.[$aFieldName]]
   ^if($self.__context eq "where"
       && ^lField.contains[fieldExpression]
@@ -692,7 +692,7 @@ pfClass
        $aOptions.selectFields
      }{
        ^if($aResultType eq "hash"){
-         ^pfAssert:isTrue(def $self._primaryKey){Не определен первичный ключ для таблицы ${TABLE_NAME}. Выборку можно делать только в таблицу.}
+         ^self.assert(def $self._primaryKey){Не определен первичный ключ для таблицы ${TABLE_NAME}. Выборку можно делать только в таблицу.}
 #         Для хеша добавляем еще одно поле с первичным ключем
           $self.PRIMARYKEY AS ^self._builder.quoteIdentifier[_ORM_HASH_KEY_],
        }
@@ -802,7 +802,7 @@ pfClass
   ^self.cleanMethodArgument[]
   ^BASE:create[$aOptions]
 
-  ^pfAssert:isTrue(def $aDialect){Не задан объект с sql-диалектом.}
+  ^self.assert(def $aDialect){Не задан объект с sql-диалектом.}
   $self.dialect[$aDialect]
 
   $self._quote[$self.dialect.identifierQuoteMark]
@@ -864,7 +864,7 @@ pfClass
 ## Возвращает список полей для выражения select
 ## aOptions.tableAlias
 ## aOptions.skipFields[$.field[] ...] — хеш с полями, которые надо исключить из выражения
-  ^pfAssert:isTrue(def $aFields){Не задан список полей.}
+  ^self.assert(def $aFields){Не задан список полей.}
   $aOptions[^self._processFieldsOptions[$aOptions]]
   $lTableAlias[^if(def $aOptions.tableAlias){$aOptions.tableAlias}]
 
@@ -886,7 +886,7 @@ pfClass
 ## aOptions.skipFields[$.field[] ...] — хеш с полями, которые надо исключить из выражения
 ## aOptions.skipAbsent(false) — пропустить поля, данных для которых нет (нaдо обязательно задать поле aOptions.data)
 ## aOptions.data — хеш с данными
-  ^pfAssert:isTrue(def $aFields){Не задан список полей.}
+  ^self.assert(def $aFields){Не задан список полей.}
   $aOptions[^self._processFieldsOptions[$aOptions]]
   $lData[^if(def $aOptions.data){$aOptions.data}{^hash::create[]}]
   $lTableAlias[^if(def $aOptions.tableAlias){$aOptions.tableAlias}]
@@ -906,7 +906,7 @@ pfClass
 ## aOptions.skipFields[$.field[] ...] — хеш с полями, которые надо исключить из выражения
 ## aOptions.skipNames(false) — не выводить имена полей, только значения (для insert values)
 ## aOptions.fieldValueFunction[self.fieldValue] — функция для преобразования полей
-  ^pfAssert:isTrue(def $aFields){Не задан список полей.}
+  ^self.assert(def $aFields){Не задан список полей.}
   ^self.cleanMethodArgument[aData;aOptions]
   $aOptions[^self._processFieldsOptions[$aOptions]]
   $lAlias[^if(def $aOptions.alias){${aOptions.alias}}]
@@ -922,7 +922,7 @@ pfClass
 
 @fieldValue[aField;aValue]
 ## Возвращает значение поля в sql-формате.
-  ^pfAssert:isTrue(def $aField){Не задано описание поля.}
+  ^self.assert(def $aField){Не задано описание поля.}
   ^try{
     $result[^switch[^if(def $aField.processor){^aField.processor.lower[]}]{
       ^case[uint;auto_uint]{^try{$lVal($aValue)}{^if(^aField.contains[default]){$exception.handled(true) $lVal($aField.default)}}^lVal.format[^if(def $aField.format){$aField.format}{%u}]}
@@ -996,8 +996,8 @@ pfClass
 ## aOptions.schema
 ## aOptions.skipFields[$.field[] ...] — хеш с полями, которые надо исключить из выражения
 ## aOptions.ignore(false)
-  ^pfAssert:isTrue(def $aTableName){Не задано имя таблицы.}
-  ^pfAssert:isTrue(def $aFields){Не задан список полей.}
+  ^self.assert(def $aTableName){Не задано имя таблицы.}
+  ^self.assert(def $aFields){Не задан список полей.}
   ^self.cleanMethodArgument[aData;aOptions]
   $lOptions[^hash::create[]]
   $lOptions.ignore(^aOptions.ignore.bool(false))
@@ -1015,11 +1015,11 @@ pfClass
 ## aOptions.skipAbsent(false) — пропустить поля, данных для которых нет
 ## aOptions.skipFields[$.field[] ...] — хеш с полями, которые надо исключить из выражения
 ## aOptions.emptySetExpression[выражение, которое надо подставить, если нет данных для обновления]
-  ^pfAssert:isTrue(def $aTableName){Не задано имя таблицы.}
-  ^pfAssert:isTrue(def $aFields){Не задан список полей.}
-  ^pfAssert:isTrue(def $aWhere){Не задано выражение для where.}
+  ^self.assert(def $aTableName){Не задано имя таблицы.}
+  ^self.assert(def $aFields){Не задан список полей.}
+  ^self.assert(def $aWhere){Не задано выражение для where.}
   ^self.cleanMethodArgument[aData;aOptions]
 
   $lSetExpression[^self.setExpression[$aFields;$aData;$aOptions]]
-  ^pfAssert:isTrue(def $lSetExpression || (!def $lSetExpression && def $aOptions.emptySetExpression)){Необходимо задать выражение для пустого update set.}
+  ^self.assert(def $lSetExpression || (!def $lSetExpression && def $aOptions.emptySetExpression)){Необходимо задать выражение для пустого update set.}
   $result[UPDATE ^if(def $aOptions.schema){${self._quote}${aOptions.schema}${self._quote}.}${self._quote}${aTableName}${self._quote} SET ^if(def $lSetExpression){$lSetExpression}{$aOptions.emptySetExpression} WHERE $aWhere]

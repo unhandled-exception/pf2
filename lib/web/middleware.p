@@ -64,7 +64,7 @@ pfMiddleware
 ## aOptions.expires[days(90)|date|session] — срок жизни куки. По-умолчанию ставим ограничение Парсера (90 дней).
   ^self.cleanMethodArgument[]
   ^BASE:create[$aOptions]
-  ^pfAssert:isTrue(def $aOptions.cryptoProvider){Не задан объект для шифрования сессий (options.cryptoProvider).}
+  ^self.assert(def $aOptions.cryptoProvider){Не задан объект для шифрования сессий (options.cryptoProvider).}
 
   $self._cryptoProvider[$aOptions.cryptoProvider]
   $self._sessionVarName[^ifdef[$aOptions.sessionVarName]{session}]
