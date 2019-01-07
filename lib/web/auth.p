@@ -137,6 +137,7 @@ pfClass
   $self._currentUser[^self._makeUser[]]
   $self._hasAuthCookie(false)
 
+# _tokenData парсится из токена и кладется в токен обратно при записи в куку
   $self._tokenData[^hash::create[]]
 
 @GET_currentUser[]
@@ -180,13 +181,13 @@ pfClass
 @authenticate[aRequest;aOptions] -> []
   $result[]
   ^try{
-    $lToken[^self._parseAuthToken[$aRequest.cookie.[$self._authCookieName]]]
+    $self._tokenData[^self._parseAuthToken[$aRequest.cookie.[$self._authCookieName]]]
     $lUser[^self.users.fetch[
-      $.userID[$lToken.id]
-      $.secureToken[$lToken.token]
+      $.userID[$self._tokenData.id]
+      $.secureToken[$self._tokenData.token]
       $.isActive(true)
     ][
-      $.log[-- Fetch user for authenticate (userID == $lToken.id)]
+      $.log[-- Fetch user for authenticate (userID == $self._tokenData.id)]
     ]]
     ^if($lUser){
       ^self._currentUser.delete[]
@@ -213,6 +214,7 @@ pfClass
   $result[]
   ^if($self._currentUser.isAuthenticated){
     $result[^self._cryptoProvider.makeToken[
+      ^hash::create[$self._tokenData]
       $.id[$self._currentUser.id]
       $.token[$self._currentUser.data.secureToken]
     ][
@@ -255,6 +257,7 @@ pfClass
 @logout[aRequest;aOptions] -> []
   $result[]
   ^self._currentUser.delete[]
+  ^self._tokenData.delete[]
   ^self._currentUser.add[^self._makeUser[
     $.isActive(false)
   ]]
