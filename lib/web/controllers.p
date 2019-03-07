@@ -390,7 +390,7 @@ pfClass
   ^self.abort(302)[^self.linkTo[$aAction;$aOptions]]
 
 @redirectFor[aAction;aObject;aOptions]
-  ^self.abort[http.302;^self.linkFor[$aAction;$aOptions]]
+  ^self.abort(302)[^self.linkFor[$aAction;$aObject;$aOptions]]
 
 @assignVar[aName;aValue]
   $result[]
