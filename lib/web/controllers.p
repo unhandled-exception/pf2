@@ -293,6 +293,7 @@ pfClass
 ## Если aTemplateName начинается со "/", то не подставляем текущий перфикс.
 ## Если переменная aTemplateName не задана, то зовем шаблон default.
 ## aContext — переменные, которые добавляются к тем, что уже заданы через assignVar.
+  $aTemplateName[^aTemplateName.trim[]]
   $lVars[^hash::create[$self._templateVars]]
   $lVars[^lVars.union[^self.templateDefaults[]]]
   ^lVars.add[$aContext]
