@@ -74,7 +74,7 @@ locals
 
 @_getRequest[] -> [hash]
   $result[^hash::create[]]
-  $result.host[$env:SERVER_NAME]
+  $result.host[$request:headers.[HOST]]
   $result.uri[$request:uri]
   $result.scheme[http^if(^env:HTTPS.lower[] eq "on"){s}]
   $result.url[${result.scheme}://${result.host}${result.uri}]
