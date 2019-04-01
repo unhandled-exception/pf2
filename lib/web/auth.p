@@ -477,7 +477,7 @@ pfModelTable
         $.[roleID in][$lRoles]
       ]]
       ^if($lRoles){
-        $lPermissions[^roles.parsePermissions[^lRoles.foreach[_;v]{$v.permissions}[#0A]]]
+        $lPermissions[^roles.parsePermissions[^lRoles.foreach[_;v]{$v.permissions}[^#0A]]]
         ^lPermissions.foreach[k;_v]{
           ^self.grant[$aUser;$k]
         }
@@ -491,7 +491,7 @@ pfModelTable
 @CLASS
 pfUsersPermissions
 
-## Вспомогательный класс для хранеия групп и прав пользователей.
+## Вспомогательный класс для хранения групп и прав пользователей.
 
 @OPTIONS
 locals
