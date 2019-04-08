@@ -501,7 +501,7 @@ pfClass
 ## Дополнительное выражение для where
 ## (выражение для полей формируется в _fieldsWhere)
   $lConds[^self._buildConditions[$aOptions]]
-  $result[^if(^aOptions.contains[where]){$aOptions.where}{1=1}^if(def $lConds){ AND $lConds}]
+  $result[^if(^aOptions.contains[where] && def ^aOptions.where.trim[]){$aOptions.where}{1=1}^if(def $lConds){ AND $lConds}]
 
 @_allHaving[aOptions]
   $result[]
