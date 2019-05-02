@@ -144,7 +144,7 @@ pfMiddleware
             ^throw[csrf.invalid.referer;$self.REASON_NO_REFERER]
           }
 
-#         При парсинге реферера считаем, что нам никогда не приходит реферер 
+#         При парсинге реферера считаем, что нам никогда не приходит реферер
 #         с логином и паролем. Потому что в гет-параметрах могут запросто передать @,
 #         что сразу ломает проверку реферера.
           $lReferer[^pfString:parseURL[^lReferer.lower[];$.skipAuth(true)]]
@@ -204,16 +204,18 @@ pfMiddleware
 #   Если нам дали команду обновить куку, то обновляем секрет
     ^_makeNewSecret[]
   }
-  $aResponse.cookie.[$self._cookieName][
-    $.value[^self.makeToken[$.log[-- Make a cookie csrf token.]]]
-    $.expires($self._cookieAge)
-    ^if(def $self._cookieDomain){
-      $.domain[$self._cookieDomain]
-    }
-    $.path[$self._cookiePath]
-    $.httponly($self._cookieHTTPOnly)
-    $.secure($self._cookieSecure)
-  ]
+  ^if(!^self._hasExempt[$aRequest]){
+    $aResponse.cookie.[$self._cookieName][
+      $.value[^self.makeToken[$.log[-- Make a cookie csrf token.]]]
+      $.expires($self._cookieAge)
+      ^if(def $self._cookieDomain){
+        $.domain[$self._cookieDomain]
+      }
+      $.path[$self._cookiePath]
+      $.httponly($self._cookieHTTPOnly)
+      $.secure($self._cookieSecure)
+    ]
+  }
 
 @tokenField[]
   $result[<input type="hidden" name="$self._formFieldName" value="^taint[html][^self.makeToken[$.log[-- Make a form csrf token.]]]" />]
@@ -253,7 +255,6 @@ pfMiddleware
 
 @_hasExempt[aRequest]
   $result(false)
-  $lURI[]
   ^self._pathExempt.foreach[_;v]{
     ^if(^aRequest.PATH.match[$v][]){
       $result(true)
