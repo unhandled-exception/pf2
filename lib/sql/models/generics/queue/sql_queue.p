@@ -3,7 +3,8 @@
 @CLASS
 pfSQLQueue
 
-## Класс для работы с очередью в MySQL-сервере.
+## Класс для работы с очередью в базе данных
+## Требует поддержки семантики SELECT-FOR-UPDATE в СУБД
 ## На основе статьи Якова Сироткина — http://telamon.ru/articles/async.html
 
 @OPTIONS
@@ -20,7 +21,6 @@ pfSQLTable
 ## aOptions.interval(0.0) — интервал в минутах между попытками обработки задач.
 ##                          Если ноль, то используем 2 в степени attempt минут.
   ^BASE:create[$aTableName;$aOptions]
-  ^self.assert($CSQL.serverType eq "mysql")[Очередь поддерживает работу только с MySQL.]
 
   $self._defaultResultType[table]
 
@@ -47,13 +47,19 @@ pfSQLTable
 ## aOptions — параметры как для pfSQLTable.all
 ## aOptions.limit(1)
   ^self.cleanMethodArgument[]
+
+  $lTail[^switch[$self.CSQL.serverType]{
+    ^case[pgsql]{FOR UPDATE OF "$self.TABLE_NAME"}
+    ^case[DEFAULT]{FOR UPDATE}
+  }]
+
   ^self.CSQL.transaction{
     $lConds[^hash::create[$aOptions]]
     $result[^self.all[
       $lConds
       $.[processTime <][^date::now[]]
     ][
-      $.tail[FOR UPDATE]
+      $.tail[$lTail]
       $.force(true)
     ]]
     ^result.foreach[k;v]{
