@@ -196,7 +196,7 @@ pfMiddleware
 @_debugInfo[]
   $lRes[^pfRuntime:resources[]]
   <div class="$self._cssClass">
-    <p>Time: ^eval($lRes.utime + $lRes.stime + ^self._getSQLTime[])[%.6f] (utime: ^lRes.utime.format[%.6f], stime: ^lRes.stime.format[%.6f]).<br />
+    <p>Time: ^eval(($lRes.utime + $lRes.stime + ^self._getSQLTime[]) * 1000)[%.3f] ms (utime: ^eval($lRes.utime * 1000)[%.3f] ms, stime: ^eval($lRes.stime * 1000)[%.3f] ms).<br />
     Memory: $lRes.used KB, free: $lRes.free KB (total: ^lRes.allocated.format[%.0f] KB, after gc: ^lRes.allocatedSinceCompact.format[%.0f] KB, $lRes.compacts compacts, limit $lRes.memoryLimit KB)
     </p>
     ^self._sqlInfo[]
@@ -216,7 +216,7 @@ pfMiddleware
   }
 
 @_queriesStat[aStat;aServerType]
-  <p class="sql-stat">SQL queries^if(def $aServerType){ ($aServerType)}: ${aStat.queriesCount} (^aStat.queriesTime.format[%.6f] sec).
+  <p class="sql-stat">SQL queries^if(def $aServerType){ ($aServerType)}: ${aStat.queriesCount} (^eval($aStat.queriesTime * 1000)[%.3f] ms).
        Memory cache: ${aStat.memoryCache.size} results, ${aStat.memoryCache.usage} hits.
   </p>
 
@@ -224,7 +224,7 @@ pfMiddleware
     <ol class="sql-queries">
        ^aStat.queries.foreach[number;it]{
          <li value="^eval($number+1)" style="margin-bottom: 0.5em^; ^if(def $it.exception){color: #94333C}">
-           (^it.time.format[%.6f] sec, $it.results rec, $it.memory KB, $it.type)
+           (^eval($it.time * 1000)[%.3f] ms, $it.results rec, $it.memory KB, $it.type)
            ^if(def $it.exception){<span>[^taint[$it.exception.type — $it.exception.comment]]</span>}
            <pre class="sql-log-query"><code class="sql">^taint[html][^it.query.trim[both]]
            ^if(def $it.limit){limit $it.limit} ^if(def $it.offset){offset $it.offset}
