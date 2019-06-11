@@ -42,7 +42,7 @@
   ^if(!$aRes){^return[]}
   <div class="mb-5">
     <h5>Resources</h5>
-    <p>Time: ^eval($aRes.utime + $aRes.stime) (utime: ^aRes.utime.format[%.6f], stime: ^aRes.stime.format[%.6f]).<br />
+    <p>Time: ^eval(($aRes.utime + $aRes.stime) * 1000)[%.3f] ms (utime: ^eval($aRes.utime * 1000)[%.3f] ms, stime: ^eval($aRes.stime * 1000)[%.3f] ms).<br />
     Memory: $aRes.used KB, free: $aRes.free KB (total: ^aRes.allocated.format[%.0f] KB, after gc: ^aRes.allocatedSinceCompact.format[%.0f] KB)
     </p>
   </div>
@@ -83,17 +83,16 @@
 
 @_html_head[aTitle]
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta/css/bootstrap.min.css">
-#   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
-  <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+  <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.8/styles/default.min.css">
 
 @_js_links[]
-  <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"></script>
+  <script src="https://code.jquery.com/jquery-3.4.1.slim.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.11.0/umd/popper.min.js"></script>
-  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta/js/bootstrap.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
 
-  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
-  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/parser3.min.js"></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.8/highlight.min.js"></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.8/languages/parser3.min.js"></script>
   <script>hljs.initHighlightingOnLoad();</script>
 
 @_css_styles[]
