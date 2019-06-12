@@ -93,6 +93,9 @@ pfMiddleware
 @GET_tokenSecret[]
   $result[$self.tokenSecret]
 
+@GET_formFieldName[]
+  $result[$self._formFieldName]
+
 @makeToken[aOptions] -> [a token string]
 ## aOptions.log
   $result[^self._cryptoProvider.makeToken[
