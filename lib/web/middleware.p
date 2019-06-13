@@ -343,3 +343,23 @@ pfMiddleware
        $result.headers.[X-Frame-Options][$self.xframeOptionsValue]
      }
   }
+
+#--------------------------------------------------------------------------------------------------
+
+@CLASS
+pfRequestIDMiddleware
+
+## Добавляет в request поле requestID из заголовка запроса X-Request-ID
+## https://www.nginx.com/blog/application-tracing-nginx-plus/
+
+@BASE
+pfMiddleware
+
+@create[aOptions]
+## aOptions.idHeaderName[X-Request-ID]
+  ^BASE:create[$aOptions]
+  $self.idHeaderName[^ifdef[$aOptions.idHeaderName]{X-Request-ID}]
+
+@processRequest[aAction;aRequest;aController;aProcessOptions] -> []
+  $result[]
+  $aRequest.requestID[^aRequest.header[$self.idHeaderName]]

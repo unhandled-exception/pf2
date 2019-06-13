@@ -144,6 +144,7 @@
 * pfSessionMiddleware
 * pfDebugInfoMiddleware
 * pfSecurityMiddleware
+* pfRequestIDMiddleware
 
 ### [./lib/web/templates.p](./lib/web/templates.p)
 * pfTemplate
