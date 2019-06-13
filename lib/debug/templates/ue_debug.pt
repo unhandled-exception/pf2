@@ -35,7 +35,7 @@
   ^if(!$aRequest){^return[]}
   <div class="mb-2">
     <p class="mb-1">[$aRequest.method] <a href="$aRequest.url" class="link">$aRequest.url</a></p>
-    <p>$aRequest.remoteIP ($aRequest.userAgent)</p>
+    <p>$aRequest.remoteIP ($aRequest.userAgent^if(def $aRequest.headers.[X_REQUEST_ID]){, $aRequest.headers.[X_REQUEST_ID]})</p>
   </div>
 
 @_print_resources[aRes]

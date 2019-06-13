@@ -83,6 +83,7 @@ locals
   $result.parserVersion[$env:PARSER_VERSION]
   $result.remoteIP[$env:REMOTE_ADDR]
   $result.userAgent[$env:HTTP_USER_AGENT]
+  $result.headers[$request:headers]
 
 @_getResources[]
 ## Возвращает хеш с информацией о времени и памяти, затраченных на данный момент
