@@ -112,91 +112,92 @@ pfMiddleware
   $lSecret[^self._getSecretFromRequest[$aRequest]]
   ^aRequest.assign[$.[$self._requestVarName][$self]]
 
-  ^if(!$self._safeHTTPMethods.[^aRequest.method.lower[]]
-    && !^self._hasExempt[$aRequest]
+  ^if($self._safeHTTPMethods.[^aRequest.method.lower[]]
+    || ^self._hasExempt[$aRequest]
   ){
+    ^return[]
+  }
+
+  ^try{
 #   Проверяем токен
-    ^if(!def $result && !def $self._requestToken){
-      $self.isValidRequest(false)
-      $result[^pfResponse::create[$self.REASON_NO_CSRF_COOKIE;$.status[403]]]
+    ^if(!def $self._requestToken){
+      ^throw[csrf.empty.cookie;$self.REASON_NO_CSRF_COOKIE]
     }
-    ^if(!def $result){
-      ^try{
-        $lFormToken[$aRequest.form.[$self._formFieldName]]
-        ^if(!def $lFormToken){
-#         Если нам не прислали токен в форме, то смотрим http-заголовок
-          $lFormToken[$aRequest.headers.[$self._headerName]]
+
+    $lFormToken[$aRequest.form.[$self._formFieldName]]
+    ^if(!def $lFormToken){
+#     Если нам не прислали токен в форме, то смотрим http-заголовок
+      $lFormToken[$aRequest.headers.[$self._headerName]]
+    }
+    $lFormTokenData[^self._cryptoProvider.parseAndValidateToken[$lFormToken;
+      $.serializer[$self._tokenSerializer]
+      $.log[-- Parse a request csrf token.]
+    ]]
+    ^if(!def $self._requestToken.secret
+        || $lFormTokenData.secret ne $self._requestToken.secret
+    ){
+      ^throw[csrf.invalid.token;$self.REASON_BAD_TOKEN]
+    }
+    $self._formToken[$lFormTokenData]
+
+#   Проверяем реферер, если нам прислали запрос по https.
+#   Для нешифрованного соединеня проверять реферер не имеет смысла —
+#   «мужик посередине» может подделать любые поля запроса.
+    ^if($aRequest.isSECURE){
+      $lReferer[^aRequest.header[referer]]
+      ^if(!def $lReferer){
+        ^throw[csrf.invalid.referer;$self.REASON_NO_REFERER]
+      }
+
+#     При парсинге реферера считаем, что нам никогда не приходит реферер
+#     с логином и паролем. Потому что в гет-параметрах могут запросто передать @,
+#     что сразу ломает проверку реферера.
+      $lReferer[^pfString:parseURL[^lReferer.lower[];$.skipAuth(true)]]
+      ^if(!$lReferer){
+        ^throw[csrf.invalid.referer;$self.REASON_MALFORMED_REFERER]
+      }
+      ^if($lReferer.protocol ne "https"){
+        ^throw[csrf.invalid.referer;$self.REASON_INSECURE_REFERER]
+      }
+
+      $lGoodReferer[$self._cookieDomain]
+      ^if(def $lGoodReferer){
+        ^if($aRequest.PORT ne "80" && $aRequest.PORT ne "443"){
+          $lGoodReferer[${lGoodReferer}:$aRequest.PORT]
         }
-        $lFormTokenData[^self._cryptoProvider.parseAndValidateToken[$lFormToken;
-          $.serializer[$self._tokenSerializer]
-          $.log[-- Parse a request csrf token.]
-        ]]
-        ^if(!def $self._requestToken.secret
-            || $lFormTokenData.secret ne $self._requestToken.secret
-        ){
-          ^throw[csrf.invalid.token;$self.REASON_BAD_TOKEN]
-        }
-        $self._formToken[$lFormTokenData]
-
-#       Проверяем реферер, если нам прислали запрос по https.
-#       Для нешифрованного соединеня проверять реферер не имеет смысла —
-#       «мужик посередине» может подделать любые поля запроса.
-        ^if($aRequest.isSECURE){
-          $lReferer[^aRequest.header[referer]]
-          ^if(!def $lReferer){
-            ^throw[csrf.invalid.referer;$self.REASON_NO_REFERER]
-          }
-
-#         При парсинге реферера считаем, что нам никогда не приходит реферер
-#         с логином и паролем. Потому что в гет-параметрах могут запросто передать @,
-#         что сразу ломает проверку реферера.
-          $lReferer[^pfString:parseURL[^lReferer.lower[];$.skipAuth(true)]]
-          ^if(!$lReferer){
-            ^throw[csrf.invalid.referer;$self.REASON_MALFORMED_REFERER]
-          }
-          ^if($lReferer.protocol ne "https"){
-            ^throw[csrf.invalid.referer;$self.REASON_INSECURE_REFERER]
-          }
-
-          $lGoodReferer[$self._cookieDomain]
-          ^if(def $lGoodReferer){
-            ^if($aRequest.PORT ne "80" && $aRequest.PORT ne "443"){
-              $lGoodReferer[${lGoodReferer}:$aRequest.PORT]
-            }
-          }{
-             $lGoodReferer[$aRequest.HOST]
-          }
-          $lGoodHosts[^hash::create[$self._trustedOrigins]]
-          $lGoodHosts.[^math:uid64[]][$lGoodReferer]
-
-          $lValidReferer(false)
-          ^lGoodHosts.foreach[_;lHost]{
-            ^if(^self._isSameDomain[$lReferer.netloc;$lHost]){
-              $lValidReferer(true)
-              ^break[]
-            }
-          }
-          ^if(!$lValidReferer){
-            ^throw[csrf.invalid.referer;$self.REASON_BAD_REFERER]
-          }
-        }
-
-#       Удаляем поле с токеном из request.form
-        ^aRequest.form.delete[$self._formFieldName]
       }{
-        ^if($self._exceptionHandler is junction){
-          $exception.handled(true)
-          $self.isValidRequest(false)
-          $result[^self._exceptionHandler[$aRequest;$exception]]
-        }($exception.type eq "csrf.invalid.referer"
-          || $exception.type eq "csrf.invalid.token"
-          || $exception.type eq "security.invalid.token"
-        ){
-          $exception.handled(true)
-          $self.isValidRequest(false)
-          $result[^pfResponse::create[^if($exception.type eq "security.invalid.token"){$self.REASON_BAD_TOKEN}{$exception.source};$.status[403]]]
+         $lGoodReferer[$aRequest.HOST]
+      }
+      $lGoodHosts[^hash::create[$self._trustedOrigins]]
+      $lGoodHosts.[^math:uid64[]][$lGoodReferer]
+
+      $lValidReferer(false)
+      ^lGoodHosts.foreach[_;lHost]{
+        ^if(^self._isSameDomain[$lReferer.netloc;$lHost]){
+          $lValidReferer(true)
+          ^break[]
         }
       }
+      ^if(!$lValidReferer){
+        ^throw[csrf.invalid.referer;$self.REASON_BAD_REFERER]
+      }
+    }
+
+#   Удаляем поле с токеном из request.form
+    ^aRequest.form.delete[$self._formFieldName]
+  }{
+    ^if($self._exceptionHandler is junction){
+      $exception.handled(true)
+      $self.isValidRequest(false)
+      $result[^self._exceptionHandler[$aRequest;$exception]]
+    }($exception.type eq "csrf.invalid.referer"
+      || $exception.type eq "csrf.invalid.token"
+      || $exception.type eq "security.invalid.token"
+      || $exception.type eq "csrf.empty.cookie"
+    ){
+      $exception.handled(true)
+      $self.isValidRequest(false)
+      $result[^pfResponse::create[^if($exception.type eq "security.invalid.token"){$self.REASON_BAD_TOKEN}{$exception.source};$.status[403]]]
     }
   }
 
