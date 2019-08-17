@@ -33,7 +33,7 @@ pfSQLTable
     $.createdAt[$.dbField[created_at] $.processor[auto_now] $.skipOnUpdate(true) $.widget[none]]
   ]
 
-  $self._defaultOrderBy[$.taskID[asc]]
+  $self._defaultOrderBy[$.processTime[asc] $.taskID[asc]]
 
   $self._interval(^aOptions.interval.double(0.0))
 
@@ -80,4 +80,11 @@ pfSQLTable
   $result[]
   ^BASE:deleteAll[
     $.tasks[$aTasks]
+  ]
+
+@regain[aTask]
+## Возвращает задачу в очередь
+  ^self.modify[$aTask.taskID;
+    $.processTime[^date::now[]]
+    $.attempt[$aTask.attempt]
   ]
