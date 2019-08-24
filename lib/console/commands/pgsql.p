@@ -49,7 +49,10 @@ pfConsoleCommandWithSubcommands
     $.help[Show schemas tables.]
   ]
   ^self.assignSubcommand[psql_shell_command;$psql_shell_command;
-    $.help[Make a postgres shell command.]
+    $.help[Make a Postgres shell command.]
+  ]
+  ^self.assignSubcommand[pgbouncer_shell_command;$pgbouncer_shell_command;
+    $.help[Make a Pg_bouncer shell command.]
   ]
   ^self.assignSubcommand[vacuum [prefix] [--cluster];$vacuum;
     $.help[Run a VACUUM ANALYZE command.]
@@ -263,6 +266,18 @@ pfConsoleCommandWithSubcommands
   ^lOptions.append{pager=off}
   ^self.print[psql ^lOptions.foreach[_;v]{$v.opt}[ ]]
 
+@pgbouncer_shell_command[aArgs;aSwitches]
+  $lOptions[^self._defaultPsqlOptions[
+    $.database[pgbouncer]
+    $.port[6432]
+    $.host[local]
+  ]]
+  ^lOptions.append{--set}
+  ^lOptions.append{PROMPT1=%n@%M:%>/%/%R%#%x}
+  ^lOptions.append{--pset}
+  ^lOptions.append{pager=off}
+  ^self.print[psql ^lOptions.foreach[_;v]{$v.opt}[ ]]
+
 @vacuum[aArgs;aSwitches]
 # Отключаем ограничения на запросы
   ^self.CSQL.void{SET statement_timeout = 0}
@@ -323,7 +338,10 @@ pfConsoleCommandWithSubcommands
     $result.options[$lParsed.6]
   }
 
-@_defaultPsqlOptions[] -> [table<opt>]
+@_defaultPsqlOptions[aOptions] -> [table<opt>]
+## aOptions.database
+## aOptions.host
+## aOptions.port
   $lOptions[^table::create{opt}]
 
 # postgresql://[user[:password]@][netloc][:port][/dbname][?param1=value1&...]
@@ -333,15 +351,18 @@ pfConsoleCommandWithSubcommands
     $lURI[${lURI}${self._settings.user}^if(def $self._settings.password){:$self._settings.password}@]
   }
 
-  ^if(def $self._settings.host){
-    $lURI[${lURI}^if($self._settings.host ne "local"){$self._settings.host}]
-    ^if(def $self._settings.port){
-      $lURI[${lURI}:$self._settings.port]
+  $lHost[^ifdef[$aOptions.host]{$self._settings.host}]
+  $lPort[^ifdef[$aOptions.port]{$self._settings.port}]
+  ^if(def $lHost){
+    $lURI[${lURI}^if($lHost ne "local"){$lHost}]
+    ^if(def $lPort){
+      $lURI[${lURI}:$lPort]
     }
   }
 
-  ^if(def $self._settings.database){
-    $lURI[${lURI}/$self._settings.database]
+  $lDatabase[^ifdef[$aOptions.database]{$self._settings.database}]
+  ^if(def $lDatabase){
+    $lURI[${lURI}/$lDatabase]
   }
 
   ^lOptions.append{$lURI}
