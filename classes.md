@@ -18,6 +18,9 @@
 ### [./lib/api/qiwi/wallet.p](./lib/api/qiwi/wallet.p)
 * pfQiwiWallet
 
+### [./lib/api/telegram/telegram.p](./lib/api/telegram/telegram.p)
+* pfTelegramBotAPI
+
 ### [./lib/api/yandex/speechkit.p](./lib/api/yandex/speechkit.p)
 * pfYandexSpeechKit
 
