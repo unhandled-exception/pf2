@@ -33,7 +33,7 @@ pfConsoleCommandWithSubcommands
   $self._settings[^self._parseConnectString[$self.CSQL.connectString]]
   ^self.assert($self._settings){"$self.CSQL.connectString" is an invalid connect string.}
 
-  ^self.assignSubcommand[dump file_name.sql [--gzip|--bzip2] [--tables=t1,tp*] [--ignore=t1,tp*] [--only-data] [--no-owner] [--clean] [--no-acl] [--format=plain] [--jobs=n] [--lock-wait-timeout=n];$dump][
+  ^self.assignSubcommand[dump file_name.sql [--gzip|--bzip2] [--tables=t1,tp*] [--ignore=t1,tp*] [--only-data] [--no-owner] [--clean] [--no-acl] [--format=plain] [--jobs=n] [--lock-wait-timeout=n] [--column-inserts];$dump][
     $.help[Dump data to file.]
   ]
   ^self.assignSubcommand[schema [file_name] [--no-owner] [--clean] [--no-acl];$schema;
@@ -77,6 +77,8 @@ pfConsoleCommandWithSubcommands
 ## aSwitches.format[plain] — формат дампа (plain|custom|directory|tar)
 ## aSwitches.jobs(1) — количество потоков для формата directory
 ## aSwitches.lock-timeout — таймаут ожидания лока базы в милисекундах
+## aSwitches.column-inserts — Выгружать данные таблиц в виде команд INSERT с явным указанием столбцов
+
   $lFile[^aArgs.1.trim[]]
   ^if(def $lFile){
     $lOptions[^self._defaultPsqlOptions[]]
@@ -95,6 +97,10 @@ pfConsoleCommandWithSubcommands
       ^if(^aSwitches.contains[no-acl]){
         ^lOptions.append{--no-acl}
       }
+    }
+
+    ^if(^aSwitches.contains[column-inserts]){
+      ^lOptions.append{--column-inserts}
     }
 
     ^if(^aSwitches.[jobs].int(0) > 0){
