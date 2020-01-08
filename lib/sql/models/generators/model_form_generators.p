@@ -335,13 +335,28 @@ pfClass
 
 @checkboxWidget[aField;aType;aOptions]
   $lVarName[^$${aOptions.argName}.$aField.name]
-  $aType[^if(def $aType){$aType}{checkbox}]
-  $result[
-    <div class="form-group">
-      <div class="form-check">
-        <label class="form-check-label"><input type="$aType" name="$aField.name" id="f-${aField.name}1" value="1" ^^if($lVarName){checked="true"} class="form-check-input" /> $aField.label</label>
-      </div>
-    </div>]
+  ^switch[$aType]{
+    ^case[checkbox]{
+      $result[
+        <div class="form-group">
+          <div class="custom-control custom-switch">
+            <input type="checkbox" name="$aField.name" id="f-${aField.name}-1" value="1" ^^if($lVarName){checked="true"} class="custom-control-input" />
+            <label class="custom-control-label" for="f-${aField.name}-1">$aField.label</label>
+          </div>
+        </div>
+      ]
+    }
+    ^case[radio]{
+      $result[
+        <div class="form-group">
+          <div class="custom-control custom-radio">
+            <input type="radio" name="$aField.name" id="f-${aField.name}-1" value="1" ^^if($lVarName){checked="true"} class="custom-control-input" />
+            <label class="custom-control-label" for="f-${aField.name}-1">$aField.label</label>
+          </div>
+        </div>
+      ]
+    }
+  }
 
 @selectWidget[aField;aOptions]
   $result[
