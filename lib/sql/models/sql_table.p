@@ -923,30 +923,110 @@ pfClass
 @fieldValue[aField;aValue]
 ## Возвращает значение поля в sql-формате.
   ^self.assert(def $aField){Не задано описание поля.}
+  $result[]
   ^try{
-    $result[^switch[^if(def $aField.processor){^aField.processor.lower[]}]{
-      ^case[uint;auto_uint]{^try{$lVal($aValue)}{^if(^aField.contains[default]){$exception.handled(true) $lVal($aField.default)}}^lVal.format[^if(def $aField.format){$aField.format}{%u}]}
-      ^case[int;auto_int]{^try{$lVal($aValue)}{^if(^aField.contains[default]){$exception.handled(true) $lVal($aField.default)}}^lVal.format[^if(def $aField.format){$aField.format}{%d}]}
-      ^case[double;auto_double]{^if(^aField.contains[default]){$lValue(^aValue.double($aField.default))}{$lValue(^aValue.double[])}^lValue.format[^if(def $aField.format){$aField.format}{%.16g}]}
-      ^case[bool;auto_bool]{^if(^aValue.bool(^if(^aField.contains[default]){$aField.default}{false})){'1'}{'0'}}
-      ^case[now;auto_now]{^if(def $aValue){'^if($aValue is date){^aValue.sql-string[]}{^taint[$aValue]}'}{$lNow[^date::now[]]'^lNow.sql-string[]'}}
-      ^case[curtime;auto_curtime]{'^if(def $aValue){^if($aValue is date){^aValue.sql-string[time]}{^taint[$aValue]}}{$lNow[^date::now[]]^lNow.sql-string[time]}'}
-      ^case[curdate;auto_curdate]{'^if(def $aValue){^if($aValue is date){^aValue.sql-string[date]}{^taint[$aValue]}}{$lNow[^date::now[]]^lNow.sql-string[date]}'}
-      ^case[datetime]{^if(def $aValue){'^if($aValue is date){^aValue.sql-string[]}{^taint[$aValue]}'}{NULL}}
-      ^case[date]{^if(def $aValue){'^if($aValue is date){^aValue.sql-string[date]}{^taint[$aValue]}'}{NULL}}
-      ^case[time]{^if(def $aValue){'^if($aValue is date){^aValue.sql-string[time]}{^taint[$aValue]}'}{NULL}}
-      ^case[json]{^if(def $aValue){'^taint[^json:string[$aValue]]'}{NULL}}
-      ^case[null]{^if(def $aValue){'^taint[$aValue]'}{NULL}}
-      ^case[int_null]{^if(def $aValue){$lVal($aValue)^lVal.format[%d]}{NULL}}
-      ^case[uint_null]{^if(def $aValue){$lVal($aValue)^lVal.format[%u]}{NULL}}
-      ^case[uid;auto_uid;uuid;uuid_auto]{'^taint[^if(def $aValue){$aValue}{$lUUID[^math:uuid[]]^lUUID.lower[]}]'}
-      ^case[inet_ip]{^self.unsafe{^inet:aton[$aValue]}{NULL}}
-      ^case[first_upper]{'^taint[^if(def $aValue){^aValue.match[$self._PFSQLBUILDER_PROCESSOR_FIRST_UPPER][]{^match.1.upper[]$match.2}}(def $aField.default){$aField.default}]'}
-      ^case[hash_md5]{'^taint[^if(def $aValue){^math:md5[$aValue]}]'}
-      ^case[lower_trim]{$lVal[^aValue.lower[]]'^taint[^lVal.trim[both]]'}
-      ^case[upper_trim]{$lVal[^aValue.lower[]]'^taint[^lVal.trim[both]]'}
-      ^case[DEFAULT;auto_default]{'^taint[^if(def $aValue){$aValue}(def $aField.default){$aField.default}]'}
-    }]
+    ^switch[^if(def $aField.processor){^aField.processor.lower[]}]{
+      ^case[null]{
+        $result[^if(def $aValue){'^taint[$aValue]'}{NULL}]
+      }
+
+      ^case[int_null]{
+        $result[^if(def $aValue){$lVal($aValue)^lVal.format[%d]}{NULL}]
+      }
+
+      ^case[uint_null]{
+        $result[^if(def $aValue){$lVal($aValue)^lVal.format[%u]}{NULL}]
+      }
+
+      ^case[uint;auto_uint]{
+        ^if(^aField.contains[default]){
+          $result(^aValue.double($aField.default))
+        }{
+          $result(^aValue.double[])
+        }
+        $result[^result.format[^if(def $aField.format){$aField.format}{%u}]]
+      }
+
+      ^case[int;auto_int]{
+        ^if(^aField.contains[default]){
+          $result(^aValue.int($aField.default))
+        }{
+          $result(^aValue.int[])
+        }
+        $result[^result.format[^if(def $aField.format){$aField.format}{%d}]]
+      }
+
+      ^case[double;auto_double]{
+        ^if(^aField.contains[default]){
+          $result(^aValue.double($aField.default))
+        }{
+          $result(^aValue.double[])
+        }
+        $result[^result.format[^if(def $aField.format){$aField.format}{%.16g}]]
+      }
+
+      ^case[bool;auto_bool]{
+        $result[^if(^aValue.bool(^if(^aField.contains[default]){$aField.default}{false})){'1'}{'0'}]
+      }
+
+      ^case[now;auto_now]{
+        $result[^if(def $aValue){'^if($aValue is date){^aValue.sql-string[]}{^taint[$aValue]}'}{$lNow[^date::now[]]'^lNow.sql-string[]'}]
+      }
+
+      ^case[curtime;auto_curtime]{
+        $result['^if(def $aValue){^if($aValue is date){^aValue.sql-string[time]}{^taint[$aValue]}}{$lNow[^date::now[]]^lNow.sql-string[time]}']
+      }
+
+      ^case[curdate;auto_curdate]{
+        $result['^if(def $aValue){^if($aValue is date){^aValue.sql-string[date]}{^taint[$aValue]}}{$lNow[^date::now[]]^lNow.sql-string[date]}']
+      }
+
+      ^case[datetime]{
+        $result[^if(def $aValue){'^if($aValue is date){^aValue.sql-string[]}{^taint[$aValue]}'}{NULL}]
+      }
+
+      ^case[date]{
+        $result[^if(def $aValue){'^if($aValue is date){^aValue.sql-string[date]}{^taint[$aValue]}'}{NULL}]
+      }
+
+      ^case[time]{
+        $result[^if(def $aValue){'^if($aValue is date){^aValue.sql-string[time]}{^taint[$aValue]}'}{NULL}]
+      }
+
+      ^case[json]{
+        $result[^if(def $aValue){'^taint[^json:string[$aValue]]'}{NULL}]
+      }
+
+      ^case[uid;auto_uid;uuid;uuid_auto]{
+        $result['^taint[^if(def $aValue){$aValue}{$lUUID[^math:uuid[]]^lUUID.lower[]}]']
+      }
+
+      ^case[inet_ip]{
+        $result[^self.unsafe{^inet:aton[$aValue]}{NULL}]
+      }
+
+      ^case[first_upper]{
+        $result['^taint[^if(def $aValue){^aValue.match[$self._PFSQLBUILDER_PROCESSOR_FIRST_UPPER][]{^match.1.upper[]$match.2}}(def $aField.default){$aField.default}]']
+      }
+
+      ^case[hash_md5]{
+        $result['^taint[^if(def $aValue){^math:md5[$aValue]}]']
+      }
+
+      ^case[lower_trim]{
+        $result[^aValue.lower[]]
+        $result['^taint[^result.trim[both]]']
+      }
+
+      ^case[upper_trim]{
+        $result[^aValue.lower[]]
+        $result['^taint[^result.trim[both]]']
+      }
+
+      ^case[DEFAULT;auto_default]{
+        $result['^taint[^if(def $aValue){$aValue}(def $aField.default){$aField.default}]']
+      }
+    }
   }{
      ^throw[pfSQLBuilder.bad.value;Ошибка при преобразовании поля ${aField.name} (processor: ^if(def $aField.processor){$aField.processor}{default}^; value type: $aValue.CLASS_NAME);[${exception.type}] ${exception.source}, ${exception.comment}.]
    }
