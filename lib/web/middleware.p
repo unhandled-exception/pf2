@@ -38,8 +38,12 @@ pfMiddleware
 @processResponse[aAction;aRequest;aResponse;aController;aProcessOptions] -> [response]
   $result[$aResponse]
   ^if($self._disableHTTPCache){
-    $result.headers.cache-control[no-store, no-cache, must-revalidate, proxy-revalidate]
-    $result.headers.pragma[no-cache]
+    ^if(!^result.headers.contains[cache-control]){
+      $result.headers.cache-control[no-store, no-cache, must-revalidate, proxy-revalidate]
+    }
+    ^if(!^result.headers.contains[pragma]){
+      $result.headers.pragma[no-cache]
+    }
   }
 
 #--------------------------------------------------------------------------------------------------
