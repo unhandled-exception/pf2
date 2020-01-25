@@ -133,6 +133,7 @@ pfMiddleware
       $.serializer[$self._tokenSerializer]
       $.log[-- Parse a request csrf token.]
     ]]
+
     ^if(!def $self._requestToken.secret
         || $lFormTokenData.secret ne $self._requestToken.secret
     ){

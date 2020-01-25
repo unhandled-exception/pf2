@@ -109,6 +109,9 @@ locals
 ## ^ifcontains[$hash;key](expression))
   $result[^if(^aObject.contains[$aName]){$aObject.[$aName]}{$aDefaultValue}]
 
+@enumerateForeach[aObject;aNumVar;aKeyVar;aValueVar;aCode;aSeparator]
+  $result[$lNum(0)^aObject.foreach[k;v]{$caller.[$aNumVar][$lNum]$caller.[$aKeyVar][$k]$caller.[$aValueVar][$v]$aCode^lNum.inc[]}{$aSeparator}]
+
 #--------------------------------------------------------------------------------------------------
 
 @CLASS
