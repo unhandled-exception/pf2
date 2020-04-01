@@ -177,7 +177,9 @@ pfSQLModelGenerator
       }
       $lData.widget[none]
     }
-
+    ^if(^lDDL.Field.match[_id^$][ni]){
+      $lData.widget[none]
+    }
     ^if($lName eq "createdAt"){
       $lData.processor[auto_now]
       $lData.skipOnUpdate(true)
@@ -300,7 +302,9 @@ pfSQLModelGenerator
       }
       $lData.widget[none]
     }
-
+    ^if(^lType.columnName.match[_id^$][ni]){
+      $lData.widget[none]
+    }
     ^if($lName eq "createdAt"){
       $lData.processor[auto_now]
       $lData.skipOnUpdate(true)
