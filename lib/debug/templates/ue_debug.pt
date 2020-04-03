@@ -2,7 +2,7 @@
 <!DOCTYPE html>
 <html>
   <head>
-    ^self._html_head[Unhandled exception]
+    ^self._html_head[Unhandled exception ^if(def $self.envType){ ($self.envType)}]
     ^self._css_styles[]
   </head>
   <body>
@@ -34,7 +34,12 @@
 @_print_request[aRequest]
   ^if(!$aRequest){^return[]}
   <div class="mb-2">
-    <p class="mb-1">[$aRequest.method] <a href="$aRequest.url" class="link">$aRequest.url</a></p>
+    <p class="mb-1">
+      [$aRequest.method] <a href="$aRequest.url" class="link">$aRequest.url</a>
+      ^if(def $self.envType){
+        ($self.envType)
+      }
+    </p>
     <p>$aRequest.remoteIP ($aRequest.userAgent^if(def $aRequest.headers.[X_REQUEST_ID]){, $aRequest.headers.[X_REQUEST_ID]})</p>
   </div>
 
@@ -82,6 +87,7 @@
   }
 
 @_html_head[aTitle]
+  <title>$aTitle</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
   <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.8/styles/default.min.css">

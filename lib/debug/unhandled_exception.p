@@ -12,6 +12,7 @@ locals
 @create[aOptions]
 ## aOptions.templateFolder — папка с шаблонами. Если не задана, определяем сами
 ## aOptions.maxSnippetLines(20) — количество строк в снипете. Если 0, то не показываем снипеты
+## aoptions.envType[] — тип окружения
   $aOptions[^hash::create[$aOptions]]
   $self._docRootRegex[^regex::create[^^(?:^taint[regex][$request:document-root])(.+?)^$][]]
 
@@ -24,6 +25,7 @@ locals
   $self.template[$self.templateFolder/ue_debug.pt]
 
   $self._maxSnippetLines(^aOptions.maxSnippetLines.int(20))
+  $self.envType[$aOptions.envType]
 
 # Кешик для файлов с кодом
   $self._snippetFiles[^hash::create[]]
