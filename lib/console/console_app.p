@@ -45,7 +45,7 @@ pfClass
   ]
 
 @getCommand[aCommandName]
-  ^if(!def $aCommandName || !^self._commands.contains[$aCommandName]){^self.fail[]}
+  ^if(!def $aCommandName || !^self._commands.contains[$aCommandName]){^self.fail[;2]}
   $result[^self.getModule[$self._commands.[$aCommandName].moduleName]]
 
 @run[aOptions]
@@ -60,15 +60,17 @@ pfClass
          ^self.usage[$exception.comment]
        }
        ^case[console.command.usage]{
-          $exception.handled(true)
+         $exception.handled(true)
          ^lCommand.usage[$exception.comment]
        }
      }
-     $response:status[2]
    }
   $result[^pfConsoleAppStdout:stdout[]]
 
-@fail[aErrorMessage]
+@fail[aErrorMessage;aErrorCode]
+  ^if(!^response:status.int(0)){
+    $response:status[^aErrorCode.int(1)]
+  }
   ^throw[console.app.usage;;$aErrorMessage]
 
 @usage[aErrorMessage]
@@ -230,7 +232,10 @@ pfClass
 @print[aLine;aOptions]
   $result[^pfConsoleAppStdout:print[$aLine;$aOptions]]
 
-@fail[aErrorMessage]
+@fail[aErrorMessage;aErrorCode]
+  ^if(!^response:status.int(0)){
+    $response:status[^aErrorCode.int(1)]
+  }
   ^throw[console.command.usage;;$aErrorMessage]
 
 #--------------------------------------------------------------------------------------------------
@@ -295,5 +300,5 @@ pfConsoleCommand
   ^if(^self._subCommands.contains[$aArgs.0]){
     $result[^self._subCommands.[$aArgs.0].function[$aArgs;$aSwitches]]
   }{
-     ^self.fail["$aArgs.0" is an unknown command]
+     ^self.fail["$aArgs.0" is an unknown command;2]
    }

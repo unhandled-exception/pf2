@@ -130,3 +130,4 @@ Comment: $exception.comment
 Stack trace:
 ^stack.menu{$stack.name^#09$stack.file ^(${stack.lineno}:$stack.colno^)}[^#0A]
 }
+$response:status[1]
