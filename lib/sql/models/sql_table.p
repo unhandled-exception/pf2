@@ -280,6 +280,7 @@ pfClass
 ##   aOptions.selectFields{exression} — выражение для списка полей (вместо автогенерации)
 ##   aOptions.where{expression} — выражение для where
 ##   aOptions.having{expression} — выражение для having
+##   aOptions.window{expression} — выражение для window
 ##   aOptions.orderBy[hash[$.field[asc]]|{expression}] — хеш с полями или выражение для orderBy
 ##   aOptions.groupBy[hash[$.field[asc]]|{expression}] — хеш с полями или выражение для groupBy
 ##   aOptions.join[] — выражение для join. Заменяет результат вызова ^self._allJoin[].
@@ -506,6 +507,9 @@ pfClass
 @_allHaving[aOptions]
   $result[]
 
+@_allWindow[aOptions]
+  $result[]
+
 @_allGroup[aOptions]
 ## aOptions.groupBy
   ^if(^aOptions.contains[groupBy]){
@@ -633,6 +637,7 @@ pfClass
     $lGroup[^self._allGroup[$aOptions]]
     $lOrder[^self._allOrder[$aOptions]]
     $lHaving[^if(^aOptions.contains[having]){$aOptions.having}{^self._allHaving[$aOptions]}]
+    $lWindow[^if(^aOptions.contains[window]){$aOptions.window}{^self._allWindow[$aOptions]}]
   }
   $lWith[^self._allWith[$aOptions]]
   $result[
@@ -641,13 +646,16 @@ pfClass
          FROM ^if(def $self.SCHEMA){^self._builder.quoteIdentifier[$self.SCHEMA].}^self._builder.quoteIdentifier[$self.TABLE_NAME] AS ^self._builder.quoteIdentifier[$self.TABLE_ALIAS]
               ^self.asContext[where]{^if(^aOptions.contains[join]){$aOptions.join}{^self._allJoin[$aOptions]}}
         WHERE ^self.asContext[where]{^self._allWhere[$aOptions]}
-      ^if(def $lGroup){
+      ^if(def ^lGroup.trim[]){
         GROUP BY $lGroup
       }
-      ^if(def $lHaving){
-       HAVING $lHaving
+      ^if(def ^lHaving.trim[]){
+        HAVING $lHaving
       }
-      ^if(def $lOrder){
+      ^if(def ^lWindow.trim[]){
+        WINDOW $lWindow
+      }
+      ^if(def ^lOrder.trim[]){
         ORDER BY $lOrder
       }
 #     Строим выражение для limit и offset.
