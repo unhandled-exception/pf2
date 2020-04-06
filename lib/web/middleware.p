@@ -169,7 +169,7 @@ pfMiddleware
   $self._enableHighlightJS(^aOptions.enableHighlightJS.bool(false))
   $self._hideQueryLog(^aOptions.hideQueryLog.bool(false))
 
-  $self._highlightJSVersion[9.13.1]
+  $self._highlightJSVersion[9.18.1]
   $self._cssClass[^self.ifdef[$aOptions.cssClass]{debug-info hidden-xs}]
 
 @processResponse[aAction;aRequest;aResponse;aController;aProcessOptions] -> [response]
