@@ -258,7 +258,12 @@ pfSQLModelGenerator
   $result[^hash::create[]]
   $lDDL[^CSQL.table{
       select cols.*,
-             (case when i.column_name is not null then 'PRI' end) as key
+             (case
+                when
+                  i.column_name is not null
+                  and i.position_in_unique_constraint is null
+                then 'PRI'
+              end) as key
         from information_schema.columns as cols
    left join information_schema.key_column_usage as i using (table_schema, table_name, column_name)
        where cols.table_schema = '^taint[^ifdef[$self._schema]{public}]'
@@ -297,7 +302,10 @@ pfSQLModelGenerator
     ^if($lDDL.key eq "PRI" && $lHasPrimary){
       $lData.primary(true)
       $self._primary[$lName]
-      ^if(!^lDDL.column_default.match[^^nextval][in]){
+      ^if(
+        !^lDDL.column_default.match[^^nextval][in]
+        && !^lDDL.identity_generation.match[ALWAYS][in]
+      ){
         $lData.sequence(false)
       }
       $lData.widget[none]
