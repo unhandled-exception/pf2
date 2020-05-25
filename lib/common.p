@@ -1045,13 +1045,12 @@ locals
 @create[]
 ## Конструктор. Если кому-то понадобится использовать класс динамически.
 
-@getMimeType[aFileName]
+@getMimeType[aFileName;aDefaultValue]
 ## Возвращает mime-тип для файла
+  $result[^if(def $aDefaultValue){$aDefaultValue}{text/plain}]
   ^if(^MAIN:MIME-TYPES.locate[ext;^file:justext[^aFileName.lower[]]]){
     $result[$MAIN:MIME-TYPES.mime-type]
-  }{
-     $result[text/plain]
-   }
+  }
 
 @tempFile[aPath;aVarName;aCode;aFinallyCode]
 ## Формирует на время выполнения кода aCode уникальное имя для временного
