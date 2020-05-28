@@ -504,7 +504,11 @@ pfClass
 
   $self._permissions[^hash::create[]]
   $self._groups[
-    $.DEFAULT[$.title[] $.permissions[^hash::create[]]]
+    $.DEFAULT[
+      $.title[]
+      $.permissions[^hash::create[]]
+      $.sections[^hash::create[]]
+    ]
   ]
 
   $self._pnRegex1[^regex::create[\s*:\s+][]]
@@ -522,25 +526,35 @@ pfClass
 @new[aName;aTitle;aOptions] -> []
 ## Добавляет право в систему
 ## aPermission[[group:]permission]
+## aOptions.section
   $result[]
   $aName[^self.processName[$aName]]
   ^self.assert(def $aName)[Не задано имя права.]
   ^self.assert(!^self._permissions.contains[$aName])[Право "$aName" уже создано.]
 
   $lPermission[^self.parsePermisson[$aName]]
-  $self._permissions.[$aName][$.title[^ifdef[$aTitle]{$aName}]]
+  $self._permissions.[$aName][
+    $.title[^ifdef[$aTitle]{$aName}]
+    $.section[$aOptions.section]
+  ]
 
   ^self.assert(!def $lPermission.group || ^self._groups.contains[$lPermission.group])[Неизвестная группа прав "$lPermission.group".]
-  $self._groups.[^ifdef[$lPermission.group]{DEFAULT}].permissions.[$aName][1]
+  $self._groups.[^ifdef[$lPermission.group]{DEFAULT}].permissions.[$aName][$self._permissions.[$aName]]
 
 @group[aName;aTitle;aOptions] -> []
 ## Добавляет в систему группу
+## aOptions.section[hash<$.name[title]>]
   $result[]
   $aName[^self.processName[$aName]]
   ^self.assert(def $aName)[Не задано имя группы прав.]
   ^self.assert(!^self._groups.contains[$aName])[Группа прав "$aName" уже создана.]
 
-  $self._groups.[$aName][$.title[^ifdef[$aTitle]{$aName}] $.permissions[^hash::create[]]]
+  $self._groups.[$aName][
+    $.name[$aName]
+    $.title[^ifdef[$aTitle]{$aName}]
+    $.permissions[^hash::create[]]
+    $.sections[^hash::create[$aOptions.sections]]
+  ]
 
 @contains[aName]
   $result(^self._permissions.contains[$aName])
