@@ -17,9 +17,10 @@ pfClass
 @create[aTableName;aOptions]
 ## aOptions.sql
 ## aOptions.tableAlias
-## aOptions.schema — название базы данных (можно не указывать).
+## aOptions.schema — название схемы в БД (можно не указывать)
 ## aOptions.builder
-## aOptions.allAsTable(false) — по умолчанию возвращать результат в виде таблицы.
+## aOptions.allAsTable(false) — по-умолчанию возвращать результат в виде таблицы
+## aOptions.readOnlyTable(false) — модель только для чтения (методы, менящие данне, вызовут исключение)
 
 ## Следующие поля необязательны, но полезны
 ## при создании объекта на основании другой таблицы:
@@ -31,6 +32,8 @@ pfClass
   ^self.cleanMethodArgument[]
   ^BASE:create[$aOptions]
   $self.__options[^hash::create[$aOptions]]
+
+  $self._readOnlyTable(^aOptions.readOnlyTable.bool(false))
 
   $self._csql[^if(def $aOptions.sql){$aOptions.sql}{$self._PFSQLTABLE_CSQL}]
   ^self.assert(def $self._csql){Не задан объект для работы с SQL-сервером.}
@@ -371,6 +374,7 @@ pfClass
 ## Вставляем значение в базу
 ## aSQLOptions.ignore(false)
 ## Возврашает автосгенерированное значение первичного ключа (last_insert_id) для sequence-полей.
+  ^self.assert(!$self._readOnlyTable){Модель $self.CLASS_NAME в режиме read only (только чтение данных)}
   ^self.cleanMethodArgument[aData;aSQLOptions]
   ^self.asContext[update]{
     $result[^self.CSQL.void{^self.__normalizeWhitespaces{^self._builder.insertStatement[$self.TABLE_NAME;$self._fields;^if($aData is table){$aData.fields}{$aData};
@@ -386,6 +390,7 @@ pfClass
 
 @modify[aPrimaryKeyValue;aData]
 ## Изменяем запись с первичныйм ключем aPrimaryKeyValue в таблице
+  ^self.assert(!$self._readOnlyTable){Модель $self.CLASS_NAME в режиме read only (только чтение данных)}
   ^self.assert(def $self._primaryKey){Не определен первичный ключ для таблицы ${TABLE_NAME}.}
   ^self.assert(def $aPrimaryKeyValue){Не задано значение первичного ключа}
   ^self.cleanMethodArgument[aData]
@@ -405,6 +410,7 @@ pfClass
 ## Аналог мускулевского "insert on duplicate key update"
 ## Пытаемся создать новую запись, а если она существует, то обновляем данные.
 ## Работает только для таблиц с первичным ключем.
+  ^self.assert(!$self._readOnlyTable){Модель $self.CLASS_NAME в режиме read only (только чтение данных)}
   $result[]
   ^self.cleanMethodArgument[aSQLOptions]
   ^self.assert(def $self._primaryKey){Не определен первичный ключ для таблицы ${TABLE_NAME}.}
@@ -417,6 +423,7 @@ pfClass
 
 @delete[aPrimaryKeyValue]
 ## Удаляем запись из таблицы с первичныйм ключем aPrimaryKeyValue
+  ^self.assert(!$self._readOnlyTable){Модель $self.CLASS_NAME в режиме read only (только чтение данных)}
   ^self.assert(def $self._primaryKey){Не определен первичный ключ для таблицы ${TABLE_NAME}.}
   ^self.assert(def $aPrimaryKeyValue){Не задано значение первичного ключа}
   $result[^self.CSQL.void{
@@ -429,6 +436,7 @@ pfClass
 ## Увеличивает или уменьшает значение счетчика в поле aFieldName на aValue
 ## aValue(1) — положитетельное или отрицательное число
 ## По-умолчанию увеличивает значение поля на единицу
+  ^self.assert(!$self._readOnlyTable){Модель $self.CLASS_NAME в режиме read only (только чтение данных)}
   ^self.assert(def $self._primaryKey){Не определен первичный ключ для таблицы ${TABLE_NAME}.}
   ^self.assert(def $aPrimaryKeyValue){Не задано значение первичного ключа.}
   ^self.assert(^self.hasField[$aFieldName]){Не найдено поле "$aFieldName" в таблице.}
@@ -447,6 +455,7 @@ pfClass
 @modifyAll[aOptions;aData]
 ## Изменяем все записи
 ## Условие обновления берем из _allWhere
+  ^self.assert(!$self._readOnlyTable){Модель $self.CLASS_NAME в режиме read only (только чтение данных)}
   ^self.cleanMethodArgument[aOptions;aData]
   $result[^self.CSQL.void{
     ^self.asContext[update]{^self.__normalizeWhitespaces{
@@ -465,6 +474,7 @@ pfClass
 @deleteAll[aOptions]
 ## Удаляем все записи из таблицы
 ## Условие для удаления берем из self._allWhere
+  ^self.assert(!$self._readOnlyTable){Модель $self.CLASS_NAME в режиме read only (только чтение данных)}
   ^self.cleanMethodArgument[]
   $result[^self.CSQL.void{
     ^self.asContext[update]{^self.__normalizeWhitespaces{
