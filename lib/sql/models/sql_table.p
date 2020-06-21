@@ -549,6 +549,17 @@ pfClass
     }
   }
 
+@_allLimitOffset[aOptions]
+  $result[]
+  $lLimit(^aOptions.limit.int(-1))
+  $lOffset(^aOptions.offset.int(-1))
+  ^if($lLimit >= 0 || $lOffset >= 0){
+    $result[LIMIT ^if($lLimit >=0){$lLimit}{18446744073709551615}]
+    ^if($lOffset >= 0){
+      $result[$result OFFSET $lOffset]
+    }
+  }
+
 # ----- Методы для построения запросов ----
 
 @fieldValue[aField;aValue]
@@ -668,15 +679,7 @@ pfClass
       ^if(def ^lOrder.trim[]){
         ORDER BY $lOrder
       }
-#     Строим выражение для limit и offset.
-      $lLimit(^aOptions.limit.int(-1))
-      $lOffset(^aOptions.offset.int(-1))
-      ^if($lLimit >= 0 || $lOffset >= 0){
-        LIMIT ^if($lLimit >=0){$lLimit}{18446744073709551615}
-        ^if($lOffset >= 0){
-          OFFSET $lOffset
-        }
-      }
+      ^self._allLimitOffset[$aOptions]
       ^if(def $aSQLOptions.tail){$aSQLOptions.tail}
   ]
 
