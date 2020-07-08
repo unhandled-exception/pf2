@@ -911,10 +911,12 @@ locals
   }
 
 # SSL options
-  $result.ssl_verifypeer(^aOptions.ssl-verifypeer.int(0))
-  $result.ssl_verifyhost(^aOptions.ssl-verifyhost.int(0))
-
-#  ^pfAssert:fail[^result.foreach[k;v]{$k}[, ]]
+  ^if(^aOptions.contains[ssl-verifypeer]){
+    $result.ssl_verifypeer(^aOptions.ssl-verifypeer.int(0))
+  }
+  ^if(^aOptions.contains[ssl-verifyhost]){
+    $result.ssl_verifyhost(^aOptions.ssl-verifyhost.int(0))
+  }
 
 @_formUrlencode[aForm;aSeparator]
   $result[^aForm.foreach[k;v]{^switch[$v.CLASS_NAME]{
