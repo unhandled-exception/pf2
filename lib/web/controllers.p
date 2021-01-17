@@ -915,6 +915,7 @@ locals
 @create[aOptions]
 ## aOptions — хеш с переменными объекта, которые надо заменить. [Для тестов.]
 ## aOptions.useXForwarded(false) — использовать для полей HOST и PORT заголовки X-Forwarded-Host и X-Forwarded-Port.
+## aOptions.protect — хэш защищённых полей: их значения можно установить только через @assign, не через форму.
   $aOptions[^hash::create[$aOptions]]
 
   $self.ifdef[$pfClass:ifdef]
