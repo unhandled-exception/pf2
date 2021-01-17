@@ -1006,7 +1006,7 @@ locals
   }
 
 @GET_DEFAULT[aName]
-  $result[^if(^self.__CONTEXT__.contains[$aName]){$self.__CONTEXT__.[$aName]}(!^self.__PROTECT__.contains[$name]){$form.[$aName]}]
+  $result[^if(^self.__CONTEXT__.contains[$aName]){$self.__CONTEXT__.[$aName]}(!^self.__PROTECT__.contains[$aName]){$form.[$aName]}]
 
 @GET_BODY_FILE[]
   $result[^if(def $self._BODY_FILE){$self._BODY_FILE}{$self.request:body-file}]
