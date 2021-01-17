@@ -915,11 +915,13 @@ locals
 @create[aOptions]
 ## aOptions — хеш с переменными объекта, которые надо заменить. [Для тестов.]
 ## aOptions.useXForwarded(false) — использовать для полей HOST и PORT заголовки X-Forwarded-Host и X-Forwarded-Port.
+## aOptions.protect — хэш защищённых полей: их значения можно установить только через @assign, не через форму.
   $aOptions[^hash::create[$aOptions]]
 
   $self.ifdef[$pfClass:ifdef]
   $self.ifcontains[$pfClass:ifcontains]
   $self.__CONTEXT__[^hash::create[]]
+  $self.__PROTECT__[^hash::create[$aOptions.protect]]
 
   $self.form[^self.ifdef[$aOptions.form]{$form:fields}]
   $self.tables[^self.ifdef[$aOptions.tables]{$form:tables}]
@@ -1004,7 +1006,7 @@ locals
   }
 
 @GET_DEFAULT[aName]
-  $result[^if(^self.__CONTEXT__.contains[$aName]){$self.__CONTEXT__.[$aName]}{$form.[$aName]}]
+  $result[^if(^self.__CONTEXT__.contains[$aName]){$self.__CONTEXT__.[$aName]}(!^self.__PROTECT__.contains[$name]){$form.[$aName]}]
 
 @GET_BODY_FILE[]
   $result[^if(def $self._BODY_FILE){$self._BODY_FILE}{$self.request:body-file}]
