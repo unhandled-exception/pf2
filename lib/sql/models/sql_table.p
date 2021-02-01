@@ -374,18 +374,20 @@ pfClass
 ## Вставляем значение в базу
 ## aSQLOptions.ignore(false)
 ## Возврашает автосгенерированное значение первичного ключа (last_insert_id) для sequence-полей.
-  ^self.assert(!$self._readOnlyTable){Модель $self.CLASS_NAME в режиме read only (только чтение данных)}
-  ^self.cleanMethodArgument[aData;aSQLOptions]
-  ^self.asContext[update]{
-    $result[^self.CSQL.void{^self.__normalizeWhitespaces{^self._builder.insertStatement[$self.TABLE_NAME;$self._fields;^if($aData is table){$aData.fields}{$aData};
-      ^hash::create[$aSQLOptions]
-      $.skipFields[$self._skipOnInsert]
-      $.schema[$self.SCHEMA]
-      $.fieldValueFunction[$self.fieldValue]
-    ]}}]
-  }
-  ^if(def $self._primaryKey && $self._fields.[$self._primaryKey].sequence){
-    $result[^self.CSQL.lastInsertID[]]
+  ^CSQL.transaction{
+    ^self.assert(!$self._readOnlyTable){Модель $self.CLASS_NAME в режиме read only (только чтение данных)}
+    ^self.cleanMethodArgument[aData;aSQLOptions]
+    ^self.asContext[update]{
+      $result[^self.CSQL.void{^self.__normalizeWhitespaces{^self._builder.insertStatement[$self.TABLE_NAME;$self._fields;^if($aData is table){$aData.fields}{$aData};
+        ^hash::create[$aSQLOptions]
+        $.skipFields[$self._skipOnInsert]
+        $.schema[$self.SCHEMA]
+        $.fieldValueFunction[$self.fieldValue]
+      ]}}]
+    }
+    ^if(def $self._primaryKey && $self._fields.[$self._primaryKey].sequence){
+      $result[^self.CSQL.lastInsertID[]]
+    }
   }
 
 @modify[aPrimaryKeyValue;aData]
@@ -414,12 +416,14 @@ pfClass
   $result[]
   ^self.cleanMethodArgument[aSQLOptions]
   ^self.assert(def $self._primaryKey){Не определен первичный ключ для таблицы ${TABLE_NAME}.}
-  ^self.CSQL.safeInsert{
-     $result[^self.new[$aData;$aSQLOptions]]
-  }{
-      ^self.modify[$aData.[$self._primaryKey];$aData]
-      $result[$aData.[$self._primaryKey]]
-   }
+  ^CSQL.transaction{
+    ^self.CSQL.safeInsert{
+       $result[^self.new[$aData;$aSQLOptions]]
+    }{
+        ^self.modify[$aData.[$self._primaryKey];$aData]
+        $result[$aData.[$self._primaryKey]]
+     }
+  }
 
 @delete[aPrimaryKeyValue]
 ## Удаляем запись из таблицы с первичныйм ключем aPrimaryKeyValue
