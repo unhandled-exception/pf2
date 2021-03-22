@@ -225,17 +225,24 @@ pfClass
 @login[aRequest;aOptions] -> [bool]
 ## aOptions.loginField[login]
 ## aOptions.passwordField[password]
+## aOptions.throwExceptions(false) — выкидываать исключения при ошибках
   ^self.cleanMethodArgument[]
   $result(false)
   $lLoginField[^self.ifdef[$aOptions.loginField]{login}]
   $lPasswordField[^self.ifdef[$aOptions.passwordField]{password}]
+  $lThrowException(^aOptions.throwExceptions.bool(false))
 
+  $lLogin[$aRequest.[$lLoginField]]
   $lUser[^self.users.fetch[
-    $.login[$aRequest.[$lLoginField]]
+    $.login[$lLogin]
     $.isActive(true)
   ][
     $.log[-- Fetch user for login (login == $lLoginField)]
   ]]
+  ^if(!$lUser && $lThrowException){
+    ^throw[user.not.found;Не найден пользователь "$lLogin"]
+  }
+
   ^if($lUser){
     $lPasswordHash[^self.users.makePasswordHash[$aRequest.[$lPasswordField];$lUser.passwordHash]]
     ^if($lUser.passwordHash eq $lPasswordHash){
@@ -251,6 +258,8 @@ pfClass
         $.csrfCookieNeedsReset(true)
       ]
       $result(true)
+    }($lThrowException){
+      ^throw[invalid.user.password;Неверный пароль для пользователя "$lLogin"]
     }
   }
 
