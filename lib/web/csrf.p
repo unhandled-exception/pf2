@@ -127,7 +127,7 @@ pfMiddleware
     $lFormToken[$aRequest.form.[$self._formFieldName]]
     ^if(!def $lFormToken){
 #     Если нам не прислали токен в форме, то смотрим http-заголовок
-      $lFormToken[$aRequest.headers.[$self._headerName]]
+      $lFormToken[^string:js-unescape[^aRequest.header[$self._headerName]]]
     }
     $lFormTokenData[^self._cryptoProvider.parseAndValidateToken[$lFormToken;
       $.serializer[$self._tokenSerializer]
