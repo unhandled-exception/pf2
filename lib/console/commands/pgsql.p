@@ -317,7 +317,7 @@ pfConsoleCommandWithSubcommands
 @_parseConnectString[aConnectString] -> [hash]
   $result[^hash::create[]]
   $lParsed[^aConnectString.match[
-    ^^(pgsql)://                # 1 - protocol
+    ^^(\S+?)://                # 1 - protocol
       (?:(.+?)(?:\:(.*))?)?     # 2 - user, 3 - password
       @(.*?)                    # 4 - host
       (?:\/(.+?))?              # 5 - database

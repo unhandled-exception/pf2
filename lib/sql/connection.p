@@ -34,6 +34,7 @@ pfClass
     $self.dialect[^switch[$self.serverType]{
       ^case[mysql]{^pfSQLMySQLDialect::create[]}
       ^case[pgsql]{^pfSQLPostgresDialect::create[]}
+      ^case[postgresql]{^pfSQLPostgresDialect::create[]}
       ^case[sqlite]{^pfSQLSQLiteDialect::create[]}
       ^case[DEFAULT]{^pfSQLAnsiDialect::create[]}
     }]

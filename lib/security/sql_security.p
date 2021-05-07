@@ -64,6 +64,7 @@ locals
       ]
     ]
   ]
+  $self._sqlFunctions.postgresql[$self._sqlFunctions.pgsql]
 
   $self._serializer[^self.ifdef[$aOptions.serializer]{hex}]
   $self._hashAlgorythm[^self.ifdef[$aOptions.hashAlgorythm]{sha256}]
