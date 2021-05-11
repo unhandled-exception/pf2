@@ -19,7 +19,7 @@ pfClass
   $self._botToken[$aBotToken]
   $self._apiURL[https://api.telegram.org/bot${self._apiPrefix}${self._botToken}]
   $self._proxy[$aOptions.proxy]
-  $self._exceptionPrefix[telegram.api.]
+  $self._exceptionPrefix[telegram.api]
   $self._timeout(^aOptions.timeout.int(20))
 
 @getMe[]
