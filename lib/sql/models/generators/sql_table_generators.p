@@ -241,7 +241,7 @@ pfSQLModelGenerator
 @create[aTableName;aOptions]
   ^self.cleanMethodArgument[]
   ^BASE:create[$aTableName;$aOptions]
-  ^self.assert($CSQL.serverType eq "pgsql")[Класс умеет получать описания таблиц только из Postgres.]
+  ^self.assert($CSQL.serverType eq "pgsql" || $CSQL.serverType eq "postgresql")[Класс умеет получать описания таблиц только из Postgres.]
 
 @_hasTable[]
   $result(

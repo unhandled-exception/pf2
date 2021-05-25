@@ -981,6 +981,14 @@ pfClass
         $result[^result.format[^if(def $aField.format){$aField.format}{%d}]]
       }
 
+      ^case[double_null]{
+        $result[NULL]
+        ^if(def $aValue){
+          $result(^aValue.double[])
+          $result[^result.format[^if(def $aField.format){$aField.format}{%.16g}]]
+        }
+      }
+
       ^case[double;auto_double]{
         ^if(^aField.contains[default]){
           $result(^aValue.double($aField.default))

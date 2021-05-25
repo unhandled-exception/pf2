@@ -56,7 +56,7 @@ pfConsoleCommandWithSubcommands
   $result[
     ^switch[$aServerType]{
       ^case[mysql]{^pfMySQLTableModelGenerator::create[$aTableName;$lOptions]}
-      ^case[pgsql]{^pfPostgresTableModelGenerator::create[$aTableName;$lOptions]}
+      ^case[pgsql;postgresql]{^pfPostgresTableModelGenerator::create[$aTableName;$lOptions]}
       ^case[DEFAULT]{
         ^self.fail["$CSQL.serverType" is an unknown sql-server type.]
       }
