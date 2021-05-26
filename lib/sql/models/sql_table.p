@@ -880,7 +880,7 @@ pfClass
   $result.skipFields[^hash::create[$aOptions.skipFields]]
 
 @quoteIdentifier[aIdent]
-  $result[${self._quote}^taint[${aIdent}]${self._quote}]
+  $result[${self._quote}^taint[^aIdent.trim[both;$self._quote]]${self._quote}]
 
 @sqlFieldName[aField;aTableAlias]
   $result[^if(def $aTableAlias){${self._quote}${aTableAlias}${self._quote}.}${self._quote}^taint[$aField.dbField]${self._quote}]
