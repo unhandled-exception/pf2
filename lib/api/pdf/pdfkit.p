@@ -44,11 +44,17 @@ pfClass
   $self._metaPrefix[pdfkit-]
   ^self.defProperty[metaPrefix]
 
+  $self._unsafeOptions[
+    $._default(false)
+    $.[enable-local-file-access](true)
+  ]
+
 @toPDF[aSource;aOptions]
 ## aSource[string|file|hash] — строка, файл или хеш
 ##    hash: $.fileName[] или $.url
 ## aOptions.toFile[] — записать результат в файл.
 ## result[file] — возвращает файл или пустую строку, если задан aOptions.toFile
+## aOptions.args — дополнительные параметры для wkhtmltopdf
   $result[]
   ^self.cleanMethodArgument[]
 
@@ -138,7 +144,7 @@ pfClass
       ^case[bool]{^if(!$v){$lKey[]}}
       ^case[DEFAULT]{$v}
     }]
-    ^if(def $lKey){
+    ^if(def $lKey && !$self._unsafeOptions.[$lKey]){
       ^result.append{--$lKey}
       ^if(def $lVal){
         ^result.append{$lVal}
