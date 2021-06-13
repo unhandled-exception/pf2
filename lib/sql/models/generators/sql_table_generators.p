@@ -304,7 +304,7 @@ pfSQLModelGenerator
       $self._primary[$lName]
       ^if(
         !^lDDL.column_default.match[^^nextval][in]
-        && !^lDDL.identity_generation.match[ALWAYS][in]
+        && (!^lDDL.fields.contains[identity_generation] || !^lDDL.identity_generation.match[(ALWAYS|BY DEFAULT)][in])
       ){
         $lData.sequence(false)
       }
