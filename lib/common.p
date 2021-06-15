@@ -1120,3 +1120,35 @@ locals
   ^if(^aVarName.left(7) ne "caller."){$caller.$aVarName[]}
 
 #--------------------------------------------------------------------------------------------------
+
+@CLASS
+pfRetry
+
+# Класс для ретраев
+
+@BASE
+pfClass
+
+@create[aOptions]
+## aOptions.maxAttempts(3) — максимальное число повторов
+## aOptions.maxDelay(0) — время задержки между повтороами в секундах. Допустимы дробные значения
+## aOptions.retryOnException[string] — ретраить при определенном типе эксепшна
+  $self.maxAttempts(^aOptions.maxAttempts.int(3))
+  $self.maxDelay(^aOptions.maxDelay.double(0))
+  $self.retryOnException[$aOptions.retryOnException]
+
+@process[aCode]
+  ^for[i](1;$self.maxAttempts){
+    ^try{
+      ^return[$aCode]
+    }{
+      ^if($i < $self.maxAttempts && $self.retryOnException is string && def $self.retryOnException){
+        ^if($exception.type eq $self.retryOnException){
+          $exception.handled(true)
+        }
+      }($i < $self.maxAttempts){
+        $exception.handled(true)
+        ^sleep($self.maxDelay)
+      }
+    }
+  }

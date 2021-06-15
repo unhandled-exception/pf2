@@ -35,6 +35,7 @@
 * pfCFile
 * pfRuntime
 * pfOS
+* pfRetry
 
 ### [./lib/console/commands/generate.p](./lib/console/commands/generate.p)
 * pfConsoleGenerateCommand
