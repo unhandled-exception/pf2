@@ -1,0 +1,9 @@
+name: pf2-ut
+on: [push]
+jobs:
+  run-unittests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - run: sudo apt-get install parser3-cgi
+      - run: parser3 ut/run_tests.p
