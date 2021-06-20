@@ -103,6 +103,16 @@
 * pfModelTable
 * pfModelChainMixin
 
+### [./lib/tests/unittest.p](./lib/tests/unittest.p)
+* pfUnittestProgram
+* pfTestsLoader
+* pfTestResult
+* pfTestStdoutStream
+* pfTextTestResult
+* pfTextTestsRunner
+* pfTestExceptions
+* pfTestCase
+
 ### [./lib/web/auth.p](./lib/web/auth.p)
 * pfAuthBase
 * pfRemoteUserAuth
