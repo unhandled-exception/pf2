@@ -22,12 +22,41 @@ locals
 @testAsString[]
   ^self.assertEq[^sut.asString[];__pfTestCase.runTest]
 
-@testSetupAndTeardown[]
-  ^self.assertNotDef[$self.sut.setupValue]
-  ^self.assertNotDef[$self.sut.tearDownValue]
-  ^self.sut.run[]
-  ^self.assertEq[$self.sut.setupValue;value 1]
-  ^self.assertEq[$self.sut.tearDownValue;value 2]
+@testSetupAndTeardownOk[]
+  $lSUT[^__pfTestCase::create[testSuccess]]
+  ^self.assertNotDef[$lSUT.setupValue]
+  ^self.assertNotDef[$lSUT.tearDownValue]
+  ^lSUT.run[]
+  ^self.assertEq[$lSUT.setupValue;value 1]
+  ^self.assertEq[$lSUT.tearDownValue;value 2]
+  ^self.assertTrue(^lSUT.result.wasSuccessful[])
+
+@testSetupAndTeardownIfTestFail[]
+  $lSUT[^__pfTestCase::create[testFailed]]
+  ^self.assertNotDef[$lSUT.setupValue]
+  ^self.assertNotDef[$lSUT.tearDownValue]
+  ^lSUT.run[]
+  ^self.assertEq[$lSUT.setupValue;value 1]
+  ^self.assertEq[$lSUT.tearDownValue;value 2]
+  ^self.assertFalse(^lSUT.result.wasSuccessful[])
+
+@testSetupAndTeardownIfSetupFail[]
+  $lSUT[^__pfTestCaseSetupFailed::create[testFailed]]
+  ^self.assertNotDef[$lSUT.setupValue]
+  ^self.assertNotDef[$lSUT.tearDownValue]
+  ^lSUT.run[]
+  ^self.assertEq[$lSUT.setupValue;value 1]
+  ^self.assertNotDef[$lSUT.tearDownValue]
+  ^self.assertFalse(^lSUT.result.wasSuccessful[])
+
+@testSetupAndTeardownIfTearDownFail[]
+  $lSUT[^__pfTestCaseTearDownFailed::create[testFailed]]
+  ^self.assertNotDef[$lSUT.setupValue]
+  ^self.assertNotDef[$lSUT.tearDownValue]
+  ^lSUT.run[]
+  ^self.assertEq[$lSUT.setupValue;value 1]
+  ^self.assertEq[$lSUT.tearDownValue;value 2]
+  ^self.assertFalse(^lSUT.result.wasSuccessful[])
 
 @testAssertRaisesOk[]
   $lTestException[test.exception]
@@ -296,3 +325,32 @@ pfTestCase
 
 @tearDown[]
   $self.tearDownValue[value 2]
+
+@testFailed[]
+  ^self.fail[Failed test]
+
+@testSuccess[]
+
+#--------------------------------------------------------------------------------------------------
+
+@CLASS
+__pfTestCaseSetupFailed
+
+@BASE
+__pfTestCase
+
+@setUp[]
+  $self.setupValue[value 1]
+  ^self.fail[Fail setUp]
+
+#--------------------------------------------------------------------------------------------------
+
+@CLASS
+__pfTestCaseTearDownFailed
+
+@BASE
+__pfTestCase
+
+@tearDown[]
+  $self.tearDownValue[value 2]
+  ^self.fail[Fail tearDown]
