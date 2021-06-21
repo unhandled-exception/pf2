@@ -502,12 +502,16 @@ locals
     $aResult[^if(def $aResult){$aResult}{^self.defaultTestResult[]}]
     ^aResult.startTestRun[]
   }
+  $self.result[$aResult]
   ^try{
     ^aResult.startTest[$self]
     ^self.setUp[]
-    ^self.[$self.testName][]
-    ^self.tearDown[]
-    ^aResult.addSuccess[$self]
+    ^try{
+      ^self.[$self.testName][]
+      ^aResult.addSuccess[$self]
+    }{}{
+      ^self.tearDown[]
+    }
   }{
     ^switch[$exception.type]{
       ^case[$pfTestExceptions:skipTest]{
