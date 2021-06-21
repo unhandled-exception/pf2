@@ -1134,7 +1134,7 @@ pfClass
 ## aOptions.maxDelay(0) — время задержки между повтороами в секундах. Допустимы дробные значения
 ## aOptions.retryOnException[string] — ретраить при определенном типе эксепшна
   $self.maxAttempts(^aOptions.maxAttempts.int(3))
-  $self.maxDelay(^aOptions.maxDelay.double(0))
+  $self.maxDelay(^aOptions.maxDelay.double(0.0))
   $self.retryOnException[$aOptions.retryOnException]
 
 @process[aCode]
@@ -1148,6 +1148,8 @@ pfClass
         }
       }($i < $self.maxAttempts){
         $exception.handled(true)
+      }
+      ^if($exception.handled){
         ^sleep($self.maxDelay)
       }
     }

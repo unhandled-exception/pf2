@@ -422,7 +422,7 @@ locals
 
   $lStopRusage[$status:rusage]
   $lStopMemory[$status:memory]
-  ^self.stream.writeln[Run $self.result.testsRun tests in ^eval($lStopRusage.tv_sec - $lStartRusage.tv_sec + ($lStopRusage.tv_usec - $lStartRusage.tv_usec)/1000) s (^eval($lStopMemory.free + $lStopMemory.used) KB memory, $self._compacts compacts)]
+  ^self.stream.writeln[Run $self.result.testsRun tests in ^eval($lStopRusage.tv_sec - $lStartRusage.tv_sec + ($lStopRusage.tv_usec - $lStartRusage.tv_usec)/1000000)[%.2f] s (^eval($lStopMemory.free + $lStopMemory.used) KB memory, $self._compacts compacts)]
 
   $lInfos[^hash::create[]]
 
@@ -455,6 +455,7 @@ locals
 @auto[]
   $self.skipTest[pf.tests.skip.test]
   $self.failure[pf.test.failure]
+  $self.notImplementedSUT[pf.test.sut.not.implemented]
 
 #--------------------------------------------------------------------------------------------------
 
@@ -492,10 +493,10 @@ locals
   }
 
 @setUp[]
-  $result[]
+  $self.sut[^__pfTestCaseNotImplementedSUT::create[]]
 
 @tearDown[]
-  $result[]
+  $self.sut[]
 
 @run[aResult]
   ^if(!def $aResult){
@@ -645,3 +646,27 @@ $aException.file (${aException.lineno}:$aException.colno)]
   ^if(^aStr.match[$aRegexp]){
     ^self.fail[^if(def $aReason){$aReason}{"$aStr" is matched to regexp [$aRegexp.pattern][$aRegexp.options])}]
   }
+
+@timeIt[aCode] -> double(duration in seconds)
+  $lStart[$status:rusage]
+  $void[$aCode]
+  $lStop[$status:rusage]
+  $result($lStop.tv_sec - $lStart.tv_sec + ($lStop.tv_usec - $lStart.tv_usec)/1000000)
+
+@assertDurationGreaterEqual[aDurationInSeconds;aCode]
+  $lDuration(^self.timeIt{
+    $result[$aCode]
+  })
+  ^if($lDuration <= $aDurationInSeconds){
+    ^self.fail[Duration $lDuration <= $aDurationInSeconds]
+  }
+
+#--------------------------------------------------------------------------------------------------
+
+@CLASS
+__pfTestCaseNotImplementedSUT
+
+@create[]
+
+@GET_DEFAULT[]
+  ^throw[$pfTestExceptions:notImplementedSUT]

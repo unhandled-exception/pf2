@@ -10,14 +10,16 @@ locals
 @setUp[]
   $self.sut[^__pfTestCase::create[]]
 
-@tearDown[]
-  $self.sut[]
-
 @assertRaisesFailureException[aCode]
   ^self.assertRaises[$pfTestExceptions:failure]{
     $result[$aCode]
   }
   $caller.[exception][$exception]
+
+@assertNotRaisesFailureException[aCode]
+  ^self.assertNotRaises[$pfTestExceptions:failure]{
+    $result[$aCode]
+  }
 
 @testAsString[]
   ^self.assertEq[^sut.asString[];__pfTestCase.runTest]
@@ -311,6 +313,27 @@ locals
     ^sut.assertRegexpNotMatch[^regex::create[is test results];this test results]
   }
   ^self.assertEq[$exception.source;"this test results" is matched to regexp [is test results][])]
+
+@testTimeIt[]
+  $lDuration(^self.sut.timeIt{
+    ^sleep(0.55)
+  })
+  ^self.assert($lDuration >= 0.5 && $lDuration <= 1)[duration is $lDuration]
+
+@testAssertDurationGreaterEqualOk[]
+  ^self.assertNotRaisesFailureException{
+    ^self.sut.assertDurationGreaterEqual(0.2){
+      ^sleep(0.3)
+    }
+  }
+
+@testAssertDurationGreaterEqualFail[]
+  ^self.assertRaisesFailureException{
+    ^self.sut.assertDurationGreaterEqual(1){
+      ^sleep(0.3)
+    }
+  }
+  ^self.assertRegexpMatch[Duration \d\.\d+ <= 1;$exception.source]
 
 #--------------------------------------------------------------------------------------------------
 
