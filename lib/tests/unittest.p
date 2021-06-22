@@ -311,7 +311,7 @@ locals
   $self.stream[^if(def $aOptions.stream){$aOptions.stream}{^pfTestStdoutStream::create[]}]
 
 @getDescription[aTest]
-  $result[^aTest.asString[]]
+  $result[^aTest.id[]]
   ^if(def $aTest.description){
     $result[$self.description]
   }
@@ -473,7 +473,7 @@ locals
   $self.description[]
   $self.__failureStack[]
 
-@asString[]
+@id[]
   $result[$self.name]
 
 @defaultTestResult[]
