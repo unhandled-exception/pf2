@@ -1,14 +1,19 @@
 #!/usr/bin/env parser3
 
-@USE
-../lib/tests/unittest.p
-
-@auto[]
-  $CLASS_PATH[./]
-
 @main[][locals]
+  ^use[pf2/lib/tests/unittest.p]
   $tests[^pfUnittestProgram::create[]]
   $result[^tests.main[]]
+
+@auto[filespec]
+$CLASS_PATH[^table::create[nameless]{
+./
+../..
+}]
+$parser3dir[$env:HOME/bin]
+$SQL[$.drivers[^table::create{protocol   driver   client
+sqlite	$parser3dir/lib/libparser3sqlite.so	libsqlite3.so
+}]]
 
 @unhandled_exception[exception;stack][locals]
 # Показываем сообщение об ошибке

@@ -1,5 +1,5 @@
 @USE
-../lib/common.p
+pf2/lib/common.p
 
 @CLASS
 TestPFRetry

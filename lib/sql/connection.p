@@ -264,7 +264,7 @@ pfClass
 ## Выполняет aInsertCode, если в нем произошел exception on duplicate, то выполняет aExistsCode.
 ## Реализует абстракцию insert ... on duplicate key update, которая нативно реализована не во всех СУБД.
   ^self.assert(def $self.dialect.duplicateKeyExceptionRegex)[В диалекте не задано регулярное выражение для поиска дублирования ключей]
-  $result[^try{^self.transaction{^self.savepoint{$aInsertCode}}}{^if($exception.type eq "sql.execute" && ^exception.comment.match[$self.dialect.duplicateKeyExceptionRegex][]){$exception.handled(true)$aExistsCode}}]
+  $result[^self.transaction{^try{^self.savepoint{$aInsertCode}}{^if($exception.type eq "sql.execute" && ^exception.comment.match[$self.dialect.duplicateKeyExceptionRegex][]){$exception.handled(true)$aExistsCode}}}]
 
 @lastInsertID[aOptions]
 ## Возвращает идентификатор последней вставленной записи.
@@ -317,7 +317,7 @@ pfClass
 @_sql[aType;aCode;aOptions]
 ## Выполняет запрос и сохраняет статистику
   ^self.cleanMethodArgument[]
-  $lMemStart($status:memory.used)
+  $lMemStart($status:memory.ever_allocated_since_start)
   $lStart($status:rusage.tv_sec + $status:rusage.tv_usec/1000000.0)
 
   ^try{
@@ -326,7 +326,7 @@ pfClass
     $lException[$exception]
   }{
     $lEnd($status:rusage.tv_sec + $status:rusage.tv_usec/1000000.0)
-    $lMemEnd($status:memory.used)
+    $lMemEnd($status:memory.ever_allocated_since_start)
 
     $self._stat.queriesTime($self._stat.queriesTime + ($lEnd-$lStart))
     ^_stat.queriesCount.inc[]
@@ -337,7 +337,7 @@ pfClass
         $.time($lEnd-$lStart)
         $.limit[$aOptions.limit]
         $.offset[$aOptions.offset]
-        $.memory($lMemEnd - $lMemStart)
+        $.memory(^eval($lMemEnd - $lMemStart)[%.3f])
         $.results(^switch[$aType]{
           ^case[DEFAULT;void]{0}
           ^case[int;double;string;file]{1}

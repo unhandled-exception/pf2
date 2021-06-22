@@ -3,7 +3,22 @@ on: [push]
 jobs:
   run-unittests:
     runs-on: ubuntu-latest
+    env:
+      PARSER3_DIST_URL: "https://www.parser.ru/f/1/download/parser346/parser3_4_6_debian10x64.tar.gz"
     steps:
+      - name: "Configure Parser 3"
+        run: |
+          cd $HOME
+          mkdir -p $HOME/bin
+          mkdir $HOME/parser3
+          cd parser3
+          wget --no-verbose $PARSER3_DIST_URL -O parser3.tar.gz
+          tar xvfz parser3.tar.gz
+          ln -fs `pwd`/parser3.cgi $HOME/bin/parser3
+          ln -fs `pwd`/lib $HOME/bin/lib
+          cp -f ./lib/system/* ./lib/
+
       - uses: actions/checkout@v2
-      - run: sudo apt-get install parser3-cgi
-      - run: parser3 ut/run_tests.p
+      - name: "Run tests"
+        run: |
+          $HOME/bin/parser3 ut/run_tests.p

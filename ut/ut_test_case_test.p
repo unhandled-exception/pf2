@@ -1,3 +1,6 @@
+@USE
+pf2/lib/tests/unittest.p
+
 @CLASS
 TestPFTestCase
 
