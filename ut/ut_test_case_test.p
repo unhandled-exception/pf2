@@ -21,8 +21,8 @@ locals
     $result[$aCode]
   }
 
-@testAsString[]
-  ^self.assertEq[^sut.asString[];__pfTestCase.runTest]
+@testId[]
+  ^self.assertEq[^sut.id[];__pfTestCase.runTest]
 
 @testSetupAndTeardownOk[]
   $lSUT[^__pfTestCase::create[testSuccess]]
