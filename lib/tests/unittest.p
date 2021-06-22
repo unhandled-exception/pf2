@@ -535,6 +535,9 @@ locals
 @runTest[]
   $result[]
 
+@unsafe[aCode;aCatchCode]
+  $result[^try{$aCode}{$exception.handled(true)$aCatchCode}]
+
 @assert[aCondition;aReason]
   $result[^self.assertTrue($aCondition)[$aReason]]
 
