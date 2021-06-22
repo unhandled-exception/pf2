@@ -3,7 +3,7 @@ PF2 — веб-фреймворк для Parser 3
 
 PF2 помогает разработчикам писать веб-приложения. Фреймворк реализует шаблон проектирования MVC. PF2 — переработанная версия [библиотеки PF](https://github.com/unhandled-exception/pf).
 
-Стабильная версия в ветке master. Разрабатываем в бранче develop и ветках feature/name.
+Стабильная версия в ветке master. Разрабатываем в ветках feature/name, все изменения только через пул-реквесты. Для нового кода обязательно пишем тесты в папке ut/.
 
 Авторы:
 * Олег Волчков ([oleg@volchkov.net](mailto:oleg@volchkov.net), [unhandled-exception.ru](http://unhandled-exception.ru))
