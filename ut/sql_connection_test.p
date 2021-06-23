@@ -11,13 +11,19 @@ locals
 pfTestCase
 
 @setUp[]
+  ^BASE:setUp[]
   $self.connectString[sqlite://:memory:]
-  $self.sut[^pfSQLConnection::create[$self.connectString;
+  $self.connection[^pfSQLConnection::create[$self.connectString;
     $.enableQueriesLog(true)
     $.enableMemoryCache(true)
   ]]
+  $self.sut[$self.connection]
+
+  $self._testTablesCount(0)
 
 @tearDown[]
+  ^self.clearTestDatabase[]
+  $self.connection[]
   ^BASE:tearDown[]
 
 @assertSQLStatementsList[aExpected]
@@ -34,12 +40,88 @@ pfTestCase
 
 @createTestTable[aOptions]
 ## aOptions.rows(20)
-  $result[table_^math:uid64[]]
+  ^self._testTablesCount.inc[]
+  $result[test_table_$self._testTablesCount]
 	$lRows(^aOptions.rows.int(20))
   ^connect[$self.connectString]{
 		^void:sql{CREATE TABLE $result (a integer primary key autoincrement, b int)}
 		^void:sql{INSERT INTO $result (b) VALUES ^for[i](1;$lRows){($i * 100)}[, ]}
 	}
+
+@fetchTestDatabaseSchema[]
+# https://www.sqlite.org/schematab.html
+  ^connect[$self.connectString]{
+    $result[^table::sql{
+        select type, name, tbl_name
+          from sqlite_master
+         where name not in ('sqlite_sequence', 'sqlite_schema', 'sqlite_master')
+      order by name, type
+    }]
+  }
+
+@clearTestDatabase[]
+  $lSchema[^self.fetchTestDatabaseSchema[]]]
+
+  ^lSchema.foreach[;v]{
+    ^connect[$self.connectString]{
+      ^switch[^v.type.lower[]]{
+        ^case[table]{
+          ^void:sql{DROP TABLE IF EXISTS ^taint[as-is][$v.name]}
+        }
+        ^case[view]{
+          ^void:sql{DROP VIEW IF EXISTS ^taint[as-is][$v.name]}
+        }
+        ^case[trigger]{
+          ^void:sql{DROP TRIGGER IF EXISTS ^taint[as-is][$v.name]}
+        }
+      }
+    }
+  }
+
+#----------------------------------------------------------------------------------------------------------------------
+
+@CLASS
+TestBaseTestSQLConnection
+
+@BASE
+BaseTestSQLConnection
+
+@createTestDatabase[]
+  ^connect[$self.connectString]{
+    ^void:sql{create table table_1 (a int)}
+    ^void:sql{create table table_2 (a integer primary key autoincrement)}
+    ^void:sql{create view view_1 as select * from table_1}
+    ^void:sql{create trigger trigger_1 before update on table_1 begin update table_1 set a = new.a^; end}
+  }
+
+@testFetchTestDatabaseSchema[]
+  ^self.createTestDatabase[]
+
+  $lSchema[^self.fetchTestDatabaseSchema[]]
+  ^self.assertEqualAsJSON[$lSchema;^table::create{type,name,tbl_name
+table,table_1,table_1
+table,table_2,table_2
+trigger,trigger_1,table_1
+view,view_1,view_1}[
+  $.separator[,]
+]]
+
+@testClearTestDatabase[]
+  ^self.createTestDatabase[]
+  ^self.assert(^self.fetchTestDatabaseSchema[] > 0)[Empty schema]
+  ^self.clearTestDatabase[]
+  ^self.assert(^self.fetchTestDatabaseSchema[] == 0)[Not empty schema]
+
+@testCreateTestTables[]
+  ^self.createTestTable[]
+  ^self.createTestTable[]
+  ^self.createTestTable[]
+  ^self.assertEqualAsJSON[^self.fetchTestDatabaseSchema[];^table::create{type,name,tbl_name
+table,test_table_1,test_table_1
+table,test_table_2,test_table_2
+table,test_table_3,test_table_3}[
+  $.separator[,]
+]]
 
 #----------------------------------------------------------------------------------------------------------------------
 
@@ -177,9 +259,9 @@ BaseTestSQLConnection
 	^self.assertNotRaises[sql.execute]{
 		$lActual[^self.sut.table{select * from $lTable order by a}[$.limit(2) $.offset(5)]]
 	}
-  ^self.assertEqualAsJSON[$lActual;^table::create{a	b
-6	600
-7	700}]
+  ^self.assertEqualAsJSON[$lActual;^table::create{a,b
+6,600
+7,700}[$.separator[,]]]
 
 @testHash[]
   $lTable[^self.createTestTable[]]
