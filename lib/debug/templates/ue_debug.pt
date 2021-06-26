@@ -81,7 +81,7 @@
     <div class="code-snippet">
       ^aSnippet.lines.foreach[;code_line]{
         $lLine($aSnippet.firstLine + ^code_line.offset[])
-        <div class="code-snippet-line ^if($lLine == $aSnippet.line){bg-light}"><pre class="mb-0"><code class="parser3"><span class="code-snippet-lineno">${lLine}:</span>^taint[html][$code_line.line]</code></pre></div>
+        <div class="code-snippet-line ^if($lLine == $aSnippet.line){bg-light}"><pre class="mb-0"><code class="parser3"><span class="code-snippet-lineno">${lLine}:</span> ^taint[html][$code_line.line]</code></pre></div>
       }
     </div>
   }
@@ -90,15 +90,15 @@
   <title>$aTitle</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
-  <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.8/styles/default.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.0.1/styles/default.min.css">
 
 @_js_links[]
   <script src="https://code.jquery.com/jquery-3.4.1.slim.min.js" integrity="sha384-J6qa4849blE2+poT4WnyKhv5vZF5SrPo0iEjwBvKU7imGFAV0wwj1yYfoRSJoZ+n" crossorigin="anonymous"></script>
   <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
   <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js" integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous"></script>
 
-  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.18.1/highlight.min.js"></script>
-  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.18.1/languages/parser3.min.js"></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.0.1/highlight.min.js"></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.0.1/languages/parser3.min.js"></script>
   <script>hljs.initHighlightingOnLoad();</script>
 
 @_css_styles[]
@@ -125,6 +125,10 @@
       margin-bottom: 1rem;
     }
 
+    .code-snippet-line code{
+      padding-top: 0 !important;
+      padding-bottom: 0.15rem !important;
+    }
     .code-snippet-line:hover .hljs{
       background-color: #f5efe6;
     }
@@ -135,7 +139,7 @@
       display: inline-block;
       color: #555;
     }
-    .code-snippet-lineno .hljs-number{
+    .hljs-number{
       color: #555;
     }
 

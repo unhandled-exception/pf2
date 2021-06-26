@@ -169,7 +169,7 @@ pfMiddleware
   $self._enableHighlightJS(^aOptions.enableHighlightJS.bool(false))
   $self._hideQueryLog(^aOptions.hideQueryLog.bool(false))
 
-  $self._highlightJSVersion[9.18.1]
+  $self._highlightJSVersion[11.0.1]
   $self._cssClass[^self.ifdef[$aOptions.cssClass]{debug-info hidden-xs}]
 
 @processResponse[aAction;aRequest;aResponse;aController;aProcessOptions] -> [response]
@@ -184,9 +184,9 @@ pfMiddleware
     <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/${self._highlightJSVersion}/styles/default.min.css">
     <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/${self._highlightJSVersion}/highlight.min.js"></script>
     <script>
-      jQuery(document).ready(function() {
-        ^$('.sql-log-query').each(function(i, block) {
-          hljs.highlightBlock(block)^;
+      document.addEventListener('DOMContentLoaded', function(){
+        Array.prototype.forEach.call(document.querySelectorAll('.sql-log-query'), function (e) {
+          hljs.highlightBlock(e)^;
         })^;
       })^;
     </script>
