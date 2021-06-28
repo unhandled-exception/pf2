@@ -561,18 +561,19 @@ $aException.comment
 
 $aException.file (${aException.lineno}:$aException.colno)]
 
-@assertRaises[aExpectedExcetionType;aCode]
+@assertRaises[aExpectedExceptionType;aCode]
   ^try{
     $result[$aCode]
-    ^self.fail[^if(def $aReason){$aReason}{$exception.type not raised}]
   }{
-    ^if($exception.type eq $aExpectedExcetionType){
+    ^if($exception.type eq $aExpectedExceptionType){
       $exception.handled(true)
       $caller.exception[$exception]
+      ^return[]
     }{
-      ^self.fail[^if(def $aReason){$aReason}{$exception.type raised instead of $aExpectedExcetionType};^self._formatException[$exception]]
+      ^self.fail[$exception.type raised instead of $aExpectedExceptionType;^self._formatException[$exception]]
     }
   }
+  ^self.fail[$aExpectedExceptionType not raised]
 
 @assertRaisesRegexp[aExceptionRegexp;aCode]
   ^if(!($aExceptionRegexp is regex)){
@@ -580,22 +581,23 @@ $aException.file (${aException.lineno}:$aException.colno)]
   }
   ^try{
     $result[$aCode]
-    ^self.fail[^if(def $aReason){$aReason}{$exception.type not raised}]
   }{
     ^if(^exception.type.match[$aExceptionRegexp]){
       $exception.handled(true)
       $caller.exception[$exception]
+      ^return[]
     }{
-      ^self.fail[^if(def $aReason){$aReason}{$exception.type not matched to [$aExceptionRegexp.pattern][$aExceptionRegexp.options]};^self._formatException[$exception]]
+      ^self.fail[$exception.type not matched to [$aExceptionRegexp.pattern][$aExceptionRegexp.options];^self._formatException[$exception]]
     }
   }
+  ^self.fail[$exception.type not raised]
 
 @assertNotRaises[aExpectedExcetionType;aCode]
   ^try{
     $result[$aCode]
   }{
     ^if($exception.type eq $aExpectedExcetionType){
-      ^self.fail[^if(def $aReason){$aReason}{$exception.type was unexpected raised};^self._formatException[$exception]]
+      ^self.fail[$exception.type was unexpected raised;^self._formatException[$exception]]
     }
   }
 
@@ -605,10 +607,9 @@ $aException.file (${aException.lineno}:$aException.colno)]
   }
   ^try{
     $result[$aCode]
-    ^self.fail[^if(def $aReason){$aReason}{$exception.type not raised}]
   }{
     ^if(^exception.type.match[$aExceptionRegexp]){
-      ^self.fail[^if(def $aReason){$aReason}{$exception.type is unexpected matched to [$aExceptionRegexp.pattern][$aExceptionRegexp.options]};^self._formatException[$exception]]
+      ^self.fail[$exception.type is unexpected matched to [$aExceptionRegexp.pattern][$aExceptionRegexp.options];^self._formatException[$exception]]
     }{
       $exception.handled(true)
     }
@@ -662,6 +663,25 @@ $aException.file (${aException.lineno}:$aException.colno)]
   })
   ^if($lDuration <= $aDurationInSeconds){
     ^self.fail[Duration $lDuration <= $aDurationInSeconds]
+  }
+
+@assertHashEquals[aActual;aExpected]
+  $aActual[^hash::create[$aActual]]
+  $aExpected[^hash::create[$aExpected]]
+  ^try{
+    ^if($aActual != $aExpected){
+      ^throw[hashes.not.equals]
+    }
+    ^aActual.foreach[k;v]{
+      ^if($aExpected.[$k] ne $v){
+        ^throw[hashes.not.equals]
+      }
+    }
+  }{
+    ^if($exception.type eq "hashes.not.equals"){
+      $exception.handled(true)
+      ^self.fail[Hashes not equals.^#0A^#0AActual:^#0A^json:string[$aActual;$.indent(true)]^#0A^#0AExpected:^#0A^json:string[$aExpected;$.indent(true)]^#0A]
+    }
   }
 
 #--------------------------------------------------------------------------------------------------
