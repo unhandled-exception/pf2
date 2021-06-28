@@ -15,6 +15,12 @@ $SQL[$.drivers[^table::create{protocol   driver   client
 sqlite	$parser3dir/lib/libparser3sqlite.so	libsqlite3.so
 }]]
 
+^if(def $env:PARSER3_LIBCURL){
+  ^curl:options[
+    $.library[$env:PARSER3_LIBCURL]
+  ]
+}
+
 @unhandled_exception[exception;stack][locals]
 # Показываем сообщение об ошибке
 $result[Unhandled Exception^if(def $exception.type){ ($exception.type)}

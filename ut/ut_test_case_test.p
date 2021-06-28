@@ -338,6 +338,35 @@ locals
   }
   ^self.assertRegexpMatch[Duration \d\.\d+ <= 1;$exception.source]
 
+@testAssertHashEqualsOk[]
+  ^self.sut.assertHashEquals[
+    $.f1[v1]
+    $.f2[v2]
+  ][
+    $.f1[v1]
+    $.f2[v2]
+  ]
+
+@testAssertHashEqualsFail[]
+  ^self.assertRaisesFailureException{
+    ^self.sut.assertHashEquals[
+      $.f1[v1]
+      $.f2[v2]
+    ][
+      $.f1[v1]
+    ]
+  }
+
+  ^self.assertRaisesFailureException{
+    ^self.sut.assertHashEquals[
+      $.f1[v1]
+      $.f2[v1]
+    ][
+      $.f1[v2]
+      $.f2[v1]
+    ]
+  }
+
 #--------------------------------------------------------------------------------------------------
 
 @CLASS
