@@ -1,5 +1,5 @@
 name: pf2-ut
-on: [push]
+on: [push, pull_request]
 jobs:
   run-unittests:
     runs-on: ubuntu-latest
