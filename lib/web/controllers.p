@@ -1009,7 +1009,7 @@ locals
   $result[^if(^self.__CONTEXT__.contains[$aName]){$self.__CONTEXT__.[$aName]}(!^self.__PROTECT__.contains[$aName]){$form.[$aName]}]
 
 @GET_BODY_FILE[]
-  $result[^if(def $self._BODY_FILE){$self._BODY_FILE}{$self.request:body-file}]
+  $result[^if(def $self._BODY_FILE){$self._BODY_FILE}{$request:body-file}]
 
 @GET_clientAcceptsJSON[]
   $result(^self.headers.ACCEPT.pos[application/json] >= 0)
