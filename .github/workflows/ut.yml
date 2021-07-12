@@ -1,5 +1,12 @@
 name: pf2-ut
-on: [push, pull_request]
+on:
+  push:
+    tags:
+      - v*
+    branches:
+      - master
+      - main
+  pull_request:
 jobs:
   run-unittests:
     runs-on: ubuntu-latest
