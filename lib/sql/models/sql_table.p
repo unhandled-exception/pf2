@@ -348,7 +348,7 @@ pfClass
 
 @aggregate[*aConds]
 ## Выборки с группировкой
-## ^aggregate[func(expr) as alias;_fields(field1, field2 as alias2);_fields(*);conditions hash;sqlOptions]
+## ^aggregate[func(expr) as alias;_fields(field1, field2 as alias2);_fields(*);table[<field>];conditions hash;sqlOptions]
 ## aConds.asHashOn[fieldName] — возвращаем хеш таблиц, ключем которого будет fieldName
   $lConds[^self.__getAgrConds[$aConds]]
   $lResultType[^if(def $lConds.options.asHashOn){table}{^self.__getResultType[$lConds.options]}]
@@ -731,15 +731,20 @@ pfClass
   $aConds[^hash::create[$aConds]]
   $result[$.fields[^hash::create[]] $.options[] $.sqlOptions[]]
   ^aConds.foreach[k;v]{
-    ^switch[$v.CLASS_NAME]{
-      ^case[string]{
+    ^switch(true){
+      ^case($v is table){
+        ^v.foreach[;f]{
+          $result.fields.[^eval($result.fields)][$f.field]
+        }
+      }
+      ^case($v is string){
         $result.fields.[^eval($result.fields)][$v]
       }
-      ^case[hash]{
+      ^case($v is hash){
         ^if(!def $result.options){
-          $result.options[$v]
+          $result.options[^hash::create[$v]]
         }(def $result.options && !def $result.sqlOptions){
-          $result.sqlOptions[$v]
+          $result.sqlOptions[^hash::create[$v]]
         }
       }
     }
