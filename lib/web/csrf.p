@@ -91,7 +91,7 @@ pfMiddleware
   $self.REASON_INSECURE_REFERER[Referer checking failed - Referer is insecure while host is secure.]
 
 @GET_tokenSecret[]
-  $result[$self.tokenSecret]
+  $result[$self._tokenSecret]
 
 @GET_formFieldName[]
   $result[$self._formFieldName]
