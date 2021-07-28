@@ -19,6 +19,10 @@ sqlite	$parser3dir/lib/libparser3sqlite.so	libsqlite3.so
   ^curl:options[
     $.library[$env:PARSER3_LIBCURL]
   ]
+}(^env:PARSER_VERSION.match[linux][in]){
+  ^curl:options[
+    $.library[libcurl.so.4]
+  ]
 }
 
 @unhandled_exception[exception;stack][locals]
