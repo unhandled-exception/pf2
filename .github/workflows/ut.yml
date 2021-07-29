@@ -33,9 +33,13 @@ jobs:
           tar xvfz parser3.tar.gz
           ln -fs `pwd`/parser3.cgi $HOME/bin/parser3
           ln -fs `pwd`/lib $HOME/bin/lib
-          cp -f ./lib/system/* ./lib/
 
       - uses: actions/checkout@v2
+
+      - name: "Start test containers"
+        run: |
+          /bin/sh ut/start_test_containers.sh
+
       - name: "Run tests"
         run: |
           $HOME/bin/parser3 ut/run_tests.p
