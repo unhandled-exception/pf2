@@ -10,9 +10,13 @@ $CLASS_PATH[^table::create[nameless]{
 ./
 ../..
 }]
+
 $parser3dir[$env:HOME/bin]
+
 $SQL[$.drivers[^table::create{protocol   driver   client
-sqlite	$parser3dir/lib/libparser3sqlite.so	libsqlite3.so
+sqlite	$parser3dir/lib/libparser3sqlite.so	$parser3dir/lib/system/libsqlite3.so
+mysql	$parser3dir/lib/libparser3mysql.so	$parser3dir/lib/system/libmysqlclient.so
+postgresql	$parser3dir/lib/libparser3pgsql.so	$parser3dir/lib/system/libpq.so
 }]]
 
 ^if(def $env:PARSER3_LIBCURL){
