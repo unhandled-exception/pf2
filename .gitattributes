@@ -1,0 +1,3 @@
+*.p linguist-language=Parser3
+*.pt linguist-language=Parser3
+*.pgsql linguist-language=SQL
