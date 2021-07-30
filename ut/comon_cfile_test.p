@@ -12,7 +12,7 @@ pfTestCase
 
 @setUp[]
   ^BASE:setUp[]
-  $self.httpbin[^if(def $env:PF2_UT_HTTPBIN){^taint[as-is][$env:PF2_UT_HTTPBIN]}{http://httpbin.org}]
+  $self.httpbin[http://localhost:8180]
   $self.httpsbin[https://httpbin.org]
 
 @assertSuccessResponse[aResponse]
