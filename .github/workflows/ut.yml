@@ -14,13 +14,6 @@ jobs:
     env:
       PARSER3_DIST_URL: "https://www.parser.ru/f/1/download/parser346/parser3_4_6_debian10x64.tar.gz"
       PARSER3_LIBCURL: "libcurl.so.4"
-      PF2_UT_HTTPBIN: "http://localhost:8180"
-
-    services:
-      httpbin:
-        image: kennethreitz/httpbin
-        ports:
-          - 8180:80
 
     steps:
       - name: "Configure Parser 3"
