@@ -24,7 +24,7 @@ jobs:
           cd parser3
           wget --no-verbose $PARSER3_DIST_URL -O parser3.tar.gz
           tar xvfz parser3.tar.gz
-          ln -fs `pwd`/parser3.cgi $HOME/bin/parser3
+          ln -fs `pwd`/parser3.cgi $HOME/bin/
           ln -fs `pwd`/lib $HOME/bin/lib
 
       - uses: actions/checkout@v2
@@ -35,4 +35,4 @@ jobs:
 
       - name: "Run tests"
         run: |
-          $HOME/bin/parser3 ut/run_tests.p
+          $HOME/bin/parser3.cgi ut/run_tests.p

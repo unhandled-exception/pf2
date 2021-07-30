@@ -12,7 +12,7 @@ pfTestCase
 
 @setUp[]
   ^BASE:setUp[]
-  $self.httpbin[http://localhost:8180]
+  $self.httpbin[http://localhost:8880]
   $self.httpsbin[https://httpbin.org]
 
 @assertSuccessResponse[aResponse]
@@ -104,7 +104,7 @@ pfTestCase
 
 @testRaiseHTTPHostException[]
   ^self.assertRaises[http.host]{
-    $lRes[^pfCFile::load[text;http://unknown-host.local]]
+    $lRes[^pfCFile::load[text;http://unknown-host.domain]]
   }
 
 @testRaiseHTTPTimeoutException[]

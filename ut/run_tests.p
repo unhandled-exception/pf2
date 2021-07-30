@@ -1,4 +1,4 @@
-#!/usr/bin/env parser3
+#!/usr/bin/env parser3.cgi
 
 @main[][locals]
   ^use[pf2/lib/tests/unittest.p]
@@ -20,14 +20,15 @@ postgresql	$parser3dir/lib/libparser3pgsql.so	$parser3dir/lib/system/libpq.so
 }]]
 
 ^if(def $env:PARSER3_LIBCURL){
-  ^curl:options[
-    $.library[$env:PARSER3_LIBCURL]
-  ]
+  $curllibrary[$env:PARSER3_LIBCURL]
 }(^env:PARSER_VERSION.match[linux][in]){
-  ^curl:options[
-    $.library[libcurl.so.4]
-  ]
+  $curllibrary[libcurl.so.4]
+}{
+  $curllibrary[$parser3dir/lib/system/libcurl.so]
 }
+^curl:options[
+  $.library[$curllibrary]
+]
 
 @unhandled_exception[exception;stack][locals]
 # Показываем сообщение об ошибке
