@@ -15,6 +15,15 @@ pfSQLSecurityCrypt
 ## MySQL:
 ## Сериализация токенов в base64 доступна начиная с MySQL 5.6.10 и MariaDB 10.0.5.
 ## Для младших версий включите $.serializer[hex]
+## Включите в настройках базы правильный режим шифрования (по умолчанию MySQL шифрует в режиме ECB, вместо CBC, что небезопасно):
+## SET block_encryption_mode = 'aes-128-cbc';
+## https://dev.mysql.com/doc/refman/8.0/en/encryption-functions.html#function_aes-encrypt
+## aes-128-cbc формирует результат, совместимый с Постгресом
+
+## Postgres:
+## Шифрование делается через расширение pgcrypto
+## Установить в базе: CREATE EXTENSION pgcrypto;
+## https://postgrespro.ru/docs/postgresql/13/pgcrypto#id-1.11.7.34.9
 
 ## Ключи лучше не вбивать с клавиатуры, а сгенерировать с помощью системного генератора случайных чисел:
 ## В unix/linux ключи можно сгенерировать через urandom:
@@ -45,22 +54,22 @@ locals
   $self._sqlFunctions[
     $.mysql[
       $.encrypt[
-        $.hex[HEX(AES_ENCRYPT('{data}', '{key}'))]
-        $.base64[TO_BASE64(AES_ENCRYPT('{data}', '{key}'))]
+        $.hex[LOWER(HEX(AES_ENCRYPT('{data}', '{key}', 0x00000000000000000000000000000000)))]
+        $.base64[REPLACE(TO_BASE64(AES_ENCRYPT('{data}', '{key}', 0x00000000000000000000000000000000)), '\n', '')]
       ]
       $.decrypt[
-        $.hex[AES_DECRYPT(UNHEX('{data}'), '{key}')]
-        $.base64[AES_DECRYPT(FROM_BASE64('{data}'), '{key}')]
+        $.hex[AES_DECRYPT(UNHEX('{data}'), '{key}', 0x00000000000000000000000000000000)]
+        $.base64[AES_DECRYPT(FROM_BASE64('{data}'), '{key}', 0x00000000000000000000000000000000)]
       ]
     ]
     $.pgsql[
       $.encrypt[
-        $.hex[ENCODE(ENCRYPT(CONVERT_TO('{data}', 'utf8'), CONVERT_TO('{key}', 'utf8'), 'aes'), 'hex')]
-        $.base64[ENCODE(ENCRYPT(CONVERT_TO('{data}', 'utf8'), CONVERT_TO('{key}', 'utf8'), 'aes'), 'base64')]
+        $.hex[LOWER(ENCODE(ENCRYPT(CONVERT_TO('{data}', 'utf8'), CONVERT_TO('{key}', 'utf8'), 'aes-cbc/pad:pkcs'), 'hex'))]
+        $.base64[REPLACE(ENCODE(ENCRYPT(CONVERT_TO('{data}', 'utf8'), CONVERT_TO('{key}', 'utf8'), 'aes-cbc/pad:pkcs'), 'base64'), E'\n', '')]
       ]
       $.decrypt[
-        $.hex[CONVERT_FROM(DECRYPT(DECODE('{data}', 'base64'), CONVERT_TO('{key}', 'utf8'), 'aes'), 'utf8')]
-        $.base64[CONVERT_FROM(DECRYPT(DECODE('{data}', 'base64'), CONVERT_TO('{key}', 'utf8'), 'aes'), 'utf8')]
+        $.hex[CONVERT_FROM(DECRYPT(DECODE('{data}', 'hex'), CONVERT_TO('{key}', 'utf8'), 'aes-cbc/pad:pkcs'), 'utf8')]
+        $.base64[CONVERT_FROM(DECRYPT(DECODE('{data}', 'base64'), CONVERT_TO('{key}', 'utf8'), 'aes-cbc/pad:pkcs'), 'utf8')]
       ]
     ]
   ]
