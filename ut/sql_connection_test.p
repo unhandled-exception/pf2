@@ -12,7 +12,6 @@ pfTestCase
 
 @setUp[]
   ^BASE:setUp[]
-  $self.connectString[sqlite://:memory:]
   $self.connection[^pfSQLConnection::create[$self.connectString;
     $.enableQueriesLog(true)
     $.enableMemoryCache(true)
@@ -36,26 +35,23 @@ pfTestCase
   ^self.assertEq[$lActual;^#0A$aExpected^#0A]
 
 @assertEqualAsJSON[aActual;aExpected]
-  ^self.assertEq[^json:string[$aActual];^json:string[$aExpected]]
+  ^self.assertEq[^json:string[$aActual;$.indent(true)];^json:string[$aExpected;$.indent(true)]]
 
 @createTestTable[aOptions]
 ## aOptions.rows(20)
-  ^self._testTablesCount.inc[]
-  $result[test_table_$self._testTablesCount]
-	$lRows(^aOptions.rows.int(20))
-  ^connect[$self.connectString]{
-		^void:sql{CREATE TABLE $result (a integer primary key autoincrement, b int)}
-		^void:sql{INSERT INTO $result (b) VALUES ^for[i](1;$lRows){($i * 100)}[, ]}
-	}
+  ^self.fail[Not implemented]
 
 @fetchTestDatabaseSchema[]
-# https://www.sqlite.org/schematab.html
   ^connect[$self.connectString]{
     $result[^table::sql{
-        select type, name, tbl_name
-          from sqlite_master
-         where name not in ('sqlite_sequence', 'sqlite_schema', 'sqlite_master')
-      order by name, type
+        select case upper(table_type)
+                 when 'BASE TABLE' then 'table'
+                 when 'VIEW' then 'view'
+                 else lower(table_type)
+               end as type,
+               table_name as name
+          from information_schema.tables
+         where table_type in ('BASE TABLE', 'VIEW')
     }]
   }
 
@@ -81,52 +77,7 @@ pfTestCase
 #----------------------------------------------------------------------------------------------------------------------
 
 @CLASS
-TestBaseTestSQLConnection
-
-@BASE
-BaseTestSQLConnection
-
-@createTestDatabase[]
-  ^connect[$self.connectString]{
-    ^void:sql{create table table_1 (a int)}
-    ^void:sql{create table table_2 (a integer primary key autoincrement)}
-    ^void:sql{create view view_1 as select * from table_1}
-    ^void:sql{create trigger trigger_1 before update on table_1 begin update table_1 set a = new.a^; end}
-  }
-
-@testFetchTestDatabaseSchema[]
-  ^self.createTestDatabase[]
-
-  $lSchema[^self.fetchTestDatabaseSchema[]]
-  ^self.assertEqualAsJSON[$lSchema;^table::create{type,name,tbl_name
-table,table_1,table_1
-table,table_2,table_2
-trigger,trigger_1,table_1
-view,view_1,view_1}[
-  $.separator[,]
-]]
-
-@testClearTestDatabase[]
-  ^self.createTestDatabase[]
-  ^self.assert(^self.fetchTestDatabaseSchema[] > 0)[Empty schema]
-  ^self.clearTestDatabase[]
-  ^self.assert(^self.fetchTestDatabaseSchema[] == 0)[Not empty schema]
-
-@testCreateTestTables[]
-  ^self.createTestTable[]
-  ^self.createTestTable[]
-  ^self.createTestTable[]
-  ^self.assertEqualAsJSON[^self.fetchTestDatabaseSchema[];^table::create{type,name,tbl_name
-table,test_table_1,test_table_1
-table,test_table_2,test_table_2
-table,test_table_3,test_table_3}[
-  $.separator[,]
-]]
-
-#----------------------------------------------------------------------------------------------------------------------
-
-@CLASS
-TestPFConnection
+CommonPFSQLConnectionTests
 
 @BASE
 BaseTestSQLConnection
@@ -156,8 +107,8 @@ BaseTestSQLConnection
 @testTransaction[]
   ^self.sut.transaction{}
   ^self.assertSQLStatementsList[
-    $.0[BEGIN TRANSACTION]
-    $.1[COMMIT]
+    $.0[^self.sut.dialect.begin[]]
+    $.1[^self.sut.dialect.commit[]]
   ]
 
 @testTransactionRollback[]
@@ -167,15 +118,15 @@ BaseTestSQLConnection
     }
   }
   ^self.assertSQLStatementsList[
-    $.0[BEGIN TRANSACTION]
-    $.1[ROLLBACK]
+    $.0[^self.sut.dialect.begin[]]
+    $.1[^self.sut.dialect.rollback[]]
   ]
 
 @testTransactionWithModes[]
-  ^self.sut.transaction[EXCLUSIVE]{}
+  ^self.sut.transaction[READ ONLY]{}
   ^self.assertSQLStatementsList[
-    $.0[BEGIN EXCLUSIVE TRANSACTION]
-    $.1[COMMIT]
+    $.0[^self.sut.dialect.begin[READ ONLY]]
+    $.1[^self.sut.dialect.commit[]]
   ]
 
 @testNestedTransaction[]
@@ -188,8 +139,8 @@ BaseTestSQLConnection
     }
   }
   ^self.assertSQLStatementsList[
-    $.0[BEGIN TRANSACTION]
-    $.1[COMMIT]
+    $.0[^self.sut.dialect.begin[]]
+    $.1[^self.sut.dialect.commit[]]
   ]
 
 @testSavepoint[]
@@ -203,14 +154,14 @@ BaseTestSQLConnection
     ^self.sut.savepoint[sp3]{}
   }
   ^self.assertSQLStatementsList[
-      $.0[BEGIN TRANSACTION]
-      $.1[SAVEPOINT sp1]
-      $.2[RELEASE SAVEPOINT sp1]
-      $.3[SAVEPOINT sp2]
-      $.4[ROLLBACK TO SAVEPOINT sp2]
-      $.5[SAVEPOINT sp3]
-      $.6[RELEASE SAVEPOINT sp3]
-      $.7[COMMIT]
+      $.0[^self.sut.dialect.begin[]]
+      $.1[^self.sut.dialect.savepoint[sp1]]
+      $.2[^self.sut.dialect.release[sp1]]
+      $.3[^self.sut.dialect.savepoint[sp2]]
+      $.4[^self.sut.dialect.rollback[sp2]]
+      $.5[^self.sut.dialect.savepoint[sp3]]
+      $.6[^self.sut.dialect.release[sp3]]
+      $.7[^self.sut.dialect.commit[]]
   ]
 
 @testNestedTrnsactionAsSavepoints[]
@@ -219,33 +170,35 @@ BaseTestSQLConnection
     }
   }[$.nestedAsSavepoints(true)]
   ^self.assertSQLStatementsList[
-    $.0[BEGIN TRANSACTION]
-    $.1[SAVEPOINT AUTO_SAVEPOINT]
-    $.2[RELEASE SAVEPOINT AUTO_SAVEPOINT]
-    $.3[COMMIT]
+    $.0[^self.sut.dialect.begin[]]
+    $.1[^self.sut.dialect.savepoint[AUTO_SAVEPOINT]]
+    $.2[^self.sut.dialect.release[AUTO_SAVEPOINT]]
+    $.3[^self.sut.dialect.commit[]]
   ]
 
 @testBegin[]
   ^self.sut.begin[]
-  ^self.assertSQLStatementsList[BEGIN TRANSACTION]
+  ^self.assertSQLStatementsList[^self.sut.dialect.begin[]]
 
 @testCommit[]
   ^self.sut.commit[]
-  ^self.assertSQLStatementsList[COMMIT]
+  ^self.assertSQLStatementsList[^self.sut.dialect.commit[]]
 
 @testRollback[]
   ^self.sut.connect{
     ^void:sql{BEGIN}
     ^self.sut.rollback[]
   }
-  ^self.assertSQLStatementsList[ROLLBACK]
+  ^self.assertSQLStatementsList[^self.sut.dialect.rollback[]]
 
 @testRelease[]
   ^self.sut.connect{
+    ^void:sql{BEGIN}
     ^void:sql{SAVEPOINT sp1}
     ^self.sut.release[sp1]
+    ^void:sql{ROLLBACK}
   }
-  ^self.assertSQLStatementsList[RELEASE SAVEPOINT sp1]
+  ^self.assertSQLStatementsList[^self.sut.dialect.release[sp1]]
 
 @testVoid[]
   $lTable[table_^math:uid64[]]
@@ -258,7 +211,7 @@ BaseTestSQLConnection
   $lTable[^self.createTestTable[]]
 	^self.assertNotRaises[sql.execute]{
 		$lActual[^self.sut.table{select * from $lTable order by a}[$.limit(2) $.offset(5)]]
-	}
+  }
   ^self.assertEqualAsJSON[$lActual;^table::create{a,b
 6,600
 7,700}[$.separator[,]]]
@@ -270,7 +223,7 @@ BaseTestSQLConnection
       $.limit(2)
       $.offset(5)
     ]]
-	}
+  }
   ^self.assertEqualAsJSON[$lActual;
     $.6[$.b[600]]
     $.7[$.b[700]]
@@ -320,9 +273,105 @@ BaseTestSQLConnection
     $.disableMemoryCache(true)
   ]
   ^self.assertSQLStatementsList[
-    $.0[BEGIN TRANSACTION]
+    $.0[^self.sut.dialect.begin[]]
     $.1[select 2+2]
     $.2[select 2+2]
     $.3[select 2+2]
-    $.4[COMMIT]
+    $.4[^self.sut.dialect.commit[]]
   ]
+
+#----------------------------------------------------------------------------------------------------------------------
+
+@CLASS
+TestSQLite3SQLConnection
+
+@BASE
+CommonPFSQLConnectionTests
+
+@GET_connectString[]
+  $result[sqlite://:memory:]
+
+@createTestTable[aOptions]
+## aOptions.rows(20)
+  ^self._testTablesCount.inc[]
+  $result[test_table_$self._testTablesCount]
+	$lRows(^aOptions.rows.int(20))
+  ^connect[$self.connectString]{
+		^void:sql{CREATE TABLE $result (a integer primary key autoincrement, b integer)}
+		^void:sql{INSERT INTO $result (b) VALUES ^for[i](1;$lRows){($i * 100)}[, ]}
+  }
+
+@fetchTestDatabaseSchema[]
+# https://www.sqlite.org/schematab.html
+  ^connect[$self.connectString]{
+    $result[^table::sql{
+        select type, name, tbl_name
+          from sqlite_master
+         where name not in ('sqlite_sequence', 'sqlite_schema', 'sqlite_master')
+      order by name, type
+    }]
+  }
+
+@testTransactionWithModes[]
+  ^self.sut.transaction[EXCLUSIVE]{}
+  ^self.assertSQLStatementsList[
+    $.0[^self.sut.dialect.begin[EXCLUSIVE]]
+    $.1[^self.sut.dialect.commit[]]
+  ]
+
+#----------------------------------------------------------------------------------------------------------------------
+
+@CLASS
+TestMySQLConnection
+
+@BASE
+CommonPFSQLConnectionTests
+
+@GET_connectString[]
+  $result[mysql://test:test@127.0.0.1:8306/mysql_test]
+
+@createTestTable[aOptions]
+## aOptions.rows(20)
+  ^self._testTablesCount.inc[]
+  $result[test_table_$self._testTablesCount]
+  $lRows(^aOptions.rows.int(20))
+  ^connect[$self.connectString]{
+    ^void:sql{CREATE TABLE $result (a integer primary key auto_increment, b integer)}
+    ^void:sql{INSERT INTO $result (b) VALUES ^for[i](1;$lRows){($i * 100)}[, ]}
+  }
+
+#----------------------------------------------------------------------------------------------------------------------
+
+@CLASS
+TestPostgresConnection
+
+@BASE
+CommonPFSQLConnectionTests
+
+@GET_connectString[]
+  $result[postgresql://test:test@127.0.0.1:8432/pg_test]
+
+@fetchTestDatabaseSchema[]
+  ^connect[$self.connectString]{
+    $result[^table::sql{
+        select case upper(table_type)
+                 when 'BASE TABLE' then 'table'
+                 when 'VIEW' then 'view'
+                 else lower(table_type)
+               end as type,
+               table_name as name
+          from information_schema.tables
+         where table_type in ('BASE TABLE', 'VIEW')
+               and table_schema = 'public'
+    }]
+  }
+
+@createTestTable[aOptions]
+## aOptions.rows(20)
+  ^self._testTablesCount.inc[]
+  $result[test_table_$self._testTablesCount]
+  $lRows(^aOptions.rows.int(20))
+  ^connect[$self.connectString]{
+    ^void:sql{CREATE TABLE $result (a serial primary key, b integer)}
+    ^void:sql{INSERT INTO $result (b) VALUES ^for[i](1;$lRows){($i * 100)}[, ]}
+  }

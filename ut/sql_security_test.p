@@ -104,8 +104,10 @@ TestMySQLSecurityCrypt
 @BASE
 BaseTestSQLSecurity
 
+@GET_connectString[]
+  $result[mysql://test:test@127.0.0.1:8306/mysql_test]
+
 @setUp[]
-  $self.connectString[mysql://test:test@127.0.0.1:8306/mysql_test]
   ^BASE:setUp[]
 # Включаем режим шифрования, совсместимый с Postgres
   ^self.connection.void{
@@ -120,6 +122,5 @@ TestPostgresSecurityCrypt
 @BASE
 BaseTestSQLSecurity
 
-@setUp[]
-  $self.connectString[postgresql://test:test@127.0.0.1:8432/pg_test]
-  ^BASE:setUp[]
+@GET_connectString[]
+  $result[postgresql://test:test@127.0.0.1:8432/pg_test]
