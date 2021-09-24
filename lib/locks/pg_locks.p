@@ -36,7 +36,7 @@ pfClass
 @exclusiveTransaction[aKey;aCode;aFailedCode]
 ## Пытается взять блокировку по aKey до конца транзакции и выполняет в транзакции aCode, иначе выполняет aFailedCode без транзакции
 ## Если при взятии лока произойдет исключение, то не выполняет никакой код, исключение не обрабатывает
-  ^self.assert(!^reflection:is[aArg1;code])[В первом параметре должен быть ключ блокировки]
+  ^self.assert(!^reflection:is[aKey;code])[В первом параметре должен быть ключ блокировки]
 
   $result[]
   ^CSQL.transaction{
