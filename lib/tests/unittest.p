@@ -119,7 +119,7 @@ locals
 
 @create[]
   $self._testClassPattern[^regex::create[^^Test\p{Lu}][n]]
-  $self._testMethodPattern[^regex::create[^^test\p{Lu}][n]]
+  $self._testMethodPattern[^regex::create[^^test[\p{Lu}_]][n]]
 
 @loadFromParser[]
   $result[^hash::create[]]

@@ -55,6 +55,9 @@
 ### [./lib/debug/unhandled_exception.p](./lib/debug/unhandled_exception.p)
 * pfUnhandledExceptionDebug
 
+### [./lib/locks/pg_locks.p](./lib/locks/pg_locks.p)
+* pfPGLocksManager
+
 ### [./lib/net/curl_file.p](./lib/net/curl_file.p)
 * pfCurlFile
 

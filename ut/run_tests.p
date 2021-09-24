@@ -17,6 +17,7 @@ $SQL[$.drivers[^table::create{protocol   driver   client
 sqlite	$parser3dir/lib/libparser3sqlite.so	$parser3dir/lib/system/libsqlite3.so
 mysql	$parser3dir/lib/libparser3mysql.so	$parser3dir/lib/system/libmysqlclient.so
 postgresql	$parser3dir/lib/libparser3pgsql.so	$parser3dir/lib/system/libpq.so
+postgresql2	$parser3dir/lib/libparser3pgsql.so	$parser3dir/lib/system/libpq.so
 }]]
 
 ^if(def $env:PARSER3_LIBCURL){
