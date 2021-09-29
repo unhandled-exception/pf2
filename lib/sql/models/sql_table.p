@@ -475,6 +475,26 @@ pfClass
     }}
   }]
 
+@modifyAllSQL[aOptions;aData]
+## Возвращает текст запроса метода modifyAll
+  ^self.assert(!$self._readOnlyTable){Модель $self.CLASS_NAME в режиме read only (только чтение данных)}
+  ^self.cleanMethodArgument[aOptions;aData]
+  ^CSQL.connect{
+    $result[
+      ^self.asContext[update]{^self.__normalizeWhitespaces{
+        ^self._builder.updateStatement[$self.TABLE_NAME;$self._fields;$aData][
+          ^self._allWhere[$aOptions]
+        ][
+          $.schema[$self.SCHEMA]
+          $.skipAbsent(true)
+          $.skipFields[$self._skipOnUpdate]
+          $.emptySetExpression[]
+          $.fieldValueFunction[$self.fieldValue]
+        ]
+      }}
+    ]
+  }
+
 @deleteAll[aOptions]
 ## Удаляем все записи из таблицы
 ## Условие для удаления берем из self._allWhere
