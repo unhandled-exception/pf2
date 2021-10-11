@@ -52,10 +52,10 @@ pfTestCase
 
 @test_lock_keys[]
   $lTests[
-    $.0[x'25f9e794323b4538'::bigint]
-    $.1[x'f573e011b414bf3f'::bigint]
-    $.2[x'115e589db5ec8ec6'::bigint]
-    $.3[x'5761121f59bdba64'::bigint]
+    $.0[123456789]
+    $.1[000000000000000000000000000000000000000000]
+    $.2[-1000000]
+    $.3[3924098320498230jf098fufjs98w34uj9sfe8jf98j98fsj98sfj9w8m94038jjf4q398fj398j349843jf98j]
   ]
   ^lTests.foreach[;v]{
     $_(^self.sut1.tryAdvisoryXACTLock[$v])
