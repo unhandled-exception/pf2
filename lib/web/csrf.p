@@ -36,6 +36,7 @@ pfMiddleware
 ## aOptions.cookieName[csrftoken] — имя csrf-куки
 ## aOptions.cookiePath[/] — путь csrf-куки
 ## aOptions.cookieSecure(false) —  ставим куку только на https
+## aOptions.cookieSameSite[Strict]
 ## aOptions.formFieldName[csrf_form_token] — имя поля формы с токеном
 ## aOptions.headerName[X-CSRFToken] — http-заголовок с токеном
 ## aOptions.pathExempt[hash<$.name[regexp]>] — хеш с регулярными выражениями для путей в урлах, которые не надо обрабатывать в мидлваре.
@@ -54,6 +55,7 @@ pfMiddleware
   $self._cookieName[^self.ifdef[$aOptions.cookieName]{csrftoken}]
   $self._cookiePath[^self.ifdef[$aOptions.cookiePath]{/}]
   $self._cookieSecure[^aOptions.cookieSecure.bool(false)]
+  $self._cookieSameSite[^self.ifdef[$aOptions.cookieSameSite]{Strict}]
 
   $self._formFieldName[^self.ifdef[$aOptions.formFieldName]{csrf_form_token}]
   $self._headerName[^self.ifdef[$aOptions.headerName]{X-CSRFToken}]
@@ -219,6 +221,7 @@ pfMiddleware
       $.path[$self._cookiePath]
       $.httponly($self._cookieHTTPOnly)
       $.secure($self._cookieSecure)
+      $.samesite[$self._cookieSameSite]
     ]
   }
 
