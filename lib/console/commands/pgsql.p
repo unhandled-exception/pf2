@@ -296,6 +296,7 @@ pfConsoleCommandWithSubcommands
            table_schema
       from information_schema.tables
      where table_schema not in ('pg_catalog', 'information_schema')
+           and table_type = 'BASE TABLE'
            ^if(def $aArgs.1){
              and table_name like '^taint[$aArgs.1]%'
            }
