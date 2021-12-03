@@ -23,15 +23,19 @@ pfClass
 ## Не стоит использоватье если pg_bouncer в transaction-режиме
   $result(^self.CSQL.int{select pg_try_advisory_lock(^self.keyToPGLiteral[$aKey])::int}[;$.force(true)] != 0)
 
-@tryAdvisoryXACTLock[aKey]
-## Пытается взять блокировку до конца транзакции и возвращает удалось взять лок или нет
-## Автоматически снимается в конце транзакции
-  $result(^self.CSQL.int{select pg_try_advisory_xact_lock(^self.keyToPGLiteral[$aKey])::int}[;$.force(true)] != 0)
+@advisoryUnlock[aKey]
+## Освоождает сессионную блокировку. Возвращает true, если удалось освободить блокировку или false, если лок не захватывался сессией
+  $result(^self.CSQL.int{select pg_advisory_unlock(^self.keyToPGLiteral[$aKey])::int}[;$.force(true)] != 0)
 
 @advisoryUnlockAll[]
 ## Освобождает все закреплённые за текущим сеансом рекомендательные блокировки сеансового уровня
   $result[]
   ^CSQL.string{select pg_advisory_unlock_all()}
+
+@tryAdvisoryXACTLock[aKey]
+## Пытается взять блокировку до конца транзакции и возвращает удалось взять лок или нет
+## Автоматически снимается в конце транзакции
+  $result(^self.CSQL.int{select pg_try_advisory_xact_lock(^self.keyToPGLiteral[$aKey])::int}[;$.force(true)] != 0)
 
 @exclusiveTransaction[aKey;aCode;aFailedCode]
 ## Пытается взять блокировку по aKey до конца транзакции и выполняет в транзакции aCode, иначе выполняет aFailedCode без транзакции
