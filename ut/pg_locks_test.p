@@ -39,17 +39,6 @@ pfTestCase
     ^self.assertEq[^self.sut1.keyToPGLiteral[$t.key];$t.result]
   }
 
-@test_pgTryAdvisoryLock[aKey]
-  ^self.assertTrue(^self.sut1.tryAdvisoryLock[key])[Берем лок из первого соединения]
-  ^self.assertFalse(^self.sut2.tryAdvisoryLock[key])[Берем лок из второго соединения]
-
-@test_pgTryAdvisoryXACTLock[aKey]
-  ^self.connection1.transaction{
-    ^self.assertTrue(^self.sut1.tryAdvisoryXACTLock[key])[Берем лок из первого соединения]
-    ^self.assertFalse(^self.sut2.tryAdvisoryXACTLock[key])[Берем лок из второго соединения]
-  }
-  ^self.assertTrue(^self.sut2.tryAdvisoryXACTLock[key])[Берем лок из второго соединения после транзакции]
-
 @test_lock_keys[]
   $lTests[
     $.0[123456789]
@@ -61,11 +50,28 @@ pfTestCase
     $_(^self.sut1.tryAdvisoryXACTLock[$v])
   }
 
-@test_pgAdvisoryUnlockAll[]
+@test_tryAdvisoryLock[aKey]
+  ^self.assertTrue(^self.sut1.tryAdvisoryLock[key])[Берем лок из первого соединения]
+  ^self.assertFalse(^self.sut2.tryAdvisoryLock[key])[Берем лок из второго соединения]
+
+@test_advisoryUnlock[]
+  ^self.assertTrue(^self.sut1.tryAdvisoryLock[key])[Берем лок из первого соединения]
+  ^self.assertFalse(^self.sut2.tryAdvisoryLock[key])[Берем лок из второго соединения]
+  ^self.sut1.advisoryUnlock[key]
+  ^self.assertTrue(^self.sut2.tryAdvisoryLock[key])[Берем лок из второго соединения после снятия всех блокировок]
+
+@test_advisoryUnlockAll[]
   ^self.assertTrue(^self.sut1.tryAdvisoryLock[key])[Берем лок из первого соединения]
   ^self.assertFalse(^self.sut2.tryAdvisoryLock[key])[Берем лок из второго соединения]
   ^self.sut1.advisoryUnlockAll[]
   ^self.assertTrue(^self.sut2.tryAdvisoryLock[key])[Берем лок из второго соединения после снятия всех блокировок]
+
+@test_tryAdvisoryXACTLock[aKey]
+  ^self.connection1.transaction{
+    ^self.assertTrue(^self.sut1.tryAdvisoryXACTLock[key])[Берем лок из первого соединения]
+    ^self.assertFalse(^self.sut2.tryAdvisoryXACTLock[key])[Берем лок из второго соединения]
+  }
+  ^self.assertTrue(^self.sut2.tryAdvisoryXACTLock[key])[Берем лок из второго соединения после транзакции]
 
 @test_exclusiveTransaction_ok[]
   ^self.sut1.exclusiveTransaction[key]{
