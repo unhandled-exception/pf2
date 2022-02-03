@@ -99,82 +99,88 @@ pfClass
 
 #----- Метаданные -----
 
-@addField[aFieldName;aOptions]
-## aOptions.dbField[aFieldName] — название поля
-## aOptions.fieldExpression{} — выражение для названия поля
-## aOptions.expression{} — sql-выражение для значения поля (если не определено, то используем fieldExpression)
-## aOptions.plural[] — название поля для групповой выборки
-## aOptions.processor — процессор
-## aOptions.default — значение «по-умолчанию»
-## aOptions.format — формат числового значения
-## aOptions.primary(false) — первичный ключ
-## aOptions.sequence(true) — последовательность формирует БД (автоинкремент; только для первичного ключа)
-## aOptions.skipOnInsert(false) — пропустить при вставке
-## aOptions.skipOnUpdate(false) — пропустить при обновлении
-## aOptions.skipOnSelect(false) — пропустить при селекте
-## aOptions.label[aFieldName] — текстовое название поля (например, для форм)
-## aOptions.comment — описание поля
-## aOptions.widget — название html-виджета для редактирования поля.
-  $result[]
-  ^self.cleanMethodArgument[]
-  ^self.assert(def $aFieldName){Не задано имя поля таблицы.}
-  ^self.assert(!^self._fields.contains[$aFieldName]){Поле «${aFieldName}» в таблице уже существует.}
-
-  $lField[^hash::create[]]
-
-  $lField.name[$aFieldName]
-  $lField.plural[$aOptions.plural]
-  $lField.processor[^if(def $aOptions.processor){$aOptions.processor}]
-  $lField.default[^if(def $aOptions.default){$aOptions.default}]
-  $lField.format[^if(def $aOptions.format){$aOptions.format}]
-
-  $lField.label[^if(def $aOptions.label){$aOptions.label}{$lField.name}]
-  $lField.comment[$aOptions.comment]
-  $lField.widget[$aOptions.widget]
-
-  ^if(^aOptions.contains[fieldExpression] || ^aOptions.contains[expression]){
-    ^if(def $aOptions.dbField){$lField.dbField[$aOptions.dbField]}
-    $lField.fieldExpression[$aOptions.fieldExpression]
-    $lField.expression[$aOptions.expression]
-    ^if(!def $lField.expression){
-      $lField.expression[$lField.fieldExpression]
-    }
-    ^if(^aOptions.skipOnUpdate.bool(false) || !def $lField.dbField){
-      $self._skipOnUpdate.[$aFieldName](true)
-    }
-    ^if(^aOptions.skipOnInsert.bool(false) || !def $lField.dbField){
-      $self._skipOnInsert.[$aFieldName](true)
-    }
-  }{
-     $lField.dbField[^if(def $aOptions.dbField){$aOptions.dbField}{$aFieldName}]
-     $lField.primary(^aOptions.primary.bool(false))
-     $lField.sequence($lField.primary && ^aOptions.sequence.bool(true))
-     ^if(^aOptions.skipOnUpdate.bool(false) || $lField.primary){
-       $self._skipOnUpdate.[$aFieldName](true)
-     }
-     ^if(^aOptions.skipOnInsert.bool(false) || $lField.sequence){
-       $self._skipOnInsert.[$aFieldName](true)
-     }
-     ^if(def $lField.primary && !def $self._primaryKey){
-       $self._primaryKey[$aFieldName]
-     }
-   }
-  ^if(^aOptions.skipOnSelect.bool(false)){
-    $self._skipOnSelect.[$aFieldName](true)
-  }
-  $self._fields.[$aFieldName][$lField]
-  ^if(def $lField.plural){
-    $self._plurals.[$lField.plural][$lField]
-  }
-
 @addFields[aFields]
-## Добавляет сразу несколько полей
-## aFields[hash]
-  ^self.cleanMethodArgument[aFields]
+## Добавляем сразу много полей в модель
+## Вместо множественного вызова addField делаем один addFields для оптимизации добавления ольшого числа полей в модель,
+## что приводило к слишком большому числу вызовов функций
+## aFields[$.fieldName[fieldOptions ...]]
+## fieldOptions.dbField[aFieldName] — название поля
+## fieldOptions.fieldExpression{} — выражение для названия поля
+## fieldOptions.expression{} — sql-выражение для значения поля (если не определено, то используем fieldExpression)
+## fieldOptions.plural[] — название поля для групповой выборки
+## fieldOptions.processor — процессор
+## fieldOptions.default — значение «по-умолчанию»
+## fieldOptions.format — формат числового значения
+## fieldOptions.primary(false) — первичный ключ
+## fieldOptions.sequence(true) — последовательность формирует БД (автоинкремент; только для первичного ключа)
+## fieldOptions.skipOnInsert(false) — пропустить при вставке
+## fieldOptions.skipOnUpdate(false) — пропустить при обновлении
+## fieldOptions.skipOnSelect(false) — пропустить при селекте
+## fieldOptions.label[aFieldName] — текстовое название поля (например, для форм)
+## fieldOptions.comment — описание поля
+## fieldOptions.widget — название html-виджета для редактирования поля.
   $result[]
-  ^aFields.foreach[k;v]{
-    ^self.addField[$k;$v]
+  $aFields[^hash::create[$aFields]]
+
+  ^aFields.foreach[lFieldName;lOptions]{
+    ^if(!def $lFieldName){^throw[assert.fail;Не задано имя поля таблицы.]}
+    ^if(^self._fields.contains[$lFieldName]){^throw[assert.fail;Поле «${lFieldName}» в таблице уже существует.]}
+
+    $lField[
+      $.name[$lFieldName]
+      $.plural[$lOptions.plural]
+      $.processor[$lOptions.processor]
+      $.default[$lOptions.default]
+      $.format[$lOptions.format]
+
+      $.label[^if(def $lOptions.label){$lOptions.label}{$lFieldName}]
+      $.comment[$lOptions.comment]
+      $.widget[$lOptions.widget]
+    ]
+
+    ^if(^lOptions.contains[fieldExpression] || ^lOptions.contains[expression]){
+      ^if(def $lOptions.dbField){
+        $lField.dbField[$lOptions.dbField]
+      }
+      $lField.fieldExpression[$lOptions.fieldExpression]
+      $lField.expression[$lOptions.expression]
+      ^if(!def $lField.expression){
+        $lField.expression[$lField.fieldExpression]
+      }
+      ^if(^lOptions.skipOnUpdate.bool(false) || !def $lField.dbField){
+        $self._skipOnUpdate.[$lFieldName](true)
+      }
+      ^if(^lOptions.skipOnInsert.bool(false) || !def $lField.dbField){
+        $self._skipOnInsert.[$lFieldName](true)
+      }
+    }{
+      $lField.dbField[^if(def $lOptions.dbField){$lOptions.dbField}{$lFieldName}]
+      $lField.primary(^lOptions.primary.bool(false))
+      $lField.sequence($lField.primary && ^lOptions.sequence.bool(true))
+      ^if(^lOptions.skipOnUpdate.bool(false) || $lField.primary){
+        $self._skipOnUpdate.[$lFieldName](true)
+      }
+      ^if(^lOptions.skipOnInsert.bool(false) || $lField.sequence){
+        $self._skipOnInsert.[$lFieldName](true)
+      }
+      ^if(def $lField.primary && !def $self._primaryKey){
+        $self._primaryKey[$lFieldName]
+      }
+    }
+    ^if(^lOptions.skipOnSelect.bool(false)){
+      $self._skipOnSelect.[$lFieldName](true)
+    }
+    $self._fields.[$lFieldName][$lField]
+    ^if(def $lField.plural){
+      $self._plurals.[$lField.plural][$lField]
+    }
   }
+
+@addField[aFieldName;aOptions]
+## Добавляем одно поле в модель
+## Лучше сразу вызвать addFields
+  $result[]
+  ^self.addFields[$.[$aFieldName][$aOptions]]
 
 @hasField[aFieldName]
 ## Проверяет наличие поля в таблице
@@ -184,7 +190,7 @@ pfClass
   ^if(^self.hasField[$aFieldName]){
     ^self._fields.delete[$aFieldName]
   }
-  $result[^self.addField[$aFieldName;$aOptions]]
+  $result[^self.addFields[$.[$aFieldName][$aOptions]]]
 
 @cleanFormData[aFormData]
 ## Возвращает хеш с полями, для которых разрешены html-виджеты.

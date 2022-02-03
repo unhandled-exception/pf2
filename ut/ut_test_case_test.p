@@ -341,10 +341,14 @@ locals
 @testAssertHashEqualsOk[]
   ^self.sut.assertHashEquals[
     $.f1[v1]
-    $.f2[v2]
+    $.f2(25)
+    $.f3(33.1)
+    $.f4[$void]
   ][
     $.f1[v1]
-    $.f2[v2]
+    $.f2(25)
+    $.f3(33.10)
+    $.f4[]
   ]
 
 @testAssertHashEqualsFail[]
@@ -364,6 +368,30 @@ locals
     ][
       $.f1[v2]
       $.f2[v1]
+    ]
+  }
+
+  ^self.assertRaisesFailureException{
+    ^self.sut.assertHashEquals[
+      $.f1(10)
+    ][
+      $.f1(11)
+    ]
+  }
+
+  ^self.assertRaisesFailureException{
+    ^self.sut.assertHashEquals[
+      $.f1(10.12)
+    ][
+      $.f1(11.12)
+    ]
+  }
+
+  ^self.assertRaisesFailureException{
+    ^self.sut.assertHashEquals[
+      $.f1(25)
+    ][
+      $.f1[25]
     ]
   }
 
