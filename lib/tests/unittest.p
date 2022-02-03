@@ -668,19 +668,41 @@ $aException.file (${aException.lineno}:$aException.colno)]
 @assertHashEquals[aActual;aExpected]
   $aActual[^hash::create[$aActual]]
   $aExpected[^hash::create[$aExpected]]
+
+  $lEqualsTypes[
+    $.int[math]
+    $.double[math]
+    $.bool[math]
+    $.string[string]
+    $.void[string]
+    $._default[fail]
+  ]
   ^try{
     ^if($aActual != $aExpected){
-      ^throw[hashes.not.equals]
+      ^throw[hashes.not.equals;Different length]
     }
-    ^aActual.foreach[k;v]{
-      ^if($aExpected.[$k] ne $v){
-        ^throw[hashes.not.equals]
+    ^aExpected.foreach[k;v]{
+      ^if(!^aActual.contains[$k]){
+        ^throw[hashes.not.equals;Actual hasn't contains "$k" key]
+      }
+      $lExpEqType[$lEqualsTypes.[$v.CLASS_NAME]]
+      $lAqEqType[$lEqualsTypes.[$aActual.[$k].CLASS_NAME]]
+      ^if($lExpEqType ne $lAqEqType){
+        ^throw[hashes.not.equals;Key $k has diff equal types]
+      }
+      ^if(
+        ($lExpEqType eq "math" && $aActual.[$k] != $v)
+        || ($lExpEqType eq "string" && $aActual.[$k] ne $v)
+      ){
+        ^throw[hashes.not.equals;Not equals value for "$k" key]
+      }($lExpEqType eq "fail" || $lAqEqType eq "fail"){
+        ^throw[hashes.not.equals;Can't compare $v.CLASS_NAME and $aActual.[$k].CLASS_NAME for "$k" key]
       }
     }
   }{
     ^if($exception.type eq "hashes.not.equals"){
       $exception.handled(true)
-      ^self.fail[Hashes not equals.^#0A^#0AActual:^#0A^json:string[$aActual;$.indent(true)]^#0A^#0AExpected:^#0A^json:string[$aExpected;$.indent(true)]^#0A]
+      ^self.fail[Hashes not equals ($exception.source).^#0A^#0AActual:^#0A^json:string[$aActual;$.indent(true)]^#0A^#0AExpected:^#0A^json:string[$aExpected;$.indent(true)]^#0A]
     }
   }
 
