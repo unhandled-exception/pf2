@@ -187,10 +187,18 @@ pfClass
   $result(def $aFieldName && ^self._fields.contains[$aFieldName])
 
 @replaceField[aFieldName;aOptions]
+## Заменяет поле в таблице
   ^if(^self.hasField[$aFieldName]){
     ^self._fields.delete[$aFieldName]
   }
   $result[^self.addFields[$.[$aFieldName][$aOptions]]]
+
+@removeField[aFieldName]
+## Удаляет поле в таблице
+  $result[]
+  ^if(^self.hasField[$aFieldName]){
+    ^self._fields.delete[$aFieldName]
+  }
 
 @cleanFormData[aFormData]
 ## Возвращает хеш с полями, для которых разрешены html-виджеты.
