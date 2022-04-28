@@ -47,3 +47,21 @@ pfTestCase
     $.primary(false)
     $.sequence(false)
   ]
+
+@test_has_field[]
+  ^self.sut.addFields[
+    $.id[]
+    $.name[]
+    $.fullName[]
+  ]
+  ^self.assertTrue(^sut.hasField[name])
+  ^self.assertFalse(^sut.hasField[comment])
+
+@test_remove_field[]
+  ^self.sut.addFields[
+    $.id[]
+    $.name[]
+    $.fullName[]
+  ]
+  ^sut.removeField[name]
+  ^self.assertFalse(^sut.hasField[name])
