@@ -19,7 +19,7 @@
 > sudo apt install postgresql-client-common postgresql-client
 ```
 
-### Apple macOS
+### Apple OSX
 
 * Со страницы https://www.parser.ru/download/macosx/ берем архив «комплект для установки»
 * Распаковываем архив в `$HOME/bin`
