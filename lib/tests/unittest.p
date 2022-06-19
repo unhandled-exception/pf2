@@ -75,7 +75,7 @@ locals
 
 @status[aCode]
   $result[]
-  $request:status[$aCode]
+  $response:status[$aCode]
 
 @parseArgs[aArgv] -> [$.args $.options]
   $result[
@@ -121,7 +121,8 @@ locals
   $self._testClassPattern[^regex::create[^^Test\p{Lu}][n]]
   $self._testMethodPattern[^regex::create[^^test[\p{Lu}_]][n]]
 
-@loadFromParser[]
+@loadFromParser[aOptions]
+## aOptions.pathPrefix — удалить из пути префикс
   $result[^hash::create[]]
   $lClasses[^reflection:classes[]]
 
@@ -139,7 +140,7 @@ locals
             $.className[$class_name]
             $.class[$lClass]
             $.method[$method]
-            $.name[^file:basename[$lClassPath]@${class_name}.$method]
+            $.name[^self._removePathPrefix[$lClassPath;$aOptions.pathPrefix]@${class_name}.$method]
           ]
         }
       }
@@ -148,15 +149,52 @@ locals
 
 @loadFromPath[aPath;aOptions]
 ## aOptions.filter[_test\.p^$]
+## aOptions.recursive(true)
   $aPath[^if(def $aPath){$aPath}{.}]
-  $lFilter[^if(def $aOptions.filter){$aOptions.filter}{_test\.p^$}]
-  $lList[^file:list[$aPath;$.filter[$lFilter]]]
-  ^lList.sort{$lList.name}
-  ^lList.foreach[;v]{
-    ^if(!-f $v.name){^continue[]}
-    ^use[$v.name]
+  $lFilter[^regex::create[^if(def $aOptions.filter){$aOptions.filter}{_test\.p^$}]]
+
+  ^self._walk[$aPath][fname]{
+    ^if(!^fname.match[$lFilter]){
+      ^continue[]
+    }
+    ^use[$fname]
   }
-  ^self.loadFromParser[]
+
+  ^self.loadFromParser[
+    $.pathPrefix[^if($aPath eq "."){$request:document-root}{$aPath}]
+  ]
+
+@_removePathPrefix[aPath;aPrefix]
+  $result[$aPath]
+  ^if(def $aPrefix){
+    $result[^result.match[^^(?:^taint[regex][$aPrefix])][]{}]
+    $result[^result.match[(\.\/)+][g]{}]
+  }
+
+@_walk[aPath;aVarName;aCode;aOptions]
+## Обходит дерево файлов начиная с aPath и выполняет для каждого найденного файла aCode.
+## Имя файла c путем попадает в переменную с именем из aVarName.
+## Файлы сортируются по именам.
+## aOptions.recursive(true)
+  $aPath[^aPath.trim[right;/\]]
+  $lRecursive(^aOptions.recursive.bool(true))
+
+  $lFiles[^file:list[$aPath]]
+  ^lFiles.sort{$lFiles.name}[asc]
+
+  ^lFiles.menu{
+    ^if(-d "$aPath/$lFiles.name"){
+      ^if(!$lRecursive){
+        ^continue[]
+      }
+      ^self._walk[$aPath/$lFiles.name;caller.$aVarName]{$aCode}[$aOptions]
+    }{
+      ^process{^$caller.caller.$aVarName^[$aPath/$lFiles.name^]}
+      $aCode
+    }
+  }
+
+  ^if(^aVarName.left(7) ne "caller."){$caller.$aVarName[]}
 
 #--------------------------------------------------------------------------------------------------
 
