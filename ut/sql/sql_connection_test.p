@@ -1,86 +1,18 @@
 @USE
 pf2/lib/sql/connection.p
+sql/testutils.p
 
-@CLASS
-BaseTestSQLConnection
-
-@OPTIONS
-locals
-
-@BASE
-pfTestCase
-
-@setUp[]
-  ^BASE:setUp[]
-  $self.connection[^pfSQLConnection::create[$self.connectString;
-    $.enableQueriesLog(true)
-    $.enableMemoryCache(true)
-  ]]
-  $self.sut[$self.connection]
-
-  $self._testTablesCount(0)
-
-@tearDown[]
-  ^self.clearTestDatabase[]
-  $self.connection[]
-  ^BASE:tearDown[]
-
-@assertSQLStatementsList[aExpected]
-## aExpected[string|hash]
-  $lActual[^#0A^self.sut.stat.queries.foreach[;v]{$v.query}[^#0A]^#0A]
-  $lActual[^lActual.match[(AUTO_SAVEPOINT)_.+?\b][g]{$match.1}]
-  ^if($aExpected is hash){
-    $aExpected[^aExpected.foreach[;v]{$v}[^#0A]]
-  }
-  ^self.assertEq[$lActual;^#0A$aExpected^#0A]
-
-@assertEqualAsJSON[aActual;aExpected]
-  ^self.assertEq[^json:string[$aActual;$.indent(true)];^json:string[$aExpected;$.indent(true)]]
-
-@createTestTable[aOptions]
-## aOptions.rows(20)
-  ^self.fail[Not implemented]
-
-@fetchTestDatabaseSchema[]
-  ^connect[$self.connectString]{
-    $result[^table::sql{
-        select case upper(table_type)
-                 when 'BASE TABLE' then 'table'
-                 when 'VIEW' then 'view'
-                 else lower(table_type)
-               end as type,
-               table_name as name
-          from information_schema.tables
-         where table_type in ('BASE TABLE', 'VIEW')
-    }]
-  }
-
-@clearTestDatabase[]
-  $lSchema[^self.fetchTestDatabaseSchema[]]]
-
-  ^lSchema.foreach[;v]{
-    ^connect[$self.connectString]{
-      ^switch[^v.type.lower[]]{
-        ^case[table]{
-          ^void:sql{DROP TABLE IF EXISTS ^taint[as-is][$v.name]}
-        }
-        ^case[view]{
-          ^void:sql{DROP VIEW IF EXISTS ^taint[as-is][$v.name]}
-        }
-        ^case[trigger]{
-          ^void:sql{DROP TRIGGER IF EXISTS ^taint[as-is][$v.name]}
-        }
-      }
-    }
-  }
-
-#----------------------------------------------------------------------------------------------------------------------
 
 @CLASS
 CommonPFSQLConnectionTests
 
 @BASE
 BaseTestSQLConnection
+
+@setUp[]
+  ^BASE:setUp[]
+  $self.sut[$self.connection]
+  $self._testTablesCount(0)
 
 @testConnect[]
  ^self.assertNotRaises[sql.execute]{
@@ -218,7 +150,7 @@ BaseTestSQLConnection
 	^self.assertNotRaises[sql.execute]{
 		$lActual[^self.sut.table{select * from $lTable order by a}[$.limit(2) $.offset(5)]]
   }
-  ^self.assertEqualAsJSON[$lActual;^table::create{a,b
+  ^self.assertEqualsAsJSON[$lActual;^table::create{a,b
 6,600
 7,700}[$.separator[,]]]
 
@@ -230,7 +162,7 @@ BaseTestSQLConnection
       $.offset(5)
     ]]
   }
-  ^self.assertEqualAsJSON[$lActual;
+  ^self.assertEqualsAsJSON[$lActual;
     $.6[$.b[600]]
     $.7[$.b[700]]
   ]
@@ -295,7 +227,7 @@ TestSQLite3SQLConnection
 CommonPFSQLConnectionTests
 
 @GET_connectString[]
-  $result[sqlite://:memory:]
+  $result[$self._sqliteConnectString]
 
 @createTestTable[aOptions]
 ## aOptions.rows(20)
@@ -305,17 +237,6 @@ CommonPFSQLConnectionTests
   ^connect[$self.connectString]{
 		^void:sql{CREATE TABLE $result (a integer primary key autoincrement, b integer)}
 		^void:sql{INSERT INTO $result (b) VALUES ^for[i](1;$lRows){($i * 100)}[, ]}
-  }
-
-@fetchTestDatabaseSchema[]
-# https://www.sqlite.org/schematab.html
-  ^connect[$self.connectString]{
-    $result[^table::sql{
-        select type, name, tbl_name
-          from sqlite_master
-         where name not in ('sqlite_sequence', 'sqlite_schema', 'sqlite_master')
-      order by name, type
-    }]
   }
 
 @testTransactionWithModes[]
@@ -334,7 +255,7 @@ TestMySQLConnection
 CommonPFSQLConnectionTests
 
 @GET_connectString[]
-  $result[mysql://test:test@127.0.0.1:8306/mysql_test]
+  $result[$self._mysqlConnectString]
 
 @createTestTable[aOptions]
 ## aOptions.rows(20)
@@ -355,22 +276,7 @@ TestPostgresConnection
 CommonPFSQLConnectionTests
 
 @GET_connectString[]
-  $result[postgresql://test:test@127.0.0.1:8432/pg_test]
-
-@fetchTestDatabaseSchema[]
-  ^connect[$self.connectString]{
-    $result[^table::sql{
-        select case upper(table_type)
-                 when 'BASE TABLE' then 'table'
-                 when 'VIEW' then 'view'
-                 else lower(table_type)
-               end as type,
-               table_name as name
-          from information_schema.tables
-         where table_type in ('BASE TABLE', 'VIEW')
-               and table_schema = 'public'
-    }]
-  }
+  $result[$self._postgresConnectString]
 
 @createTestTable[aOptions]
 ## aOptions.rows(20)
