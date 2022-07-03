@@ -281,6 +281,22 @@ locals
     ^self.sut.assertNe[str1;str1]
   }
 
+@testAssertNumEqOk[]
+  ^self.sut.assertNumEq(3245;3245.0)
+
+@testAssertNumEqFail[]
+  ^self.assertRaisesFailureException{
+    ^self.sut.assertNumEq(5245;3245.0)
+  }
+
+@testAssertNumNeOk[]
+  ^self.sut.assertNumNe(5245;3245.0)
+
+@testAssertNumNeFail[]
+  ^self.assertRaisesFailureException{
+    ^self.sut.assertNumNe(3245;3245.0)
+  }
+
 @testAssertRegexpMatchStringOk[]
   ^sut.assertRegexpMatch[test results;this is test results]
 

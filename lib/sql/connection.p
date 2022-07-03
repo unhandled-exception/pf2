@@ -20,7 +20,7 @@ pfClass
 ## aOptions.enableQueriesLog(false) — включить логирование sql-запросов.
 ## aOptions.nestedAsSavepoints(false) — объединить вложенные транзакции в сейвпоинты.
   ^self.cleanMethodArgument[]
-  ^self.assert(def $aConnectString)[Не задана строка соединения. не задано регулярное выражение для поиска дублирования ключей]
+  ^self.assert(def $aConnectString)[Не задана строка соединения]
 
   ^BASE:create[]
   $self.serverType[^aConnectString.left(^aConnectString.pos[:])]
@@ -365,7 +365,7 @@ pfClass
 @create[aOptions]
   ^BASE:create[]
 
-  $self.name[ANSI]
+  $self.name[ansi]
   $self.identifierQuoteMark["]
 
 # Регулярное вражение для проверки исключения в pfSQLConnection.safeInsert.
@@ -411,7 +411,7 @@ pfSQLAnsiDialect
 @create[aOptions]
   ^BASE:create[$aOptions]
 
-  $self.name[Postgres]
+  $self.name[postgres]
   $self.duplicateKeyExceptionRegex[^regex::create[(?:duplicate key value|повторяющееся значение ключа)][i]]
 
 @lastInsertID[aOptions]
@@ -441,7 +441,7 @@ pfSQLAnsiDialect
 ## aOptions.ansiQuotes(false) — использовать даойные кавычки для идентификаторов.
   ^BASE:create[$aOptions]
 
-  $self.name[MySQL]
+  $self.name[mysql]
   $self.identifierQuoteMark[^if(^aOptions.ansiQuotes.bool(false)){"}{`}]
   $self.duplicateKeyExceptionRegex[^regex::create[duplicate entry][i]]
 
@@ -471,7 +471,7 @@ pfSQLAnsiDialect
 @create[aOptions]
   ^BASE:create[$aOptions]
 
-  $self.name[SQLite]
+  $self.name[sqlite]
   $self.duplicateKeyExceptionRegex[^regex::create[SQL logic error][i]]
 
 @lastInsertID[aOptions]

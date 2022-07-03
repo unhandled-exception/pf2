@@ -710,6 +710,16 @@ $aException.file (${aException.lineno}:$aException.colno)]
     ^self.fail[^if(def $aReason){$aReason}{"$aStr1" equals to "$aStr2"}]
   }
 
+@assertNumEq[aNum1;aNum2;aReason][result]
+  ^if($aNum1 != $aNum2){
+    ^self.fail[^if(def $aReason){$aReason}{"$aNum1" not equals to "$aNum2"}]
+  }
+
+@assertNumNe[aNum1;aNum2;aReason][result]
+  ^if($aNum1 == $aNum2){
+    ^self.fail[^if(def $aReason){$aReason}{"$aNum1" equals to "$aNum2"}]
+  }
+
 @assertRegexpMatch[aRegexp;aStr;aReason][result]
   ^if(!($aRegexp is regex)){
     $aRegexp[^regex::create[$aRegexp][n]]
