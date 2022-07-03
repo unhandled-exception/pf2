@@ -122,11 +122,11 @@ locals
   ^self.println[$self._description]
   ^self.println[]
   ^self.println[Options:]
-  ^self.println[[test_regex]^#09Filter tests by pattern]
-  ^self.println[^#09-h^#09Print usage and exit]
-  ^self.println[^#09-l^#09Print tests list and exit]
-  ^self.println[^#09-r[=seed]^#09Run test in random order]
-  ^self.println[^#09-v^#09Verbose]
+  ^self.println[[test_regex]    Filter tests by pattern]
+  ^self.println[-h              Print usage and exit]
+  ^self.println[-l              Print tests list and exit]
+  ^self.println[-r[=seed]       Run test in random order]
+  ^self.println[-v              Verbose]
   ^self.flush[]
 
 #--------------------------------------------------------------------------------------------------
