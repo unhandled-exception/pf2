@@ -35,4 +35,4 @@ jobs:
 
       - name: "Run tests"
         run: |
-          $HOME/bin/parser3.cgi ut/run_tests.p
+          $HOME/bin/parser3.cgi ut/run_tests.p -v -r

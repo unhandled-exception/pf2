@@ -179,8 +179,14 @@ BaseTestSQLConnection
 @testBegin[]
   ^self.sut.begin[]
   ^self.assertSQLStatementsList[^self.sut.dialect.begin[]]
+  ^self.sut.connect{
+    ^void:sql{ROLLBACK}
+  }
 
 @testCommit[]
+  ^self.sut.connect{
+    ^void:sql{BEGIN}
+  }
   ^self.sut.commit[]
   ^self.assertSQLStatementsList[^self.sut.dialect.commit[]]
 

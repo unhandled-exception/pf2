@@ -6,8 +6,8 @@ locals
 
 @create[]
   $self._loader[^pfTestsLoader::create[]]
-  $self._runner[^pfTextTestsRunner::create[]]
   $self._stream[^pfTestStdoutStream::create[]]
+  $self._runner[^pfTextTestsRunner::create[$.stream[$self._stream]]]
 
   $self._argv[$request:argv]
   $self._name[^file:basename[$self._argv.0]]
@@ -17,10 +17,16 @@ locals
   $self._args[$lArgs.args]
   $self._options[$lArgs.options]
 
+  $self._last_random_value(^math:random(10000)*^math:random(10000))
+
+@_random[]
+  $self._last_random_value((17839837 * $self._last_random_value + 395312313) % 1339765)
+  $result($self._last_random_value)
+
 @main[]
   $result[]
   ^try{
-    ^if($self._options.[-h]){
+    ^if(^self._options.contains[-h]){
       ^self.usage[]
       ^return[]
     }
@@ -32,16 +38,28 @@ locals
       ^return[]
     }
 
+    ^lTests.sort[;v]{$v.name}
+    ^if(^self._options.contains[-r]){
+      ^if(^self._options.[-r].int(0) != 0){
+        $self._last_random_value($self._options.[-r])
+      }
+
+      ^self.println[Tests random seed is $self._last_random_value]
+      ^lTests.sort[;v](^self._random[])
+    }
+
     ^if(def $self._args.1){
       $lTests[^self.filterTests[$lTests;$self._args.1]]
     }
 
     ^switch(true){
-      ^case($self._options.[-l]){
+      ^case(^self._options.contains[-l]){
         ^self.printTestsList[$lTests]
       }
       ^case[DEFAULT]{
-        ^self._runner.runTests[$lTests]
+        ^self._runner.runTests[$lTests;
+          $.verbose(^self._options.contains[-v])
+        ]
       }
     }
   }{}{
@@ -84,7 +102,7 @@ locals
   ]
   ^aArgv.foreach[;v]{
     ^if(^v.left(1) eq "-"){
-      $result.options.[$v](true)
+      $result.options.[^v.left(2)][^v.mid(3)]
       ^continue[]
     }
     $result.args.[^eval($result.args)][$v]
@@ -104,9 +122,11 @@ locals
   ^self.println[$self._description]
   ^self.println[]
   ^self.println[Options:]
-  ^self.println[[test_regex]^#09Filter tests by pattern]
-  ^self.println[^#09-l^#09Print tests list and exit]
-  ^self.println[^#09-h^#09Print usage and exit]
+  ^self.println[[test_regex]    Filter tests by pattern]
+  ^self.println[-h              Print usage and exit]
+  ^self.println[-l              Print tests list and exit]
+  ^self.println[-r[=seed]       Run test in random order]
+  ^self.println[-v              Verbose]
   ^self.flush[]
 
 #--------------------------------------------------------------------------------------------------
@@ -160,9 +180,9 @@ locals
     ^use[$fname]
   }
 
-  ^self.loadFromParser[
+  $result[^self.loadFromParser[
     $.pathPrefix[^if($aPath eq "."){$request:document-root}{$aPath}]
-  ]
+  ]]
 
 @_removePathPrefix[aPath;aPrefix]
   $result[$aPath]
@@ -343,10 +363,12 @@ locals
 
 @create[aOptions]
 ## aOptions.stream
+## aOptions.verbose(false)
   ^BASE:create[]
   $self.separator1[^for[i](1;70){=}]
   $self.separator2[^for[i](1;70){-}]
   $self.stream[^if(def $aOptions.stream){$aOptions.stream}{^pfTestStdoutStream::create[]}]
+  $self.verbose(^aOptions.verbose.bool(false))
 
 @getDescription[aTest]
   $result[^aTest.id[]]
@@ -362,23 +384,33 @@ locals
 
 @startTest[aTest]
   ^BASE:startTest[$aTest]
-  ^self.stream.write[^self.getDescription[$aTest] ... ]
+  ^if($self.verbose){
+    ^self.stream.write[^self.getDescription[$aTest] ... ]
+  }
 
 @addSkip[aTest;aReason]
   ^BASE:addSkip[$aTest]
-  ^self.stream.write[SKIP^if(def $aReason){ ($aReason)}]
+  ^if($self.verbose){
+    ^self.stream.write[SKIP^if(def $aReason){ ($aReason)}]
+  }
 
 @addSuccess[aTest]
   ^BASE:addSuccess[$aTest]
-  ^self.stream.write[OK]
+  ^if($self.verbose){
+    ^self.stream.write[OK]
+  }
 
 @addError[aTest;aException;aStack]
   ^BASE:addError[$aTest;$aException;$aStack]
-  ^self.stream.write[ERROR]
+  ^if($self.verbose){
+    ^self.stream.write[ERROR]
+  }
 
 @addFailure[aTest;aException;aStack]
   ^BASE:addFailure[$aTest;$aException;$aStack]
-  ^self.stream.write[FAIL]
+  ^if($self.verbose){
+    ^self.stream.write[FAIL]
+  }
 
 @stopTest[aTest]
   ^BASE:stopTest[$aTest]
@@ -419,11 +451,10 @@ pfTextTestsRunner
 @OPTIONS
 locals
 
-@create[]
-  $self.stream[^pfTestStdoutStream::create[]]
-  $self.result[^pfTextTestResult::create[
-    $.stream[$self.stream]
-  ]]
+@create[aOptions]
+## aOptions.steam
+  $self.stream[^if(def $aOptions.stream){$aOptions.stream}{^pfTestStdoutStream::create[]}]
+
   $self._minMemoryLimit(4096)
   $self._compacts(0)
 
@@ -439,41 +470,47 @@ locals
     }
   }
 
-@runTests[aTests]
+@runTests[aTests;aOptions]
+## aOptions.verbose(false)
   $result[]
   $lStat[$.total(0) $.ok(0) $.fail(0)]
 
+  $lTestTextResult[^pfTextTestResult::create[
+    $.stream[$self.stream]
+    $.verbose(^aOptions.verbose.bool(false))
+  ]]
+
   $lStartRusage[$status:rusage]
-  ^self.result.startTestRun[]
+  ^lTestTextResult.startTestRun[]
   ^aTests.foreach[;t]{
     ^self.doCleanup{
       $lTest[^reflection:create[$t.className;create;$t.method;
         $.name[$t.name]
       ]]
-      ^lTest.run[$self.result]
+      ^lTest.run[$lTestTextResult]
     }
   }
-  ^self.result.stopTestRun[]
-  ^self.result.printErrors[]
+  ^lTestTextResult.stopTestRun[]
+  ^lTestTextResult.printErrors[]
 
-  ^self.stream.writeln[^#0A$self.result.separator1]
+  ^self.stream.writeln[^#0A$lTestTextResult.separator1]
 
   $lStopRusage[$status:rusage]
   $lStopMemory[$status:memory]
-  ^self.stream.writeln[Run $self.result.testsRun tests in ^eval($lStopRusage.tv_sec - $lStartRusage.tv_sec + ($lStopRusage.tv_usec - $lStartRusage.tv_usec)/1000000)[%.2f] s (^eval($lStopMemory.free + $lStopMemory.used) KB memory, $self._compacts compacts)]
+  ^self.stream.writeln[Run $lTestTextResult.testsRun tests in ^eval($lStopRusage.tv_sec - $lStartRusage.tv_sec + ($lStopRusage.tv_usec - $lStartRusage.tv_usec)/1000000)[%.2f] s (^eval($lStopMemory.free + $lStopMemory.used) KB memory, $self._compacts compacts)]
 
   $lInfos[^hash::create[]]
 
-  ^if(!^self.result.wasSuccessful[]){
+  ^if(!^lTestTextResult.wasSuccessful[]){
     ^self.stream.write[FAIL]
-    $lInfos.[^lInfos._count[]][failures=^eval($self.result.failures)]
-    $lInfos.[^lInfos._count[]][errors=^eval($self.result.errors)]
+    $lInfos.[^lInfos._count[]][failures=^eval($lTestTextResult.failures)]
+    $lInfos.[^lInfos._count[]][errors=^eval($lTestTextResult.errors)]
     $response:status[2]
   }{
     ^self.stream.write[OK]
   }
-  ^if($self.result.skipped){
-    $lInfos.[^lInfos._count[]][skipped=^eval($self.result.skipped)]
+  ^if($lTestTextResult.skipped){
+    $lInfos.[^lInfos._count[]][skipped=^eval($lTestTextResult.skipped)]
   }
 
   ^if($lInfos){
