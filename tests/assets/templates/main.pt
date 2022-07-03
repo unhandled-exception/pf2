@@ -1,5 +1,0 @@
-
-Main template!
-
-loop: ^for[i](2;12){$i}[, ]
-
