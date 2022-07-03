@@ -32,6 +32,7 @@ jobs:
       - name: "Start test containers"
         run: |
           /bin/bash ut/start_test_containers.sh
+          sleep 5
 
       - name: "Run tests"
         run: |
