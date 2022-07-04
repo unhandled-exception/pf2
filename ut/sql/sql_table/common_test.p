@@ -65,3 +65,20 @@ pfTestCase
   ]
   ^sut.removeField[name]
   ^self.assertFalse(^sut.hasField[name])
+
+@test_add_fields_groups[]
+  ^self.sut.addFields[
+    $.id[$.groups[full, base, short]]
+    $.login[$.groups[full, base, short]]
+    $.name[$.groups[full, base]]
+    $.comment[$.groups[full]]
+    $.createdAt[]
+  ]
+
+  ^self.assertHashEquals[
+    $sut.FIELDS_GROUPS
+  ][
+    $.full[$.id(true) $.login(true) $.name(true) $.comment(true)]
+    $.short[$.id(true) $.login(true)]
+    $.base[$.id(true) $.login(true) $.name(true)]
+  ]

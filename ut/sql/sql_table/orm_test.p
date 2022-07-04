@@ -48,6 +48,76 @@ BaseTestSQLConnection
         $.updatedAt[2022-07-04 22:04:18]
   ]
 
+@testAll_selectGroups[]
+  ^self._createTestUsers(5)
+
+  $lRes[^self.sut.all[$.selectFieldsGroups[base] $.asTable(true)]]
+  $lColumns[^lRes.columns[]]
+  ^self.assertHashEquals[
+    ^lColumns.hash[column]{}
+  ][
+    $.userID[]
+    $.login[]
+    $.name[]
+    $.passwordHash[]
+    $.isAdmin[]
+    $.isActive[]
+  ]
+
+  $lRes[^self.sut.all[$.selectFieldsGroups[short, ext] $.asTable(true)]]
+  $lColumns[^lRes.columns[]]
+  ^self.assertHashEquals[
+    ^lColumns.hash[column]{}
+  ][
+    $.userID[]
+    $.login[]
+    $.name[]
+    $.job[]
+    $.createdAt[]
+    $.updatedAt[]
+  ]
+
+@testAll_selectUnknownGroup[]
+  ^self._createTestUsers(5)
+
+  ^self.assertRaises[pfSQLTable.unknown.group]{
+    $lRes[^self.sut.all[$.selectFieldsGroups[short, ext, unknown] $.asTable(true)]]
+  }
+
+@testAll_aggregateGroups[]
+  ^self._createTestUsers(5)
+
+  $lRes[^self.sut.aggregate[
+    _groups(base);
+    _fields(createdAt) as ca;
+    _groups();
+  ][
+    $.asTable(true)]
+  ]
+  $lColumns[^lRes.columns[]]
+  ^self.assertHashEquals[
+    ^lColumns.hash[column]{}
+  ][
+    $.userID[]
+    $.login[]
+    $.name[]
+    $.passwordHash[]
+    $.isAdmin[]
+    $.isActive[]
+    $.createdAt[]
+  ]
+
+@testAll_aggregateUnknownGroup[]
+  ^self._createTestUsers(5)
+
+  ^self.assertRaises[pfSQLTable.unknown.group]{
+    $lRes[^self.sut.aggregate[
+      _groups(unknown);
+    ][
+      $.asTable(true)
+    ]]
+  }
+
 #----------------------------------------------------------------------------------------------------------------------
 
 @CLASS
@@ -60,15 +130,15 @@ pfSQLTable
   ^BASE:create[users;$aOptions]
 
   ^self.addFields[
-    $.userID[$.dbField[user_id] $.processor[int] $.primary(true) $.widget[none]]
-    $.login[$.label[]]
-    $.name[$.label[]]
-    $.job[$.label[]]
-    $.passwordHash[$.dbField[password_hash] $.label[]]
-    $.isAdmin[$.dbField[is_admin] $.processor[bool] $.default(false) $.label[]]
-    $.isActive[$.dbField[is_active] $.processor[bool] $.default(true) $.widget[none]]
-    $.createdAt[$.dbField[created_at] $.processor[auto_now] $.skipOnUpdate(true) $.widget[none]]
-    $.updatedAt[$.dbField[updated_at] $.processor[auto_now] $.widget[none]]
+    $.userID[$.dbField[user_id] $.processor[int] $.primary(true) $.widget[none] $.groups[full, base, short]]
+    $.login[$.label[] $.groups[full, base, short]]
+    $.name[$.label[] $.groups[full, base, short]]
+    $.job[$.label[] $.groups[ext]]
+    $.passwordHash[$.dbField[password_hash] $.label[] $.groups[full, base]]
+    $.isAdmin[$.dbField[is_admin] $.processor[bool] $.default(false) $.label[] $.groups[full, base]]
+    $.isActive[$.dbField[is_active] $.processor[bool] $.default(true) $.widget[none] $.groups[full, base]]
+    $.createdAt[$.dbField[created_at] $.processor[auto_now] $.skipOnUpdate(true) $.widget[none] $.groups[ext]]
+    $.updatedAt[$.dbField[updated_at] $.processor[auto_now] $.widget[none] $.groups[ext]]
   ]
 
   $self._defaultOrderBy[$.userID[asc]]

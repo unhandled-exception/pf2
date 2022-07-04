@@ -29,6 +29,7 @@ pfClass
 ##   aOptions.skipOnInsert[$.field(bool)]
 ##   aOptions.skipOnUpdate[$.field(bool)]
 ##   aOptions.skipOnSelect[$.field(bool)]
+##   aOptions.fieldsGroups[$.group[$.field(bool)]]
   ^self.cleanMethodArgument[]
   ^BASE:create[$aOptions]
   $self.__options[^hash::create[$aOptions]]
@@ -55,6 +56,8 @@ pfClass
   ^if(^aOptions.contains[fields]){
     ^self.addFields[$aOptions.fields]
   }
+
+  $self._fieldsGroups[^hash::create[^if(def $aOptions.fieldsGroups){$aOptions.fieldsGroups}]]
 
   $self._skipOnInsert[^hash::create[^if(def $aOptions.skipOnInsert){$aOptions.skipOnInsert}]]
   $self._skipOnUpdate[^hash::create[^if(def $aOptions.skipOnUpdate){$aOptions.skipOnUpdate}]]
@@ -113,6 +116,7 @@ pfClass
 ## fieldOptions.format — формат числового значения
 ## fieldOptions.primary(false) — первичный ключ
 ## fieldOptions.sequence(true) — последовательность формирует БД (автоинкремент; только для первичного ключа)
+## fieldOptions.groups[group1, group2] — список групп для поля
 ## fieldOptions.skipOnInsert(false) — пропустить при вставке
 ## fieldOptions.skipOnUpdate(false) — пропустить при обновлении
 ## fieldOptions.skipOnSelect(false) — пропустить при селекте
@@ -167,12 +171,30 @@ pfClass
         $self._primaryKey[$lFieldName]
       }
     }
+
     ^if(^lOptions.skipOnSelect.bool(false)){
       $self._skipOnSelect.[$lFieldName](true)
     }
+
     $self._fields.[$lFieldName][$lField]
     ^if(def $lField.plural){
       $self._plurals.[$lField.plural][$lField]
+    }
+
+    ^if(def $lOptions.groups){
+      $lGroups[^lOptions.groups.split[,;lv]]
+      ^lGroups.foreach[;group]{
+        $group[^group.piece.trim[]]
+        ^if(!def $group){
+          ^continue[]
+        }
+
+        ^if(!^self._fieldsGroups.contains[$group]){
+          $self._fieldsGroups.[$group][^hash::create[]]
+        }
+
+        $self._fieldsGroups.[$group].[$lFieldName](true)
+      }
     }
   }
 
@@ -239,6 +261,9 @@ pfClass
 @GET_FIELDS[]
   $result[$self._fields]
 
+@GET_FIELDS_GROUPS[]
+  $result[$self._fieldsGroups]
+
 @GET_DEFAULT[aField]
 # Если нам пришло имя скоупа, то возвращаем таблицу со скоупом
 # Если нам пришло имя поля, то возвращаем имя поля в БД
@@ -294,6 +319,7 @@ pfClass
 ## aOptions.asHash(false) — возвращаем хеш (ключ хеша — первичный ключ таблицы)
 ## aOptions.asHashOn[fieldName] — возвращаем хеш таблиц, ключем которого будет fieldName
 ## Выражения для контроля выборки (код в фигурных скобках):
+##   aOptions.selectFieldsGroups[group1, group2] — выбрать толкьо поля с группами
 ##   aOptions.selectFields{exression} — выражение для списка полей (вместо автогенерации)
 ##   aOptions.where{expression} — выражение для where
 ##   aOptions.having{expression} — выражение для having
@@ -362,7 +388,7 @@ pfClass
 
 @aggregate[*aConds]
 ## Выборки с группировкой
-## ^aggregate[func(expr) as alias;_fields(field1, field2 as alias2);_fields(*);table[<field>];conditions hash;sqlOptions]
+## ^aggregate[func(expr) as alias;_fields(field1, field2 as alias2);_fields(*);_groups(group1, group2);table[<field>];conditions hash;sqlOptions]
 ## aConds.asHashOn[fieldName] — возвращаем хеш таблиц, ключем которого будет fieldName
   $lConds[^self.__getAgrConds[$aConds]]
   $lResultType[^if(def $lConds.options.asHashOn){table}{^self.__getResultType[$lConds.options]}]
@@ -532,10 +558,35 @@ pfClass
   ^if(^aSQLOptions.contains[skipFields]){
     ^lSkipFields.add[$aSQLOptions.skipFields]
   }
-  $result[^self._builder.selectFields[$self._fields;
+
+  $lFields[$self._fields]
+  ^if(def $aOptions.selectFieldsGroups){
+    $lFields[^self._filterFieldsByGroups[$aOptions.selectFieldsGroups]]
+  }
+
+  $result[^self._builder.selectFields[$lFields;
     $.tableAlias[$self.TABLE_ALIAS]
     $.skipFields[$lSkipFields]
   ]]
+
+@_filterFieldsByGroups[aGroups]
+  $result[^hash::create[]]
+
+  $lGroups[^aGroups.split[,;lv]]
+  ^lGroups.foreach[;group]{
+    $group[^group.piece.trim[]]
+    ^if(!def $group){
+      ^continue[]
+    }
+
+    ^if(!$self._fieldsGroups.[$group]){
+      ^throw[pfSQLTable.unknown.group;В таблице нет группы полей "$group". Доступные группы: "^self._fieldsGroups.foreach[k;]{$k}[, ]" ($self.CLASS_NAME)]
+    }
+
+    ^result.add[$self._fieldsGroups.[$group]]
+  }
+
+  $result[^self._fields.intersection[$result]]
 
 @_allWith[aOptions]
   $result[]
@@ -792,6 +843,7 @@ pfClass
 #   Если нам не передали поля, то подставляем все поля модели.
     $aFields[^hash::create[$.0[_fields(*)]]]
   }
+
   ^aFields.foreach[_;v]{
     ^v.match[$self._PFSQLTABLE_AGR_REGEX][]{
       $lField[
@@ -800,14 +852,26 @@ pfClass
         $.args[^match.3.trim[both;() ]]
         $.alias[$match.4]
       ]
+
       ^if(^lField.function.lower[] eq "_fields"){
         $lSplit[^lField.args.split[,;lv]]
         $lField.expr[^lSplit.menu{^lSplit.piece.match[$self._PFSQLTABLE_AGR_REGEX][]{^if($match.1 eq "*"){^self._allFields[][$aSQLOptions]}(def $match.1){^self.sqlFieldName[$match.1] AS ^self._builder.quoteIdentifier[^if(def $match.4){$match.4}{$match.1}]}}}[, ]]
         $lField.alias[]
       }
+
+      ^if(^lField.function.lower[] eq "_groups"){
+        ^if(!def ^lField.args.trim[]){
+          ^continue[]
+        }
+
+        $lField.expr[^self._allFields[$.selectFieldsGroups[$lField.args]][$aSQLOptions]]
+        $lField.alias[]
+      }
+
       $result.[^result._count[]][$lField]
     }
   }
+
   $result[^result.foreach[_;v]{$v.expr^if(def $v.alias){ AS ^self._builder.quoteIdentifier[$v.alias]}}[, ]]
 
 @__normalizeWhitespaces[aQuery;aOptions]

@@ -750,9 +750,12 @@ $aException.file (${aException.lineno}:$aException.colno)]
     ^self.fail[Duration $lDuration <= $aDurationInSeconds]
   }
 
-@assertHashEquals[aActual;aExpected]
+@assertHashEquals[aActual;aExpected;aOptions]
+## aOptions.nestedAssert(false) — рекурсивный вызов
   $aActual[^hash::create[$aActual]]
   $aExpected[^hash::create[$aExpected]]
+
+  $lExceptionType[assert.hashes.not.equals]
 
   $lEqualsTypes[
     $.int[math]
@@ -760,32 +763,42 @@ $aException.file (${aException.lineno}:$aException.colno)]
     $.bool[math]
     $.string[string]
     $.void[string]
+    $.hash[recursive]
     $._default[fail]
   ]
+
   ^try{
     ^if($aActual != $aExpected){
-      ^throw[hashes.not.equals;Different length]
+      ^throw[assert.hashes.not.equals;Different length]
     }
     ^aExpected.foreach[k;v]{
       ^if(!^aActual.contains[$k]){
-        ^throw[hashes.not.equals;Actual hasn't contains "$k" key]
+        ^throw[$lExceptionType;Actual hasn't contains "$k" key]
       }
       $lExpEqType[$lEqualsTypes.[$v.CLASS_NAME]]
       $lAqEqType[$lEqualsTypes.[$aActual.[$k].CLASS_NAME]]
-      ^if($lExpEqType ne $lAqEqType){
-        ^throw[hashes.not.equals;Key $k has diff equal types]
+
+      ^if($lExpEqType eq "fail" || $lAqEqType eq "fail"){
+        ^throw[$lExceptionType;Can't compare $v.CLASS_NAME and $aActual.[$k].CLASS_NAME for "$k" key]
       }
+
+      ^if($lExpEqType ne $lAqEqType){
+        ^throw[$lExceptionType;Key $k has diff equal types]
+      }
+
+      ^if($lExpEqType eq "recursive"){
+        ^self.assertHashEquals[$aActual.[$k];$v;$.nestedAssert(true)]
+      }
+
       ^if(
         ($lExpEqType eq "math" && $aActual.[$k] != $v)
         || ($lExpEqType eq "string" && $aActual.[$k] ne $v)
       ){
-        ^throw[hashes.not.equals;Not equals value for "$k" key]
-      }($lExpEqType eq "fail" || $lAqEqType eq "fail"){
-        ^throw[hashes.not.equals;Can't compare $v.CLASS_NAME and $aActual.[$k].CLASS_NAME for "$k" key]
+        ^throw[$lExceptionType;Not equals value for "$k" key]
       }
     }
   }{
-    ^if($exception.type eq "hashes.not.equals"){
+    ^if($exception.type eq $lExceptionType && !^aOptions.nestedAssert.bool(false)){
       $exception.handled(true)
       ^self.fail[Hashes not equals ($exception.source).^#0A^#0AActual:^#0A^json:string[$aActual;$.indent(true)]^#0A^#0AExpected:^#0A^json:string[$aExpected;$.indent(true)]^#0A]
     }

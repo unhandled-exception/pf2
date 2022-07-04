@@ -360,11 +360,13 @@ locals
     $.f2(25)
     $.f3(33.1)
     $.f4[$void]
+    $.f5[$.f1[v1]]
   ][
     $.f1[v1]
     $.f2(25)
     $.f3(33.10)
     $.f4[]
+    $.f5[$.f1[v1]]
   ]
 
 @testAssertHashEqualsFail[]
@@ -408,6 +410,14 @@ locals
       $.f1(25)
     ][
       $.f1[25]
+    ]
+  }
+
+  ^self.assertRaisesFailureException{
+    ^self.sut.assertHashEquals[
+      $.f1[$.f1[v1]]
+    ][
+      $.f1[$.f1[v2]]
     ]
   }
 
