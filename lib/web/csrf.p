@@ -63,7 +63,7 @@ pfMiddleware
   $self._pathExempt[^hash::create[$aOptions.pathExempt]]
   $self._trustedOrigins[^hash::create[$aOptions.trustedOrigins]]
 
-  $self._requestVarName[^self.ifdef[$aOtpions.requestVarName]{CSRF}]
+  $self._requestVarName[^self.ifdef[$aOptions.requestVarName]{CSRF}]
 
   ^if(^aOptions.contains[exceptionHandler]){
     ^self.assert($aOptions.exceptionHandler is junction)[Обработчик исключения для CSRF-мидлваре должен быть функцией.]
