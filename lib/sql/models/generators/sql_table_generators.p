@@ -72,8 +72,12 @@ pfClass
 
   ^self._classBody[]
   ]
-  $result[^result.match[^^[ \t]{2}][gmx][]]
-  $result[^result.match[(^^\s*^$){3,}][gmx][^#0A]]
+
+  $result[^result.trim[start]]
+  $result[^result.match[^^[ \t]{2}][gm][]]
+  $result[^result.match[^^\s*^$][gm][^#0A]]
+  $result[^result.match[\n{3,}][g][^#0A^#0A]]
+  $result[^result.match[\n*?^$][][^#0A]]
 
 @_makeClassName[aTableName]
   $lParts[^aTableName.split[_;lv]]
@@ -325,7 +329,7 @@ pfSQLModelGenerator
     ^if($lName eq "isActive"){
       $lData.widget[none]
     }
-    ^if(^lType.columnName.match[^^(?:is_|can_).+]){
+    ^if(^lType.columnName.match[^^(?:is_|can_|has_).+]){
       $lData.processor[bool]
       ^if(def $lData.default){
         $lData.default(^lData.default.bool[])
