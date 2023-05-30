@@ -82,3 +82,12 @@ pfTestCase
     $.short[$.id(true) $.login(true)]
     $.base[$.id(true) $.login(true) $.name(true)]
   ]
+
+@test_add_primary_field_not_first[]
+  ^self.sut.addFields[
+    $.name[]
+    $.fullName[$.primary(false)]
+    $.id[$.primary(true)]
+  ]
+
+  ^self.assertEq["test_table"."id";$sut.PRIMARYKEY]
