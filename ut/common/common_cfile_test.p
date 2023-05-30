@@ -26,6 +26,7 @@ pfTestCase
 @testHttps[]
   $lRes[^pfCFile::load[text;$self.httpsbin/get;
     $.any-status(true)
+    $.timeout(20)
   ]]
   ^self.assertSuccessResponse[$lRes]
 

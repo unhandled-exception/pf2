@@ -136,6 +136,7 @@ pfClass
       $.processor[$lOptions.processor]
       $.default[$lOptions.default]
       $.format[$lOptions.format]
+      $.primary(false)
 
       $.label[^if(def $lOptions.label){$lOptions.label}{$lFieldName}]
       $.comment[$lOptions.comment]
@@ -167,7 +168,7 @@ pfClass
       ^if(^lOptions.skipOnInsert.bool(false) || $lField.sequence){
         $self._skipOnInsert.[$lFieldName](true)
       }
-      ^if(def $lField.primary && !def $self._primaryKey){
+      ^if($lField.primary && !def $self._primaryKey){
         $self._primaryKey[$lFieldName]
       }
     }
