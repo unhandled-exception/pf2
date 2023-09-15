@@ -304,7 +304,12 @@ pfClass
   $result[^self.one[$.[$self._primaryKey][$aPrimaryKeyValue]]]
 
 @one[aOptions;aSQLOptions]
-  $result[^self.all[$aOptions;$aSQLOptions]]
+  $result[^self.all[
+    ^hash::create[$aOptions]
+    $.orderBy[]
+  ][
+    $aSQLOptions
+  ]]
   ^if($result){
     ^if($result is table){
       $result[$result.fields]
