@@ -118,6 +118,18 @@ BaseTestSQLConnection
     ]]
   }
 
+@testOne_skipOrderBy[]
+  ^self._createTestUsers(5)
+  $self.sut._defaultOrderBy[unknown]
+
+  $lUser[^self.sut.one[
+    $.userID[1]
+    $.selectFieldsGroups[base]
+    $.orderBy[unknown2]
+  ]]
+
+  ^self.assert($lUser.userID == 1)[UserID is $lUser.userID]
+
 #----------------------------------------------------------------------------------------------------------------------
 
 @CLASS
