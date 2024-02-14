@@ -75,6 +75,18 @@ pfClass
 ## Возвращает статистику по запросам
   $result[$self._stat]
 
+@uncached[aCode]
+## Отключает кеширование результатов SQL-запросов для блока кода
+  $result[]
+  $lOldCacheState($self._enableMemoryCache)
+  $self._enableMemoryCache(false)
+
+  ^try{
+    $result[$aCode]
+  }{}{
+    $self._enableMemoryCache($lOldCacheState)
+  }
+
 @connect[aCode]
 ## Выполняет соединение с сервером и выполняет код, если оно еще не установлено.
 ## Выполняется автоматически при попытке отправить запрос или открыть транзакцию.
