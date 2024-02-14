@@ -65,6 +65,8 @@ pfMiddleware
 ## aOptions.sessionCookieName[session] — имя куки для хранения сессий.
 ## aOptions.sessionCookieDomain — домен для куки сессии
 ## aOptions.sessionCookiePath — путь для куки сессии
+## aOptions.sessionCookieSecure(false) —  ставим куку только на https
+## aOptions.sessionCookieSameSite[Strict]
 ## aOptions.expires[days(90)|date|session] — срок жизни куки. По-умолчанию ставим ограничение Парсера (90 дней).
   ^self.cleanMethodArgument[]
   ^BASE:create[$aOptions]
@@ -75,6 +77,8 @@ pfMiddleware
   $self._sessionCookieName[^ifdef[$aOptions.sessionCookieName]{session}]
   $self._sessionCookieDomain[$aOptions.sessionCookieDomain]
   $self._sessionCookiePath[$aOptions.sessionCookiePath]
+  $self._sessionCookieSecure[^aOptions.sessionCookieSecure.bool(false)]
+  $self._sessionCookieSameSite[^self.ifdef[$aOptions.sessionCookieSameSite]{Strict}]
   $self._expires[$aOptions.expires]
 
 # Заполняется в processRequest
@@ -108,6 +112,8 @@ pfMiddleware
     $aResponse.cookie.[$self._sessionCookieName][
       $.value[^self._serializeSession[$self._sessionData]]
       $.httponly(true)
+      $.secure($self._sessionCookieSecure)
+      $.samesite[$self._sessionCookieSameSite]
       ^if(def $self._expires){
         $.expires[$self._expires]
       }

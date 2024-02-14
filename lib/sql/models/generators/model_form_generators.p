@@ -247,7 +247,9 @@ pfClass
 @inputWidget[aField;aType;aOptions]
   $result[
     <div class="form-group row">
-      <label for="f-$aField.name" class="col-sm-3 col-form-label">$aField.label</label>
+      <div class="col-sm-3">
+        <label for="f-$aField.name" class="col-form-label">$aField.label</label>
+      </div>
       <div class="col-sm-9">
         <input type="^if(def $aType){$aType}{text}" name="$aField.name" id="f-$aField.name" value="^$${aOptions.argName}.$aField.name" class="form-control" placeholder="" />
       </div>
@@ -256,7 +258,9 @@ pfClass
 @textareaWidget[aField;aOptions]
   $result[
     <div class="form-group row">
-      <label for="f-$aField.name" class="col-sm-3 col-form-label">$aField.label</label>
+      <div class="col-sm-3">
+        <label for="f-$aField.name" class="col-form-label">$aField.label</label>
+      </div>
       <div class="col-sm-9">
         <textarea name="$aField.name" id="f-$aField.name" class="form-control" rows="7" placeholder="" />^$${aOptions.argName}.$aField.name</textarea>
       </div>
@@ -267,15 +271,20 @@ pfClass
   $aType[^if(def $aType){$aType}{checkbox}]
   $result[
     <div class="form-group row">
-      <div class="col-sm-offset-3 col-sm-9">
-      <label><input type="$aType" name="$aField.name" id="f-${aField.name}1" value="1" ^^if($lVarName){checked="true"} class="form-check-input" /> $aField.label</label>
+      <div class="offset-sm-3 col-sm-9">
+        <div class="custom-control custom-switch">
+          <input type="$aType" name="$aField.name" id="f-${aField.name}1" class="custom-control-input" value="1" ^^if($lVarName){checked="true"} />
+          <label for="f-${aField.name}1" class="custom-control-label">$aField.label</label>
+        </div>
       </div>
     </div>]
 
 @selectWidget[aField;aOptions]
   $result[
     <div class="form-group row">
-      <label for="f-$aField.name" class="col-sm-3 col-form-label">$aField.label</label>
+      <div class="col-sm-3">
+        <label for="f-$aField.name" class="col-form-label">$aField.label</label>
+      </div>
       <div class="col-sm-9">
         <select name="$aField.name" id="f-$aField.name" class="form-control" placeholder="">
           <option value=""></option>
@@ -289,13 +298,13 @@ pfClass
 
 @submitWidget[aOptions]
   ^self.cleanMethodArgument[]
-  $result[<div class="form-group row">
+  $result[
+    <div class="form-group row">
       <div class="offset-sm-3 col-sm-9">
         <input type="submit" id="f-sub" value="Сохранить" class="btn btn-primary" />
         <a href="^^linkTo^[/^]" class="btn btn-outline-primary ml-2">Ничего не менять</a>
       </div>
-    </div>
-  ]
+    </div>]
 
 #--------------------------------------------------------------------------------------------------
 
