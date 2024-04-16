@@ -1136,11 +1136,11 @@ pfClass
       }
 
       ^case[json]{
-        $result[^if(def $aValue){'^taint[^json:string[$aValue]]'}{NULL}]
+        $result[^if(def $aValue || $aValue is hash){'^taint[^json:string[$aValue]]'}{NULL}]
       }
 
       ^case[uid;auto_uid;uuid;uuid_auto]{
-        $result['^taint[^if(def $aValue){$aValue}{$lUUID[^math:uuid[]]^lUUID.lower[]}]']
+        $result['^taint[^if(def $aValue){$aValue}{^unsafe{^math:uuid7[$.lower(true)]}{^math:uuid[$.lower(true)]}}]']
       }
 
       ^case[inet_ip]{

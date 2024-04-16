@@ -47,6 +47,7 @@ pfClass
   $result[^aName.match[_(\w)][g]{^match.1.upper[]}]
   $result[^result.match[Id^$][][ID]]
   $result[^result.match[Ip^$][][IP]]
+  $result[^result.match[Uuid^$][][UUID]]
 
 @generate[aOptions]
   ^self.cleanMethodArgument[]
@@ -301,6 +302,10 @@ pfSQLModelGenerator
       ^case[timestamp]{$lData.processor[datetime]}
       ^case[time]{$lData.processor[time]}
       ^case[json;jsonb]{$lData.processor[json]}
+      ^case[uuid]{
+        $lData.processor[uuid]
+        $lData.widget[none]
+      }
     }
 
     ^if($lDDL.key eq "PRI" && $lHasPrimary){
