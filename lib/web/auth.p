@@ -331,7 +331,7 @@ pfModelTable
   ]
 
   $self._cryptoProvider[$aOptions.cryptoProvider]
-  ^self.assert(def $self._cryptoProvider){Не передан объект с криптовровайдером.}
+  ^self.assert(def $self._cryptoProvider){Не передан объект с криптопровайдером.}
 
   ^self.addFields[
     $.userID[$.dbField[user_id] $.processor[int] $.primary(true) $.widget[none]]
@@ -371,23 +371,30 @@ pfModelTable
 
 @new[aData;aSQLOptions] -> [userID]
 ## aData.password
-  $aData[^self._makeCredentials[$aData]]
+  $aData[^self.makeCredentials[$aData]]
   $result[^BASE:new[$aData;$aSQLOptions]]
 
 @modify[aUserID;aData] -> []
 ## aData.password
-  $aData[^self._makeCredentials[$aData]]
+  $aData[^self.makeCredentials[$aData]]
   $result[^BASE:modify[$aUserID;$aData]]
 
-@_makeCredentials[aData]
+@makeSecureToken[aPasswordHash]
+  $result[^self._cryptoProvider.digest[$aPasswordHash|^unsafe{^math:uuid7[]}{^math:uuid[]}]]
+
+@makeCredentials[aData]
 ## aData.password
 ## Генерируем хеш пароля и secureToken, если нам передали aData.password и не передали хеш пароля и токен.
   $result[^hash::create[$aData]]
   ^if(def $aData.password && !def $aData.passwordHash && !def $aData.secureToken){
     $lPasswordHash[^self.makePasswordHash[$aData.password]]
     $result.passwordHash[$lPasswordHash]
-    $result.secureToken[^self._cryptoProvider.digest[$lPasswordHash|^math:uuid[]]]
+    $result.secureToken[^self.makeSecureToken[$lPasswordHash]]
   }
+
+@_makeCredentials[aData]
+## Совместимость со старым приватным методом
+  $result[^self.makeCredentials[$aData]]
 
 @delete[aUserID]
   $result[^self.modify[$aUserID;$.isActive(false)]]

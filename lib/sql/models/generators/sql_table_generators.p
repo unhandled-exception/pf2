@@ -334,7 +334,7 @@ pfSQLModelGenerator
     ^if($lName eq "isActive"){
       $lData.widget[none]
     }
-    ^if(^lType.columnName.match[^^(?:is_|can_|has_).+]){
+    ^if(^lType.columnName.match[^^(?:is_|can_|has_).+] || ^lType.columnName.match[(?:_enabled|_required)^$]){
       $lData.processor[bool]
       ^if(def $lData.default){
         $lData.default(^lData.default.bool[])
