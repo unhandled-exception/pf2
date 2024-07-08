@@ -304,9 +304,12 @@ pfClass
   $result[^self.one[$.[$self._primaryKey][$aPrimaryKeyValue]]]
 
 @one[aOptions;aSQLOptions]
+## Достаёт из базы одну запись
+## Игнорируем _defaultOrderBy модели.
   $result[^self.all[
     ^hash::create[$aOptions]
-    $.orderBy[]
+#   Хак. Чтобы отсортировать результат надо явно передать aOptions.orderBy
+    $.orderBy[$aOptions.orderBy]
   ][
     $aSQLOptions
   ]]

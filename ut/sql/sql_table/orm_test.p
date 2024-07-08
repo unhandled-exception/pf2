@@ -125,7 +125,6 @@ BaseTestSQLConnection
   $lUser[^self.sut.one[
     $.userID[1]
     $.selectFieldsGroups[base]
-    $.orderBy[unknown2]
   ]]
 
   ^self.assert($lUser.userID == 1)[UserID is $lUser.userID]
