@@ -241,6 +241,7 @@ pfClass
     $.isActive(true)
   ][
     $.log[-- Fetch user for login (login == $lLoginField)]
+    $.force(true)
   ]]
   ^if(!$lUser && $lThrowException){
     ^throw[user.not.found;Не найден пользователь "$lLogin"]
@@ -319,6 +320,9 @@ locals
 @BASE
 pfModelTable
 
+@auto[]
+  $self._saltAlphabet[abcdefghijkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ123456789]
+
 @create[aOptions]
 ## aOptions.tableName[auth_users]
 ## aOptions.cryptoProvider — объект для шифрования токенов и паролей (например, pfSQLSecurityCrypt)
@@ -326,9 +330,12 @@ pfModelTable
 ## aOptions.rolesModel[pfRolesModel[$.tableName[$aOptions.rolesTableName]]]
 ## aOptions.rolesToUsersTableName
 ## aOptions.rolesToUsersModel[pfRolesToUsersModel[$.tableName[$aOptions.rolesToUsersTableName]]]
+## aOptions.passwordHashType[apr1;yescrypt;gost-yescrypt]
   ^BASE:create[^hash::create[$aOptions]
     $.tableName[^ifdef[$aOptions.tableName]{auth_users}]
   ]
+
+  $self.passwordHashType[^ifdef[$aOptions.passwordHashType]{apr1}]
 
   $self._cryptoProvider[$aOptions.cryptoProvider]
   ^self.assert(def $self._cryptoProvider){Не передан объект с криптопровайдером.}
@@ -403,7 +410,20 @@ pfModelTable
   $result[^self.modify[$aUserID;$.isActive(true)]]
 
 @makePasswordHash[aPassword;aSalt] -> [string]
-  $result[^math:crypt[$aPassword;^ifdef[$aSalt]{^$apr1^$}]]
+# https://manpages.debian.org/unstable/libcrypt-dev/crypt.5.en.html
+# https://unix.stackexchange.com/questions/690679/what-does-j9t-mean-in-yescrypt-from-etc-shadow
+  ^if(!def $aSalt){
+    $aSalt[^switch[$self.passwordHashType]{
+      ^case[apr1;DEFAULT]{^$apr1^$}
+      ^case[yescrypt]{^$y^$j9T^$^self.makeSalt(16)}
+      ^case[gost-yescrypt]{^$gy^$j9T^$^self.makeSalt(16)}
+    }]
+  }
+  $result[^math:crypt[$aPassword;$aSalt]]
+
+@makeSalt[aLen]
+  $aAlphabetLen(^self._saltAlphabet.length[])
+  $result[^for[i](1;$aLen){^self._saltAlphabet.mid(^math:random($aAlphabetLen);1)}]
 
 @can[aUser;aPermission] -> [bool]
   $result(false)
