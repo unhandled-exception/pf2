@@ -423,6 +423,7 @@ pfClass
 ## Вставляем значение в базу
 ## aSQLOptions.ignore(false)
 ## Возврашает автосгенерированное значение первичного ключа (last_insert_id) для sequence-полей.
+## aSQLOptions.log
   ^CSQL.transaction{
     ^self.assert(!$self._readOnlyTable){Модель $self.CLASS_NAME в режиме read only (только чтение данных)}
     ^self.cleanMethodArgument[aData;aSQLOptions]
@@ -432,7 +433,7 @@ pfClass
         $.skipFields[$self._skipOnInsert]
         $.schema[$self.SCHEMA]
         $.fieldValueFunction[$self.fieldValue]
-      ]}}]
+      ]}}[][$aSQLOptions]]
     }
     ^if(def $self._primaryKey && $self._fields.[$self._primaryKey].sequence){
       $result[^self.CSQL.lastInsertID[]]
@@ -455,7 +456,7 @@ pfClass
         $.fieldValueFunction[$self.fieldValue]
       ]
     }}
-  }]
+  }[][$aSQLOptions]]
 
 @newOrModify[aData;aSQLOptions]
 ## Аналог мускулевского "insert on duplicate key update"
@@ -483,7 +484,7 @@ pfClass
     ^self.asContext[update]{^self.__normalizeWhitespaces{
       DELETE FROM ^if(def $self.SCHEMA){^self._builder.quoteIdentifier[$self.SCHEMA].}^self._builder.quoteIdentifier[$self.TABLE_NAME] WHERE $self.PRIMARYKEY = ^self.fieldValue[$self._fields.[$self._primaryKey];$aPrimaryKeyValue]
     }}
-  }]
+  }[][$aSQLOptions]]
 
 @shift[aPrimaryKeyValue;aFieldName;aValue]
 ## Увеличивает или уменьшает значение счетчика в поле aFieldName на aValue
@@ -501,7 +502,7 @@ pfClass
          SET $lFieldName = $lFieldName ^if($aValue < 0){-}{+} ^self.fieldValue[$self._fields.[$aFieldName]](^math:abs($aValue))
        WHERE $self.PRIMARYKEY = ^self.fieldValue[$self._fields.[$self._primaryKey];$aPrimaryKeyValue]
     }}
-  }]
+  }[][$aSQLOptions]]
 
 #----- Групповые операции с данными -----
 
@@ -522,7 +523,7 @@ pfClass
         $.fieldValueFunction[$self.fieldValue]
       ]
     }}
-  }]
+  }[][$aSQLOptions]]
 
 @modifyAllSQL[aOptions;aData]
 ## Возвращает текст запроса метода modifyAll
@@ -554,7 +555,7 @@ pfClass
       DELETE FROM ^if(def $self.SCHEMA){^self._builder.quoteIdentifier[$self.SCHEMA].}^self._builder.quoteIdentifier[$self.TABLE_NAME]
        WHERE ^self._allWhere[$aOptions]
     }}
-  }]
+  }[][$aSQLOptions]]
 
 #----- Private -----
 ## Методы с префиксом _all используются для построения частей выражений выборки.

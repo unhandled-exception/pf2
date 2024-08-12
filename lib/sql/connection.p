@@ -265,7 +265,7 @@ pfClass
 @void[aQuery;aSQLOptions;aOptions]
 ## aOptions.log[] — запись, которую надо сделать в логе вместо текста запроса.
   $lQuery[$aQuery]
-  $lOptions[^self._getOptions[$lQuery;int;$aSQLOptions;$aOptions]]
+  $lOptions[^self._getOptions[$lQuery;void;$aSQLOptions;$aOptions]]
   $result[^self._sql[void]{^void:sql{$lQuery}[$aSQLOptions]}[^hash::create[$lOptions]]]
 
 @clearMemoryCache[]
