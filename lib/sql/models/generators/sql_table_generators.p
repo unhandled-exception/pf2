@@ -48,6 +48,8 @@ pfClass
   $result[^result.match[Id^$][][ID]]
   $result[^result.match[Ip^$][][IP]]
   $result[^result.match[Uuid^$][][UUID]]
+  $result[^result.match[Guid^$][][GUID]]
+  $result[^result.match[Uan^$][][UAN]]
 
 @generate[aOptions]
   ^self.cleanMethodArgument[]
