@@ -78,6 +78,7 @@ pfConsoleCommandWithSubcommands
 ## aSwitches.jobs(1) — количество потоков для формата directory
 ## aSwitches.lock-timeout — таймаут ожидания лока базы в милисекундах
 ## aSwitches.column-inserts — Выгружать данные таблиц в виде команд INSERT с явным указанием столбцов
+## aSwitches.compress[уровень|метод[:строка_информации]] — Указывает метод и/или уровень сжатия. В качестве метода сжатия можно выбрать gzip, lz4, zstd или none (без сжатия). В качестве дополнительной информации можно передать параметры сжатия.
 
   $lFile[^aArgs.1.trim[]]
   ^if(def $lFile){
@@ -111,6 +112,10 @@ pfConsoleCommandWithSubcommands
       ^lOptions.append{--format=$aSwitches.format}
     }{
       $aSwitches.format[plain]
+    }
+
+    ^if(def $aSwitches.compress){
+      ^lOptions.append{--compress=$aSwitches.compress}
     }
 
     ^if(^aSwitches.[lock-wait-timeout].int(0)){
