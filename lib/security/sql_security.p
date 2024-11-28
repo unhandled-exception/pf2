@@ -97,16 +97,23 @@ locals
   $lFuncs[$self._sqlFunctions.[$self.CSQL.serverType]]
   $lSeralizer[$lFuncs.encrypt.[^self.ifdef[$aOptions.serializer]{$self._serializer}]]
   ^self.assert(def $lSeralizer){Неизвестный метод сериализации "$aOptions.serializer".}
-  $result[^self.CSQL.string{
-    SELECT
-      ^self._applyPattern[$lSeralizer;
-        $.data[$aString]
-        $.key[^self.ifdef[$aOptions.cryptKey]{$self._cryptKey}]
-      ]
-  }[][
-    $.force(true)
-    $.log{^self.ifdef[$aOptions.log]{-- Encrypt a string "$aString".}}
-  ]]
+
+  $lLog[^self.ifdef[$aOptions.log]{-- Encrypt a string "$aString".}]
+
+  ^try{
+    $result[^self.CSQL.string{
+      SELECT
+        ^self._applyPattern[$lSeralizer;
+          $.data[$aString]
+          $.key[^self.ifdef[$aOptions.cryptKey]{$self._cryptKey}]
+        ]
+    }[][
+      $.force(true)
+      $.log[$lLog]
+    ]]
+  }{
+    ^throw[$exception.type;$lLog;$exception.comment]
+  }
 
 @decrypt[aString;aOptions]
 ## Расшифровывает строку, закодированную методом encrypt
@@ -116,16 +123,23 @@ locals
   $lFuncs[$self._sqlFunctions.[$self.CSQL.serverType]]
   $lSeralizer[$lFuncs.decrypt.[^self.ifdef[$aOptions.serializer]{$self._serializer}]]
   ^self.assert(def $lSeralizer){Неизвестный метод сериализации "$aOptions.serializer".}
-  $result[^self.CSQL.string{
-    SELECT
-      ^self._applyPattern[$lSeralizer;
-        $.data[$aString]
-        $.key[^self.ifdef[$aOptions.cryptKey]{$self._cryptKey}]
-      ]
-  }[][
-    $.force(true)
-    $.log{^self.ifdef[$aOptions.log]{-- Decrypt a string "$aString".}}
-  ]]
+
+  $lLog[^self.ifdef[$aOptions.log]{-- Decrypt a string "$aString".}]
+
+  ^try{
+    $result[^self.CSQL.string{
+      SELECT
+        ^self._applyPattern[$lSeralizer;
+          $.data[$aString]
+          $.key[^self.ifdef[$aOptions.cryptKey]{$self._cryptKey}]
+        ]
+    }[][
+      $.force(true)
+      $.log[$lLog]
+    ]]
+  }{
+    ^throw[$exception.type;$lLog;$exception.comment]
+  }
 
 @signString[aString] -> [signature.$aString]
 ## Добавляет в начало строки цифровую подпись hash/hmac/base64.
