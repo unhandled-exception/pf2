@@ -259,6 +259,9 @@ pfClass
 @GET_TABLE_EXPRESSION[]
   $result[^if(def $self.SCHEMA){^self._builder.quoteIdentifier[$self.SCHEMA].}^self._builder.quoteIdentifier[$self.TABLE_NAME] AS ^self._builder.quoteIdentifier[$self.TABLE_ALIAS]]
 
+@GET_TE[]
+  $result[^self.GET_TABLE_EXPRESSION[]]
+
 @GET_FIELDS[]
   $result[$self._fields]
 
@@ -286,7 +289,7 @@ pfClass
 
 @TABLE_AS[*aArgs]
 ## ^TABLE_AS[name] -> schema.table_name as name
-## ^TABLE_AS[name]{t.TABLE_EXPRESSION ... $t.field} — временно переименовывает таблицы и выполняет код
+## ^TABLE_AS[name]{$t.TE ... $t.field} — временно переименовывает таблицы и выполняет код
   ^if($aArgs == 2){
     $lOldTableAlias[$self._tableAlias]
     $self._tableAlias[$aArgs.0]

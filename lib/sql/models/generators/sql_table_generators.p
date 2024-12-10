@@ -321,6 +321,12 @@ pfSQLModelGenerator
       }
       $lData.widget[none]
     }
+
+    ^if($lDDL.is_generated eq "ALWAYS"){
+      $lData.skipOnInsert(true)
+      $lData.skipOnUpdate(true)
+    }
+
     ^if(^lType.columnName.match[_id^$][ni]){
       $lData.widget[none]
     }

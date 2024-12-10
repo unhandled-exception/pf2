@@ -262,7 +262,7 @@ pfSQLTable
 ## aOptions.orderByTags(false)
   $result[^BASE:_allJoin[$aOptions]
     ^if(^aOptions.orderByTags.bool(false)){
-      join $self._tagging.tags.TABLE_EXPRESSION on ($tagID = $self._tagging.tags.tagID)
+      join $self._tagging.tags.TE on ($tagID = $self._tagging.tags.tagID)
     }
   ]
 
