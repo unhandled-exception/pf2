@@ -734,6 +734,6 @@ pfModelTable
 
 @_allJoin[aOptions]
   $result[
-    join $usersModel.TABLE_EXPRESSION on ($usersModel.userID = $self.userID)
-    join $usersModel.roles.TABLE_EXPRESSION on ($usersModel.roles.roleID = $self.roleID)
+    join $usersModel.TE on ($usersModel.userID = $self.userID)
+    join $usersModel.roles.TE on ($usersModel.roles.roleID = $self.roleID)
   ]
