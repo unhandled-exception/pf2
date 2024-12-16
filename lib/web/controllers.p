@@ -923,12 +923,13 @@ locals
   $self.__CONTEXT__[^hash::create[]]
   $self.__PROTECT__[^hash::create[$aOptions.protect]]
 
-  $self.form[^self.ifdef[$aOptions.form]{$form:fields}]
-  $self.tables[^self.ifdef[$aOptions.tables]{$form:tables}]
-  $self.files[^self.ifdef[$aOptions.files]{$form:files}]
+  $self.form[^hash::create[^self.ifdef[$aOptions.form]{$form:fields}]]
+  $self.tables[^hash::create[^self.ifdef[$aOptions.tables]{$form:tables}]]
+  $self.files[^hash::create[^self.ifdef[$aOptions.files]{$form:files}]]
+  $self.elements[^hash::create[^self.ifdef[$aOptions.elements]{$form:elements}]]
 
-  $self.cookie[^self.ifdef[$aOptions.cookie]{$cookie:fields}]
-  $self.headers[^self.ifdef[$aOptions.headers]{$request:headers}]
+  $self.cookie[^hash::create[^self.ifdef[$aOptions.cookie]{$cookie:fields}]]
+  $self.headers[^hash::create[^self.ifdef[$aOptions.headers]{$request:headers}]]
 
   $self.method[^self.ifdef[^aOptions.method.lower[]]{^request:method.lower[]}]
 # Если нам пришел post-запрос с полем _method, то берем method из запроса.
