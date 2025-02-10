@@ -1,12 +1,13 @@
 #!/bin/bash
 
+DB_HOST="${CI_TESTS_DIND_HOST:-127.0.0.1}"
+
 MYSQL_57_IMAGE="mysql/mysql-server:5.7"
 if [[ `uname -m` == 'arm64' ]]; then
   MYSQL_57_IMAGE="beercan1989/arm-mysql:5.7"
 fi
 
 MYSQL_8_IMAGE="mysql:8.4"
-
 POSTGRES_IMAGE="postgres:17"
 
 # sudo docker pull mysql/mysql-server:$MYSQL_IMAGE_TAG
@@ -31,7 +32,7 @@ docker run --rm --name=pf2-ut-postgres -p 8432:5432 \
     -e POSTGRES_DB=pg_test \
     -d "$POSTGRES_IMAGE" \
 && sleep 4 \
-&& psql postgres://test:test@127.0.0.1:8432/pg_test -c 'create extension if not exists pgcrypto'
+&& psql postgres://test:test@${DB_HOST}:8432/pg_test -c 'create extension if not exists pgcrypto'
 
 # docker pull kennethreitz/httpbin
 docker run --rm --name=pf2-ut-httpbin -p 8880:80 -d kennethreitz/httpbin

@@ -1,0 +1,57 @@
+default:
+  image: ubuntu:24.04
+
+stages:
+  - test
+
+run-tests:
+  stage: test
+
+  services:
+    - docker:dind
+
+  variables:
+    PARSER3_DIST_URL: "https://www.parser.ru/f/1/download/parser350/parser3_5_0_debian12x64.tar.gz"
+    DOCKER_HOST: tcp://docker:2375
+    DOCKER_DRIVER: overlay2
+    CI_TESTS_DIND_HOST: docker
+
+  before_script:
+    - echo "Install dependencies"
+    - apt update
+    - apt -y install ca-certificates curl sudo wget
+    - install -m 0755 -d /etc/apt/keyrings
+    - curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+    - chmod a+r /etc/apt/keyrings/docker.asc
+    - echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu $(. /etc/os-release && echo "${UBUNTU_CODENAME:-$VERSION_CODENAME}") stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null
+    - apt install -y postgresql-common
+    - /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y
+    - apt update
+    - apt -y install postgresql-client-common postgresql-client libpq-dev libpq5 docker-ce-cli
+
+  script:
+    - echo "Configure Parser 3"
+    - cd $HOME
+    - mkdir -p $HOME/bin
+    - mkdir $HOME/parser3
+    - cd parser3
+    - wget --no-verbose $PARSER3_DIST_URL -O parser3.tar.gz
+    - tar xvfz parser3.tar.gz
+    - ln -fs `pwd`/parser3.cgi $HOME/bin/
+    - ln -fs `pwd`/lib $HOME/bin/lib
+    - cd $CI_PROJECT_DIR
+    - echo "Copy MySQL drivers"
+    - cp ut/_libs/ubuntu_24.04/x64/libparser3mysql8.so $HOME/bin/lib/
+    - cp ut/_libs/ubuntu_24.04/x64/libmysqlclient8.so $HOME/bin/lib/system/
+    - echo "Start test containers"
+    - /bin/bash ut/start_test_containers.sh
+    - sleep 5
+    - docker container ls
+    - echo "Run tests"
+    - cd $CI_PROJECT_DIR
+    - $HOME/bin/parser3.cgi ut/run_tests.p -v -r
+
+  after_script:
+    - echo "Stop test containers"
+    - cd $CI_PROJECT_DIR
+    - /bin/bash ut/stop_test_containers.sh

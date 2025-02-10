@@ -14,6 +14,7 @@ jobs:
     env:
       PARSER3_DIST_URL: "https://www.parser.ru/f/1/download/parser350/parser3_5_0_debian12x64.tar.gz"
       PARSER3_LIBCURL: "libcurl.so.4"
+      CI_TESTS_DIND_HOST: 127.0.0.1
 
     steps:
       - name: "Configure Parser 3"

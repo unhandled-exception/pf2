@@ -11,6 +11,13 @@ locals
 @BASE
 pfTestCase
 
+@auto[]
+  $self.DB_HOST[^if(def $env:CI_TESTS_DIND_HOST){$env:CI_TESTS_DIND_HOST}{127.0.0.1}]
+  $self._sqliteConnectString[sqlite://:memory:]
+  $self._mysql57ConnectString[mysql57://test:test_57@${self.DB_HOST}:8306/mysql_test_57]
+  $self._mysql8ConnectString[mysql8://test:test_8@${self.DB_HOST}:9306/mysql_test_8]
+  $self._postgresConnectString[postgresql://test:test@${self.DB_HOST}:8432/pg_test]
+
 @setUp[]
 # $self.connectString[] — setup in children
   $self.connection[^pfSQLConnection::create[$self.connectString;
@@ -105,7 +112,7 @@ TestMySQL57SecurityCrypt
 BaseTestSQLSecurity
 
 @GET_connectString[]
-  $result[mysql57://test:test_57@127.0.0.1:8306/mysql_test_57]
+  $result[$self._mysql57ConnectString]
 
 @setUp[]
   ^BASE:setUp[]
@@ -123,7 +130,7 @@ TestMySQL8SecurityCrypt
 BaseTestSQLSecurity
 
 @GET_connectString[]
-  $result[mysql8://test:test_8@127.0.0.1:9306/mysql_test_8]
+  $result[$self._mysql8ConnectString]
 
 @setUp[]
   ^BASE:setUp[]
@@ -141,4 +148,4 @@ TestPostgresSecurityCrypt
 BaseTestSQLSecurity
 
 @GET_connectString[]
-  $result[postgresql://test:test@127.0.0.1:8432/pg_test]
+  $result[$self._postgresConnectString]
