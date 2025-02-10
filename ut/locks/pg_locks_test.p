@@ -12,11 +12,13 @@ locals
 pfTestCase
 
 @setUp[]
-  $self.connection1[^pfSQLConnection::create[postgresql://test:test@127.0.0.1:8432/pg_test;
+  $self.DB_HOST[^if(def $env:CI_TESTS_DIND_HOST){$env:CI_TESTS_DIND_HOST}{127.0.0.1}]
+
+  $self.connection1[^pfSQLConnection::create[postgresql://test:test@${DB_HOST}:8432/pg_test;
     $.enableQueriesLog(true)
     $.enableMemoryCache(true)
   ]]
-  $self.connection2[^pfSQLConnection::create[postgresql2://test:test@127.0.0.1:8432/pg_test;
+  $self.connection2[^pfSQLConnection::create[postgresql2://test:test@${DB_HOST}:8432/pg_test;
     $.enableQueriesLog(true)
     $.enableMemoryCache(true)
   ]]

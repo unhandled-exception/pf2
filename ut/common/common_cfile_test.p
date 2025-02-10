@@ -12,7 +12,9 @@ pfTestCase
 
 @setUp[]
   ^BASE:setUp[]
-  $self.httpbin[http://localhost:8880]
+  $self.LOCALHOST[^if(def $env:CI_TESTS_DIND_HOST){$env:CI_TESTS_DIND_HOST}{127.0.0.1}]
+
+  $self.httpbin[http://${self.LOCALHOST}:8880]
   $self.httpsbin[https://httpbin.org]
 
 @assertSuccessResponse[aResponse]
