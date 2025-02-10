@@ -9,10 +9,10 @@ on:
   pull_request:
 jobs:
   run-unittests:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
 
     env:
-      PARSER3_DIST_URL: "https://www.parser.ru/f/1/download/parser346/parser3_4_6_debian10x64.tar.gz"
+      PARSER3_DIST_URL: "https://www.parser.ru/f/1/download/parser350/parser3_5_0_debian12x64.tar.gz"
       PARSER3_LIBCURL: "libcurl.so.4"
 
     steps:
