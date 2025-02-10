@@ -12,11 +12,11 @@ locals
 pfTestCase
 
 @setUp[]
-  $self.connection1[^pfSQLConnection::create[postgresql://test:test@127.0.0.1:8432/pg_test?WithoutDefaultTransaction=1;
+  $self.connection1[^pfSQLConnection::create[postgresql://test:test@127.0.0.1:8432/pg_test;
     $.enableQueriesLog(true)
     $.enableMemoryCache(true)
   ]]
-  $self.connection2[^pfSQLConnection::create[postgresql2://test:test@127.0.0.1:8432/pg_test?WithoutDefaultTransaction=1;
+  $self.connection2[^pfSQLConnection::create[postgresql2://test:test@127.0.0.1:8432/pg_test;
     $.enableQueriesLog(true)
     $.enableMemoryCache(true)
   ]]

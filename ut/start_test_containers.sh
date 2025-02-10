@@ -5,7 +5,7 @@ if [[ `uname -m` == 'arm64' ]]; then
   MYSQL_IMAGE="beercan1989/arm-mysql:5.7"
 fi
 
-POSTGRES_IMAGE="postgres:13"
+POSTGRES_IMAGE="postgres:17"
 
 # sudo docker pull mysql/mysql-server:$MYSQL_IMAGE_TAG
 docker run --rm --name=pf2-ut-mysql -p 8306:3306 \
