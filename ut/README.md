@@ -20,8 +20,8 @@
 ```
 * Копируем драйверы для MySQL 8:
 ```
-cp ut/_libs/ubuntu_24.04/libparser3mysql8.so $HOME/bin/lib/
-cp ut/_libs/ubuntu_24.04/libmysqlclient8.so $HOME/bin/lib/system/
+cp ut/_libs/ubuntu_24.04/x64/libparser3mysql8.so $HOME/bin/lib/
+cp ut/_libs/ubuntu_24.04/x64/libmysqlclient8.so $HOME/bin/lib/system/
 ```
 
 ### Apple OSX
@@ -36,9 +36,9 @@ cp ut/_libs/ubuntu_24.04/libmysqlclient8.so $HOME/bin/lib/system/
 ```
 * Копируем драйверы для MySQL 8 и Постгреса:
 ```
-cp ut/_libs/osx/libparser3mysql8.so $HOME/bin/lib/
-cp ut/_libs/osx/libmysqlclient8.so $HOME/bin/lib/system/
-cp ut/_libs/osx/libpq.so $HOME/bin/lib/system/
+cp ut/_libs/osx/x64/libparser3mysql8.so $HOME/bin/lib/
+cp ut/_libs/osx/x64/libmysqlclient8.so $HOME/bin/lib/system/
+cp ut/_libs/osx/x64/libpq.so $HOME/bin/lib/system/
 ```
 * Делаем симлинк на libcurl
 ```

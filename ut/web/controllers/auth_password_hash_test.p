@@ -28,7 +28,7 @@ pfTestCase
   ^self.assertEq[$lHashed;^self.sut.makePasswordHash[$lPassword;$lHashed]]
 
 @testYescrypt[]
-  ^if(!^env.PARSER_VERSION.match[linux][in]){
+  ^if(!^env:PARSER_VERSION.match[linux][in]){
     ^self.skipTest[]
   }
 
@@ -39,7 +39,7 @@ pfTestCase
   ^self.assertEq[$lHashed;^self.sut.makePasswordHash[$lPassword;$lHashed]]
 
 @testGostYescrypt[]
-  ^if(!^env.PARSER_VERSION.match[linux][in]){
+  ^if(!^env:PARSER_VERSION.match[linux][in]){
     ^self.skipTest[]
   }
 
