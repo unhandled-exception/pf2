@@ -27,7 +27,7 @@ jobs:
           ln -fs `pwd`/parser3.cgi $HOME/bin/
           ln -fs `pwd`/lib $HOME/bin/lib
 
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
       - name: "Start test containers"
         run: |
