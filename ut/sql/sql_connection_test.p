@@ -249,13 +249,34 @@ CommonPFSQLConnectionTests
 #----------------------------------------------------------------------------------------------------------------------
 
 @CLASS
-TestMySQLConnection
+TestMySQL57Connection
 
 @BASE
 CommonPFSQLConnectionTests
 
 @GET_connectString[]
-  $result[$self._mysqlConnectString]
+  $result[$self._mysql57ConnectString]
+
+@createTestTable[aOptions]
+## aOptions.rows(20)
+  ^self._testTablesCount.inc[]
+  $result[test_table_$self._testTablesCount]
+  $lRows(^aOptions.rows.int(20))
+  ^connect[$self.connectString]{
+    ^void:sql{CREATE TABLE $result (a integer primary key auto_increment, b integer)}
+    ^void:sql{INSERT INTO $result (b) VALUES ^for[i](1;$lRows){($i * 100)}[, ]}
+  }
+
+#----------------------------------------------------------------------------------------------------------------------
+
+@CLASS
+TestMySQL8Connection
+
+@BASE
+CommonPFSQLConnectionTests
+
+@GET_connectString[]
+  $result[$self._mysql8ConnectString]
 
 @createTestTable[aOptions]
 ## aOptions.rows(20)

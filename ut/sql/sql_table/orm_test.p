@@ -192,7 +192,7 @@ TestMySQLORMPFSQLTable
 ORMPFSQLTableTests
 
 @GET_connectString[]
-  $result[$self._mysqlConnectString]
+  $result[$self._mysql57ConnectString]
 
 @createTestSchema[]
   ^connect[$self.connectString]{

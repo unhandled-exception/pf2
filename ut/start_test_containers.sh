@@ -1,18 +1,28 @@
 #!/bin/bash
 
-MYSQL_IMAGE="mysql/mysql-server:5.7"
+MYSQL_57_IMAGE="mysql/mysql-server:5.7"
 if [[ `uname -m` == 'arm64' ]]; then
-  MYSQL_IMAGE="beercan1989/arm-mysql:5.7"
+  MYSQL_57_IMAGE="beercan1989/arm-mysql:5.7"
 fi
+
+MYSQL_8_IMAGE="mysql:8.4"
 
 POSTGRES_IMAGE="postgres:17"
 
 # sudo docker pull mysql/mysql-server:$MYSQL_IMAGE_TAG
-docker run --rm --name=pf2-ut-mysql -p 8306:3306 \
+docker run --rm --name=pf2-ut-mysql-57 -p 8306:3306 \
     -e MYSQL_USER=test \
-    -e MYSQL_PASSWORD=test \
-    -e MYSQL_DATABASE=mysql_test \
-    -d "$MYSQL_IMAGE"
+    -e MYSQL_PASSWORD=test_57 \
+    -e MYSQL_DATABASE=mysql_test_57 \
+    -d "$MYSQL_57_IMAGE"
+
+# sudo docker pull mysql/mysql-server:$MYSQL_IMAGE_TAG
+docker run --rm --name=pf2-ut-mysql-8 -p 9306:3306 \
+    -e MYSQL_ROOT_PASSWORD=root \
+    -e MYSQL_USER=test \
+    -e MYSQL_PASSWORD=test_8 \
+    -e MYSQL_DATABASE=mysql_test_8 \
+    -d "$MYSQL_8_IMAGE"
 
 # docker pull postgres:$POSTGRES_IMAGE_TAG
 docker run --rm --name=pf2-ut-postgres -p 8432:5432 \

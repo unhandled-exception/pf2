@@ -32,7 +32,7 @@ pfClass
   $self.dialect[$aOptions.dialect]
   ^if(!def $self.dialect){
     $self.dialect[^switch[$self.serverType]{
-      ^case[mysql]{^pfSQLMySQLDialect::create[]}
+      ^case[mysql;mysql8;mysql57]{^pfSQLMySQLDialect::create[]}
       ^case[pgsql]{^pfSQLPostgresDialect::create[]}
       ^case[postgresql]{^pfSQLPostgresDialect::create[]}
       ^case[sqlite]{^pfSQLSQLiteDialect::create[]}

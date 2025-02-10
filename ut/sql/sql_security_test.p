@@ -99,13 +99,31 @@ pfTestCase
 #----------------------------------------------------------------------------------------------------------------------
 
 @CLASS
-TestMySQLSecurityCrypt
+TestMySQL57SecurityCrypt
 
 @BASE
 BaseTestSQLSecurity
 
 @GET_connectString[]
-  $result[mysql://test:test@127.0.0.1:8306/mysql_test]
+  $result[mysql57://test:test_57@127.0.0.1:8306/mysql_test_57]
+
+@setUp[]
+  ^BASE:setUp[]
+# Включаем режим шифрования, совсместимый с Postgres
+  ^self.connection.void{
+    SET block_encryption_mode = 'aes-128-cbc';
+  }
+
+#----------------------------------------------------------------------------------------------------------------------
+
+@CLASS
+TestMySQL8SecurityCrypt
+
+@BASE
+BaseTestSQLSecurity
+
+@GET_connectString[]
+  $result[mysql8://test:test_8@127.0.0.1:9306/mysql_test_8]
 
 @setUp[]
   ^BASE:setUp[]
