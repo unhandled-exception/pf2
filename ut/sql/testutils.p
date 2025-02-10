@@ -12,7 +12,8 @@ pfTestCase
 
 @auto[]
   $self._sqliteConnectString[sqlite://:memory:]
-  $self._mysqlConnectString[mysql://test:test@127.0.0.1:8306/mysql_test]
+  $self._mysql57ConnectString[mysql57://test:test_57@127.0.0.1:8306/mysql_test_57]
+  $self._mysql8ConnectString[mysql8://test:test_8@127.0.0.1:9306/mysql_test_8]
   $self._postgresConnectString[postgresql://test:test@127.0.0.1:8432/pg_test]
 
 @setUp[]

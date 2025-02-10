@@ -73,7 +73,10 @@ locals
       ]
     ]
   ]
+
   $self._sqlFunctions.postgresql[$self._sqlFunctions.pgsql]
+  $self._sqlFunctions.mysql8[$self._sqlFunctions.mysql]
+  $self._sqlFunctions.mysql57[$self._sqlFunctions.mysql]
 
   $self._serializer[^self.ifdef[$aOptions.serializer]{hex}]
   $self._hashAlgorythm[^self.ifdef[$aOptions.hashAlgorythm]{sha256}]

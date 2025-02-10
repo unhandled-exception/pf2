@@ -18,6 +18,11 @@
 > sudo apt update
 > sudo apt install postgresql-client-common postgresql-client
 ```
+* Копируем драйверы для MySQL 8:
+```
+cp ut/_libs/ubuntu_24.04/libparser3mysql8.so $HOME/bin/lib/
+cp ut/_libs/ubuntu_24.04/libmysqlclient8.so $HOME/bin/lib/system/
+```
 
 ### Apple OSX
 
@@ -28,6 +33,12 @@
 ```
 > brew update
 > brew install postgresql curl
+```
+* Копируем драйверы для MySQL 8 и Постгреса:
+```
+cp ut/_libs/osx/libparser3mysql8.so $HOME/bin/lib/
+cp ut/_libs/osx/libmysqlclient8.so $HOME/bin/lib/system/
+cp ut/_libs/osx/libpq.so $HOME/bin/lib/system/
 ```
 * Делаем симлинк на libcurl
 ```
