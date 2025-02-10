@@ -31,8 +31,8 @@ jobs:
 
       - name: "Prepare MySQL 8 drivers"
         run: |
-          cp ut/_libs/ubuntu_24.04/libparser3mysql8.so $HOME/bin/lib/
-          cp ut/_libs/ubuntu_24.04/libmysqlclient8.so $HOME/bin/lib/system/
+          cp ut/_libs/ubuntu_24.04/x64/libparser3mysql8.so $HOME/bin/lib/
+          cp ut/_libs/ubuntu_24.04/x64/libmysqlclient8.so $HOME/bin/lib/system/
 
       - name: "Start test containers"
         run: |

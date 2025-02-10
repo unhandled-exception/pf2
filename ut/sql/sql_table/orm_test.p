@@ -186,13 +186,42 @@ ORMPFSQLTableTests
 #----------------------------------------------------------------------------------------------------------------------
 
 @CLASS
-TestMySQLORMPFSQLTable
+TestMySQL57ORMPFSQLTable
 
 @BASE
 ORMPFSQLTableTests
 
 @GET_connectString[]
   $result[$self._mysql57ConnectString]
+
+@createTestSchema[]
+  ^connect[$self.connectString]{
+    ^void:sql{
+      CREATE TABLE users (
+          user_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+          login varchar(250) NOT NULL,
+          name varchar(250) DEFAULT NULL,
+          job varchar(250) DEFAULT NULL,
+          password_hash varchar(250) DEFAULT NULL,
+          is_admin smallint DEFAULT 0 NOT NULL,
+          is_active smallint DEFAULT 1 NOT NULL,
+          created_at datetime,
+          updated_at datetime,
+          UNIQUE(login)
+      )
+    }
+  }
+
+#----------------------------------------------------------------------------------------------------------------------
+
+@CLASS
+TestMySQL8ORMPFSQLTable
+
+@BASE
+ORMPFSQLTableTests
+
+@GET_connectString[]
+  $result[$self._mysql8ConnectString]
 
 @createTestSchema[]
   ^connect[$self.connectString]{
