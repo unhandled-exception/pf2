@@ -20,6 +20,7 @@ pfClass
 ## aOptions.schema — название схемы в БД (можно не указывать)
 ## aOptions.builder
 ## aOptions.allAsTable(false) — по-умолчанию возвращать результат в виде таблицы
+## aOptions.allAsTable(false) — по-умолчанию возвращать результат в виде массива хешей
 ## aOptions.readOnlyTable(false) — модель только для чтения (методы, менящие данне, вызовут исключение)
 
 ## Следующие поля необязательны, но полезны
@@ -63,7 +64,7 @@ pfClass
   $self._skipOnUpdate[^hash::create[^if(def $aOptions.skipOnUpdate){$aOptions.skipOnUpdate}]]
   $self._skipOnSelect[^hash::create[^if(def $aOptions.skipOnSelect){$aOptions.skipOnSelect}]]
 
-  $self._defaultResultType[^if(^aOptions.allAsTable.bool(false)){table}{hash}]
+  $self._defaultResultType[^if(^aOptions.allAsTable.bool(false)){table}(^aOptions.allAsArray.bool(false)){array}{hash}]
 
   $self._defaultOrderBy[]
   $self._defaultGroupBy[]
@@ -330,6 +331,7 @@ pfClass
 ## aOptions.asTable(false) — возвращаем таблицу
 ## aOptions.asHash(false) — возвращаем хеш (ключ хеша — первичный ключ таблицы)
 ## aOptions.asHashOn[fieldName] — возвращаем хеш таблиц, ключем которого будет fieldName
+## aOptions.asArray(false) — возвращаем массив
 ## Выражения для контроля выборки (код в фигурных скобках):
 ##   aOptions.selectFieldsGroups[group1, group2] — выбрать толкьо поля с группами
 ##   aOptions.selectFields{exression} — выражение для списка полей (вместо автогенерации)
@@ -401,7 +403,10 @@ pfClass
 @aggregate[*aConds]
 ## Выборки с группировкой
 ## ^aggregate[func(expr) as alias;_fields(field1, field2 as alias2);_fields(*);_groups(group1, group2);table[<field>];conditions hash;sqlOptions]
-## aConds.asHashOn[fieldName] — возвращаем хеш таблиц, ключем которого будет fieldName
+## aOptions.asTable(false) — возвращаем таблицу
+## aOptions.asHash(false) — возвращаем хеш (ключ хеша — первичный ключ таблицы)
+## aOptions.asHashOn[fieldName] — возвращаем хеш таблиц, ключем которого будет fieldName
+## aOptions.asArray(false) — возвращаем массив
   $lConds[^self.__getAgrConds[$aConds]]
   $lResultType[^if(def $lConds.options.asHashOn){table}{^self.__getResultType[$lConds.options]}]
   $lExpression[^self.__aggregateSQLExpression[$lResultType;$lConds]]
@@ -794,6 +799,7 @@ pfClass
   $result[^switch(true){
     ^case(^aOptions.asTable.bool(false)){table}
     ^case(^aOptions.asHash.bool(false)){hash}
+    ^case(^aOptions.asArray.bool(false)){array}
     ^case[DEFAULT]{$self._defaultResultType}
   }]
 

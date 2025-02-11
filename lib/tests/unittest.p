@@ -763,6 +763,8 @@ $aException.file (${aException.lineno}:$aException.colno)]
     $.bool[math]
     $.string[string]
     $.void[string]
+    $.table[json_string]
+    $.array[json_string]
     $.hash[recursive]
     $._default[fail]
   ]
@@ -793,6 +795,7 @@ $aException.file (${aException.lineno}:$aException.colno)]
       ^if(
         ($lExpEqType eq "math" && $aActual.[$k] != $v)
         || ($lExpEqType eq "string" && $aActual.[$k] ne $v)
+        || ($lExpEqType eq "json_string" && "^json:string[$aActual.[$k]]" ne "^json:string[$v]")
       ){
         ^throw[$lExceptionType;Not equals value for "$k" key]
       }

@@ -360,13 +360,19 @@ locals
     $.f2(25)
     $.f3(33.1)
     $.f4[$void]
-    $.f5[$.f1[v1]]
+    $.f5[$.f1[v1] $.f2[v1] $.f3[$.0[1] $.1[2]]]
+    $.f6[^array::create[1;2;3;4;5;6]]
+    $.f7[^table::create{one,two
+1,2}[$.separator[,]]]
   ][
-    $.f1[v1]
-    $.f2(25)
-    $.f3(33.10)
+    $.f7[^table::create{one,two
+1,2}[$.separator[,]]]
+    $.f6[^array::create[1;2;3;4;5;6]]
+    $.f5[$.f2[v1] $.f3[$.1[2] $.0[1]] $.f1[v1]]
     $.f4[]
-    $.f5[$.f1[v1]]
+    $.f3(33.10)
+    $.f2(25)
+    $.f1[v1]
   ]
 
 @testAssertHashEqualsFail[]
@@ -415,9 +421,17 @@ locals
 
   ^self.assertRaisesFailureException{
     ^self.sut.assertHashEquals[
-      $.f1[$.f1[v1]]
+      $.f1[$.f1[v1] $.f2[v2]]
     ][
-      $.f1[$.f1[v2]]
+      $.f1[$.f1[v2] $.f2[v2]]
+    ]
+  }
+
+  ^self.assertRaisesFailureException{
+    ^self.sut.assertHashEquals[
+      $.f1[^array::create[1,2,3,4]]
+    ][
+      $.f1[^array::create[2,2,3,4]]
     ]
   }
 
