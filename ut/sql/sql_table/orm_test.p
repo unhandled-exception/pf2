@@ -31,21 +31,142 @@ BaseTestSQLConnection
     ]
   }
 
-@testAll_AsHash[]
+@testAll_allAsHash[]
   ^self._createTestUsers(5)
   $lRes[^self.sut.all[]]
 
+  ^self.assertTrue($lRes is hash)[result is $lRes.CLASS_NAME istead of hash]
   ^self.assertNumEq($lRes;5)
   ^self.assertHashEquals[$lRes.1;
-        $.userID[1]
-        $.login[user_4]
-        $.name[name]
-        $.job[job 1]
-        $.passwordHash[password hash 1]
-        $.isAdmin[0]
-        $.isActive[1]
-        $.createdAt[2022-07-03 14:52:18]
-        $.updatedAt[2022-07-04 22:04:18]
+    $.userID[1]
+    $.login[user_4]
+    $.name[name]
+    $.job[job 1]
+    $.passwordHash[password hash 1]
+    $.isAdmin[0]
+    $.isActive[1]
+    $.createdAt[2022-07-03 14:52:18]
+    $.updatedAt[2022-07-04 22:04:18]
+  ]
+
+@testAll_allAsTable[]
+  ^self._createTestUsers(5)
+
+  $self.sut[^_TestUserModel::create[
+    $.sql[$self.connection]
+    $.allAsTable(true)
+  ]]
+
+  $lRes[^self.sut.all[]]
+
+  ^self.assertTrue($lRes is table)[result is $lRes.CLASS_NAME istead of table]
+  ^self.assertNumEq($lRes;5)
+  ^self.assertHashEquals[$lRes.fields;
+    $.userID[1]
+    $.login[user_4]
+    $.name[name]
+    $.job[job 1]
+    $.passwordHash[password hash 1]
+    $.isAdmin[0]
+    $.isActive[1]
+    $.createdAt[2022-07-03 14:52:18]
+    $.updatedAt[2022-07-04 22:04:18]
+  ]
+
+@testAll_allAsArray[]
+  ^self._createTestUsers(5)
+
+  $self.sut[^_TestUserModel::create[
+    $.sql[$self.connection]
+    $.allAsArray(true)
+  ]]
+
+  $lRes[^self.sut.all[]]
+
+  ^self.assertTrue($lRes is array)[result is $lRes.CLASS_NAME istead of array]
+  ^self.assertNumEq($lRes;5)
+  ^self.assertHashEquals[$lRes.1;
+    $.userID[2]
+    $.login[user_3]
+    $.name[name]
+    $.job[job 2]
+    $.passwordHash[password hash 2]
+    $.isAdmin[0]
+    $.isActive[1]
+    $.createdAt[2022-07-03 14:52:18]
+    $.updatedAt[2022-07-04 22:04:18]
+  ]
+
+@testAll_asTableOption[]
+  ^self._createTestUsers(5)
+
+  $lRes[^self.sut.all[
+    $.asTable(true)
+  ]]
+
+  ^self.assertTrue($lRes is table)[result is $lRes.CLASS_NAME istead of table]
+  ^self.assertNumEq($lRes;5)
+  ^self.assertHashEquals[$lRes.fields;
+    $.userID[1]
+    $.login[user_4]
+    $.name[name]
+    $.job[job 1]
+    $.passwordHash[password hash 1]
+    $.isAdmin[0]
+    $.isActive[1]
+    $.createdAt[2022-07-03 14:52:18]
+    $.updatedAt[2022-07-04 22:04:18]
+  ]
+
+@testAll_asHashOption[]
+  ^self._createTestUsers(5)
+
+  $self.sut[^_TestUserModel::create[
+    $.sql[$self.connection]
+    $.allAsTable(true)
+  ]]
+
+  $lRes[^self.sut.all[
+    $.asHash(true)
+  ]]
+
+  ^self.assertTrue($lRes is hash)[result is $lRes.CLASS_NAME istead of hash]
+  ^self.assertNumEq($lRes;5)
+  ^self.assertHashEquals[$lRes.1;
+    $.userID[1]
+    $.login[user_4]
+    $.name[name]
+    $.job[job 1]
+    $.passwordHash[password hash 1]
+    $.isAdmin[0]
+    $.isActive[1]
+    $.createdAt[2022-07-03 14:52:18]
+    $.updatedAt[2022-07-04 22:04:18]
+  ]
+
+@testAll_asArrayOption[]
+  ^self._createTestUsers(5)
+
+  $self.sut[^_TestUserModel::create[
+    $.sql[$self.connection]
+  ]]
+
+  $lRes[^self.sut.all[
+    $.asArray(true)
+  ]]
+
+  ^self.assertTrue($lRes is array)[result is $lRes.CLASS_NAME istead of array]
+  ^self.assertNumEq($lRes;5)
+  ^self.assertHashEquals[$lRes.1;
+    $.userID[2]
+    $.login[user_3]
+    $.name[name]
+    $.job[job 2]
+    $.passwordHash[password hash 2]
+    $.isAdmin[0]
+    $.isActive[1]
+    $.createdAt[2022-07-03 14:52:18]
+    $.updatedAt[2022-07-04 22:04:18]
   ]
 
 @testAll_selectGroups[]
@@ -117,6 +238,142 @@ BaseTestSQLConnection
       $.asTable(true)
     ]]
   }
+
+@testAggregate_allAsTable[]
+  ^self._createTestUsers(50)
+
+  $self.sut[^_TestUserModel::create[
+    $.sql[$self.connection]
+    $.allAsTable(true)
+  ]]
+
+  $lRes[^self.sut.aggregate[
+    count(*) as total;
+    sum(case when $sut.userID % 5 = 0 then 1 else 0 end) as dividedBy5;
+  ][
+    $.orderBy[]
+  ]]
+
+  ^self.assertTrue($lRes is table)[result is $lRes.CLASS_NAME istead of table]
+  ^self.assertNumEq($lRes;1)
+  ^self.assertHashEquals[$lRes.fields;
+    $.total[50]
+    $.dividedBy5[10]
+  ]
+
+@testAggregate_allAsHash[]
+  ^self._createTestUsers(50)
+
+  $self.sut[^_TestUserModel::create[
+    $.sql[$self.connection]
+  ]]
+
+  $lRes[^self.sut.aggregate[
+    count(*) as total;
+    sum(case when $sut.userID % 5 = 0 then 1 else 0 end) as dividedBy5;
+  ][
+    $.orderBy[]
+  ]]
+
+  ^self.assertTrue($lRes is hash)[result is $lRes.CLASS_NAME istead of hash]
+  ^self.assertNumEq($lRes;1)
+  ^self.assertHashEquals[$lRes;
+    $.50[
+      $.dividedBy5[10]
+    ]
+  ]
+
+@testAggregate_allAsArray[]
+  ^self._createTestUsers(50)
+
+  $self.sut[^_TestUserModel::create[
+    $.sql[$self.connection]
+    $.allAsArray(true)
+  ]]
+
+  $lRes[^self.sut.aggregate[
+    count(*) as total;
+    sum(case when $sut.userID % 5 = 0 then 1 else 0 end) as dividedBy5;
+  ][
+    $.orderBy[]
+  ]]
+
+  ^self.assertTrue($lRes is array)[result is $lRes.CLASS_NAME istead of array]
+  ^self.assertNumEq($lRes;1)
+  ^self.assertHashEquals[$lRes.0;
+    $.total[50]
+    $.dividedBy5[10]
+  ]
+
+@testAggregate_asArrayOption[]
+  ^self._createTestUsers(50)
+
+  $self.sut[^_TestUserModel::create[
+    $.sql[$self.connection]
+    $.allAsArray(false)
+  ]]
+
+  $lRes[^self.sut.aggregate[
+    count(*) as total;
+    sum(case when $sut.userID % 5 = 0 then 1 else 0 end) as dividedBy5;
+  ][
+    $.asArray(true)
+    $.orderBy[]
+  ]]
+
+  ^self.assertTrue($lRes is array)[result is $lRes.CLASS_NAME istead of array]
+  ^self.assertNumEq($lRes;1)
+  ^self.assertHashEquals[$lRes.0;
+    $.total[50]
+    $.dividedBy5[10]
+  ]
+
+@testAggregate_asHashOption[]
+  ^self._createTestUsers(50)
+
+  $self.sut[^_TestUserModel::create[
+    $.sql[$self.connection]
+  ]]
+
+  $lRes[^self.sut.aggregate[
+    count(*) as total;
+    sum(case when $sut.userID % 5 = 0 then 1 else 0 end) as dividedBy5;
+  ][
+    $.asHash(true)
+    $.orderBy[]
+  ]]
+
+  ^self.assertTrue($lRes is hash)[result is $lRes.CLASS_NAME istead of hash]
+  ^self.assertNumEq($lRes;1)
+  ^self.assertHashEquals[$lRes;
+    $.50[
+      $.dividedBy5[10]
+    ]
+  ]
+
+@testAggregate_asHashOnOption[]
+  ^self._createTestUsers(50)
+
+  $self.sut[^_TestUserModel::create[
+    $.sql[$self.connection]
+  ]]
+
+  $lRes[^self.sut.aggregate[
+    't1' as key;
+    count(*) as total;
+    sum(case when $sut.userID % 5 = 0 then 1 else 0 end) as dividedBy5;
+  ][
+    $.asHashOn[key]
+    $.orderBy[]
+  ]]
+
+  ^self.assertTrue($lRes is hash)[result is $lRes.CLASS_NAME istead of hash]
+  ^self.assertNumEq($lRes;1)
+  ^self.assertHashEquals[$lRes;
+    $.t1[^table::create{key,total,dividedBy5
+t1,50,10}[$.separator[,]]
+    ]
+  ]
 
 @testOne_skipOrderBy[]
   ^self._createTestUsers(5)

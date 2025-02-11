@@ -167,6 +167,19 @@ BaseTestSQLConnection
     $.7[$.b[700]]
   ]
 
+@testArray[]
+  $lTable[^self.createTestTable[]]
+	^self.assertNotRaises[sql.execute]{
+		$lActual[^self.sut.array{select * from $lTable order by a}[$.limit(2) $.offset(5)]]
+  }
+  ^self.assertEqualsAsJSON[$lActual;
+    ^array::create[
+      $.a[6] $.b[600]
+    ][
+      $.a[7] $.b[700]
+    ]
+  ]
+
 @testString[]
   ^self.assertEq[^self.sut.string{select 'string data'};string data]
 

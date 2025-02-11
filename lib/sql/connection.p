@@ -33,8 +33,7 @@ pfClass
   ^if(!def $self.dialect){
     $self.dialect[^switch[$self.serverType]{
       ^case[mysql;mysql8;mysql57]{^pfSQLMySQLDialect::create[]}
-      ^case[pgsql]{^pfSQLPostgresDialect::create[]}
-      ^case[postgresql]{^pfSQLPostgresDialect::create[]}
+      ^case[pgsql;postgresql]{^pfSQLPostgresDialect::create[]}
       ^case[sqlite]{^pfSQLSQLiteDialect::create[]}
       ^case[DEFAULT]{^pfSQLAnsiDialect::create[]}
     }]
@@ -230,6 +229,14 @@ pfClass
   $lOptions[^self._getOptions[$lQuery;hash;$aSQLOptions;$aOptions]]
   $result[^self._processMemoryCache{^self._sql[hash]{^hash::sql{$lQuery}[$aSQLOptions]}[$lOptions]}[$lOptions]]
 
+@array[aQuery;aSQLOptions;aOptions]
+## aOptions.force — отключить кеширование в памяти
+## aOptions.cacheKey — ключ для кеширования. Если не задан, то вычисляется автоматически.
+## aOptions.log[] — запись, которую надо сделать в логе вместо текста запроса.
+  $lQuery[$aQuery]
+  $lOptions[^self._getOptions[$lQuery;array;$aSQLOptions;$aOptions]]
+  $result[^self._processMemoryCache{^self._sql[array]{^array::sql{$lQuery}[$aSQLOptions]}[$lOptions]}[$lOptions]]
+
 @file[aQuery;aSQLOptions;aOptions]
 ## aOptions.force — отключить кеширование в памяти
 ## aOptions.cacheKey — ключ для кеширования. Если не задан, то вычисляется автоматически.
@@ -353,7 +360,7 @@ pfClass
         $.results(^switch[$aType]{
           ^case[DEFAULT;void]{0}
           ^case[int;double;string;file]{1}
-          ^case[table;hash]{^eval($result)}
+          ^case[table;hash;array]{^eval($result)}
         })
         $.exception[$lException]
       ]
