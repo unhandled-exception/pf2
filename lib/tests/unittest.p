@@ -750,6 +750,7 @@ $aException.file (${aException.lineno}:$aException.colno)]
     ^self.fail[Duration $lDuration <= $aDurationInSeconds]
   }
 
+
 @assertHashEquals[aActual;aExpected;aOptions]
 ## aOptions.nestedAssert(false) — рекурсивный вызов
   $aActual[^hash::create[$aActual]]

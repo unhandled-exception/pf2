@@ -386,6 +386,31 @@ t1,50,10}[$.separator[,]]
 
   ^self.assert($lUser.userID == 1)[UserID is $lUser.userID]
 
+@testConditions_arraysOfHashes[]
+  ^self._createTestUsers(50)
+
+  $lRes[^sut.all[
+    $.[userID in][^sut.all[
+      $.asArray(true)
+      $.where[
+        $sut.userID % 5 = 0
+      ]
+    ]]
+    $.asArray(true)
+  ]]
+
+  ^self.assertEq[^lRes.foreach[;v]{$v.userID}[,]][5,10,15,20,25,30,35,40,45,50]
+
+@testConditions_arraysOfHashesColumn[]
+  ^self._createTestUsers(50)
+
+  $lRes[^sut.all[
+    $.[userID in][^array::create[5;15;25;35;45]]
+    $.asArray(true)
+  ]]
+
+  ^self.assertEq[^lRes.foreach[;v]{$v.userID}[,]][5,15,25,35,45]
+
 #----------------------------------------------------------------------------------------------------------------------
 
 @CLASS

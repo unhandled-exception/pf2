@@ -682,7 +682,7 @@ pfClass
   ^if($aField is string){
     $aField[$self._fields.[$aField]]
   }
-  $result[^self._builder.array[$aField;$aValues;$aOptions $.valueFunction[$self.fieldValue]]]
+  $result[^self._builder.array[$aField;$aValues;^hash::create[$aOptions] $.valueFunction[$self.fieldValue]]]
 
 @sqlFieldName[aFieldName]
   ^self.assert(^self._fields.contains[$aFieldName]){Неизвестное поле «${aFieldName}».}
@@ -737,8 +737,8 @@ pfClass
       }(^self._plurals.contains[$match.1]
         || (^self._fields.contains[$match.1] && ($match.2 eq "in" || $match.2 eq "!in"))
        ){
-#       $.[field [!]in][hash|table|values string]
-#       $.[plural [not]][hash|table|values string]
+#       $.[field [!]in][hash|table|array[hash or string value]|values string]
+#       $.[plural [not]][hash|table|array[hash or string value]|values string]
         $lRes.[^lRes._count[]][^self._condArrayField[$aConds;$match.1;^match.2.lower[];$v]]
       }($match.1 eq "OR" || $match.1 eq "AND" || $match.1 eq "NOT"){
 #       Рекурсивный вызов логического блока
@@ -1188,8 +1188,8 @@ pfClass
 
 @array[aField;aValue;aOptions]
 ## Строит массив значений
-## aValue[table|hash|csv-string]
-## aOptions.column[$aField.name] — имя колонки в таблице
+## aValue[table|hash|array|csv-string]
+## aOptions.column[$aField.name] — имя колонки в таблице или массиве
 ## aOptions.emptyValue[null] — значение массива, если в aValue нет данных
 ## aOptions.valueFunction[fieldValue] — функция форматирования значения поля
   ^self.cleanMethodArgument[]
@@ -1198,14 +1198,21 @@ pfClass
   $lEmptyValue[^if(^aOptions.contains[emptyValue]){$aOptions.emptyValue}{null}]
   $lColumn[^if(def $aOptions.column){$aOptions.column}{$aField.name}]
   ^switch(true){
-    ^case($aValue is hash){$result[^aValue.foreach[k;_]{^lValueFunction[$aField;$k]}[, ]]}
-    ^case($aValue is table){$result[^aValue.menu{^lValueFunction[$aField;$aValue.[$lColumn]]}[, ]]}
+    ^case($aValue is hash){
+      $result[^aValue.foreach[k;]{^lValueFunction[$aField;$k]}[, ]]
+    }
+    ^case($aValue is table){
+      $result[^aValue.menu{^lValueFunction[$aField;$aValue.[$lColumn]]}[, ]]
+    }
+    ^case($aValue is array){
+      $result[^aValue.foreach[;v]{^if($v is hash){^lValueFunction[$aField;$v.[$lColumn]]}{^lValueFunction[$aField;$v]}}[, ]]
+    }
     ^case($aValue is string){
       $lItems[^self._parseCSVString[$aValue]]
       $result[^lItems.foreach[_;v]{^lValueFunction[$aField;$v]}[, ]]
     }
     ^case[DEFAULT]{
-      ^throw[pfSQLBuilder.bad.array.values;Значениями массива может быть хеш, таблица или csv-строка. (Поле: $aField.name, тип значения: $aValue.CLASS_NAME)]
+      ^throw[pfSQLBuilder.bad.array.values;Значениями массива может быть хеш, таблица, массив или csv-строка. (Поле: $aField.name, тип значения: $aValue.CLASS_NAME)]
     }
   }]
   ^if(!def $result && def $lEmptyValue){
