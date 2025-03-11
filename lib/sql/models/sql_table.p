@@ -687,24 +687,30 @@ pfClass
 @sqlFieldName[aFieldName]
   ^self.assert(^self._fields.contains[$aFieldName]){Неизвестное поле «${aFieldName}».}
   $lField[$self._fields.[$aFieldName]]
-  ^if($self.__context eq "where"
-      && ^lField.contains[fieldExpression]
-      && def $lField.fieldExpression){
-    $result[$lField.fieldExpression]
-  }(^lField.contains[expression]
+
+  ^if(^lField.contains[fieldExpression]
+      && def $lField.fieldExpression
+      && ($self.__context eq "where" || $self.__context eq "update")
+  ){
+    ^return[$lField.fieldExpression]
+  }
+
+  ^if(^lField.contains[expression]
     && def $lField.expression
+    && !($self.__context eq "update" && ^lField.contains[dbField])
    ){
      ^if($self.__context eq "group"){
-       $result[^self._builder.quoteIdentifier[$lField.name]]
-     }{
-        $result[$lField.expression]
-      }
-  }{
-     ^if(!^lField.contains[dbField]){
-       ^throw[pfSQLTable.field.fail;Для поля «${aFieldName}» не задано выражение или имя в базе данных.]
+       ^return[^self._builder.quoteIdentifier[$lField.name]]
      }
-     $result[^self._builder.sqlFieldName[$lField;^if($self.__context ne "update"){$self.TABLE_ALIAS}]]
-   }
+
+     ^return[$lField.expression]
+  }
+
+  ^if(!^lField.contains[dbField]){
+    ^throw[pfSQLTable.field.fail;Для поля «${aFieldName}» не задано выражение или имя в базе данных.]
+  }
+
+  ^return[^self._builder.sqlFieldName[$lField;^if($self.__context ne "update"){$self.TABLE_ALIAS}]]
 
 @asContext[aContext;aCode]
   $lOldContext[$self.__context]

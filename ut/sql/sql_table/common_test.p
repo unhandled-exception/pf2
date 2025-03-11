@@ -91,3 +91,46 @@ pfTestCase
   ]
 
   ^self.assertEq["test_table"."id";$sut.PRIMARYKEY]
+
+@test_sql_field_name[]
+  ^self.sut.addFields[
+    $.simple[]
+    $.dbField[$.dbField[db_field]]
+    $.exField[$.expression[sum(db_field_1)]]
+    $.exDBField[$.expression[max(db_field_2)] $.dbField[db_field_2]]
+    $.fexField[$.expression[min(db_field_3)] $.fieldExpression[db_field_3]]
+  ]
+
+  ^self.assertEq[^sut.sqlFieldName[simple];"test_table"."simple"]
+  ^self.assertEq[^sut.sqlFieldName[dbField];"test_table"."db_field"]
+  ^self.assertEq[^sut.sqlFieldName[exField];sum(db_field_1)]
+  ^self.assertEq[^sut.sqlFieldName[exDBField];max(db_field_2)]
+  ^self.assertEq[^sut.sqlFieldName[fexField];min(db_field_3)]
+
+  ^self.sut.asContext[group]{
+    ^self.assertEq[^sut.sqlFieldName[simple];"test_table"."simple"]
+    ^self.assertEq[^sut.sqlFieldName[dbField];"test_table"."db_field"]
+    ^self.assertEq[^sut.sqlFieldName[exField];"exField"]
+    ^self.assertEq[^sut.sqlFieldName[exDBField];"exDBField"]
+    ^self.assertEq[^sut.sqlFieldName[fexField];"fexField"]
+  }
+
+  ^self.sut.asContext[where]{
+    ^self.assertEq[^sut.sqlFieldName[simple];"test_table"."simple"]
+    ^self.assertEq[^sut.sqlFieldName[dbField];"test_table"."db_field"]
+    ^self.assertEq[^sut.sqlFieldName[exField];sum(db_field_1)]
+    ^self.assertEq[^sut.sqlFieldName[exDBField];max(db_field_2)]
+    ^self.assertEq[^sut.sqlFieldName[fexField];db_field_3]
+  }
+
+  ^self.sut.asContext[update]{
+    ^self.assertEq[^sut.sqlFieldName[simple];"simple"]
+    ^self.assertEq[^sut.sqlFieldName[dbField];"db_field"]
+    ^self.assertEq[^sut.sqlFieldName[exField];sum(db_field_1)]
+    ^self.assertEq[^sut.sqlFieldName[exDBField];"db_field_2"]
+    ^self.assertEq[^sut.sqlFieldName[fexField];db_field_3]
+  }
+
+  ^self.assertRaises[assert.fail]{
+    ^sut.sqlFieldName[unexistant]
+  }

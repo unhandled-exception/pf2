@@ -18,6 +18,11 @@ locals
 
 @create[aOptions]
 
+@A[*aValues] -> array[aValues...]
+## Создаёт массив c элементами из параметров методов.
+## Аналог ^array::create[...], но с коротким именем
+  $result[^array::copy[$aValues]]
+
 @assert[aCondition;aComment] -> [] | throws: assert.fail
   $result[]
   ^if(!$aCondition){
