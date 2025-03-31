@@ -28,6 +28,7 @@ BaseTestSQLConnection
       $.IsAdmin($i == 1)
       $.createdAt[$self.testTime1]
       $.updatedAt[$self.testTime2]
+      $._hiddenField[hidden $i]
     ]
   }
 
@@ -411,6 +412,76 @@ t1,50,10}[$.separator[,]]
 
   ^self.assertEq[^lRes.foreach[;v]{$v.userID}[,]][5,15,25,35,45]
 
+@testSQLOptions_withSkippedFields_one[]
+  ^self._createTestUsers(50)
+
+  $lRes[^self.sut.one[
+    $.userID[1]
+  ][
+    $.withSkippedFields(true)
+  ]]
+
+  ^self.assertHashEquals[$lRes.fields;
+    $.userID[1]
+    $.login[user_49]
+    $.name[name]
+    $.job[job 1]
+    $.passwordHash[password hash 1]
+    $.isAdmin[0]
+    $.isActive[1]
+    $.createdAt[2022-07-03 14:52:18]
+    $.updatedAt[2022-07-04 22:04:18]
+    $._hiddenField[hidden 1]
+  ]
+
+@testSQLOptions_withSkippedFields_all[]
+  ^self._createTestUsers(50)
+
+  $lRes[^self.sut.all[
+    $.userID[1]
+    $.asTable(true)
+  ][
+    $.withSkippedFields(true)
+  ]]
+
+  ^self.assertHashEquals[$lRes.fields;
+    $.userID[1]
+    $.login[user_49]
+    $.name[name]
+    $.job[job 1]
+    $.passwordHash[password hash 1]
+    $.isAdmin[0]
+    $.isActive[1]
+    $.createdAt[2022-07-03 14:52:18]
+    $.updatedAt[2022-07-04 22:04:18]
+    $._hiddenField[hidden 1]
+  ]
+
+@testSQLOptions_withSkippedFields_aggregate[]
+  ^self._createTestUsers(50)
+
+  $lRes[^self.sut.aggregate[
+    _fields(*)
+  ][
+    $.userID[1]
+    $.asTable(true)
+  ][
+    $.withSkippedFields(true)
+  ]]
+
+  ^self.assertHashEquals[$lRes.fields;
+    $.userID[1]
+    $.login[user_49]
+    $.name[name]
+    $.job[job 1]
+    $.passwordHash[password hash 1]
+    $.isAdmin[0]
+    $.isActive[1]
+    $.createdAt[2022-07-03 14:52:18]
+    $.updatedAt[2022-07-04 22:04:18]
+    $._hiddenField[hidden 1]
+  ]
+
 #----------------------------------------------------------------------------------------------------------------------
 
 @CLASS
@@ -432,6 +503,8 @@ pfSQLTable
     $.isActive[$.dbField[is_active] $.processor[bool] $.default(true) $.widget[none] $.groups[full, base]]
     $.createdAt[$.dbField[created_at] $.processor[auto_now] $.skipOnUpdate(true) $.widget[none] $.groups[ext]]
     $.updatedAt[$.dbField[updated_at] $.processor[auto_now] $.widget[none] $.groups[ext]]
+
+    $._hiddenField[$.dbField[_hidden_field] $.skipOnSelect(true)]
   ]
 
   $self._defaultOrderBy[$.userID[asc]]
@@ -460,6 +533,7 @@ ORMPFSQLTableTests
           is_active smallint DEFAULT 1 NOT NULL,
           created_at datetime,
           updated_at datetime,
+          _hidden_field text,
           UNIQUE(login)
       )
     }
@@ -489,6 +563,7 @@ ORMPFSQLTableTests
           is_active smallint DEFAULT 1 NOT NULL,
           created_at datetime,
           updated_at datetime,
+          _hidden_field text,
           UNIQUE(login)
       )
     }
@@ -518,6 +593,7 @@ ORMPFSQLTableTests
           is_active smallint DEFAULT 1 NOT NULL,
           created_at datetime,
           updated_at datetime,
+          _hidden_field text,
           UNIQUE(login)
       )
     }
@@ -545,6 +621,7 @@ ORMPFSQLTableTests
           password_hash character varying(250) DEFAULT NULL::character varying,
           is_admin smallint DEFAULT 0 NOT NULL,
           is_active smallint DEFAULT 1 NOT NULL,
+          _hidden_field text,
           created_at timestamp without time zone,
           updated_at timestamp without time zone
       )
