@@ -348,6 +348,7 @@ pfClass
 ##   aSQLOptions.selectOptions — модификатор после select (distinct, sql_no_cache и т.п.)
 ##   aSQLOptions.skipFields — пропустить поля
 ##   aSQLOptions.force — отменить кеширование результата запроса
+##   aSQLOptions.withSkippedFields(false) — игнорировать опцию skipOnSelect у полей
 ##   + Все опции pfSQL.
   ^self.cleanMethodArgument[aOptions;aSQLOptions]
   $lResultType[^if(def $aOptions.asHashOn){table}{^self.__getResultType[$aOptions]}]
@@ -572,9 +573,12 @@ pfClass
 
 @_allFields[aOptions;aSQLOptions]
   ^self.cleanMethodArgument[aOptions;aSQLOptions]
-  $lSkipFields[^hash::create[$self._skipOnSelect]]
-  ^if(^aSQLOptions.contains[skipFields]){
-    ^lSkipFields.add[$aSQLOptions.skipFields]
+
+  ^if(!^aSQLOptions.withSkippedFields.bool(false)){
+    $lSkipFields[^hash::create[$self._skipOnSelect]]
+    ^if(^aSQLOptions.contains[skipFields]){
+      ^lSkipFields.add[$aSQLOptions.skipFields]
+    }
   }
 
   $lFields[$self._fields]
