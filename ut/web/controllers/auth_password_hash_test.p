@@ -12,11 +12,11 @@ locals
 pfTestCase
 
 @setUp[]
-  $lSQL[^pfSQLConnection::create[postgresql://]]
+  $self.sql[^pfSQLConnection::create[postgresql://]]
   $self.sut[^pfUsersModel::create[
-    $.sql[$lSQL]
+    $.sql[$self.sql]
     $.cryptoProvider[^pfSQLSecurityCrypt::create[
-      $.sql[$lSQL]
+      $.sql[$self.sql]
       $.secretKey[secret1]
     ]]
   ]]
@@ -48,3 +48,22 @@ pfTestCase
   $lHashed[^self.sut.makePasswordHash[$lPassword]]
   ^self.assertRegexpMatch[^^\^$gy\^$j9T\^$\S{16}\^$\S{32,}^$;$lHashed]
   ^self.assertEq[$lHashed;^self.sut.makePasswordHash[$lPassword;$lHashed]]
+
+@testDisabledTrimPassword[]
+  $lPassword[  password_1   ^#0A]
+  $lSalt[^$apr1^$12345678^$]
+  ^self.assertNe[^self.sut.makePasswordHash[$lPassword;$lSalt];^self.sut.makePasswordHash[^lPassword.trim[];$lSalt]]
+
+@testTrimPassword[]
+  $self.sut[^pfUsersModel::create[
+    $.sql[$self.sql]
+    $.cryptoProvider[^pfSQLSecurityCrypt::create[
+      $.sql[$self.sql]
+      $.secretKey[secret1]
+    ]]
+    $.trimPassword(true)
+  ]]
+
+  $lPassword[  password_1   ^#0A]
+  $lSalt[^$apr1^$12345678^$]
+  ^self.assertEq[^self.sut.makePasswordHash[$lPassword;$lSalt];^self.sut.makePasswordHash[^lPassword.trim[];$lSalt]]
