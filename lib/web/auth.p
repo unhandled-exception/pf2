@@ -331,11 +331,13 @@ pfModelTable
 ## aOptions.rolesToUsersTableName
 ## aOptions.rolesToUsersModel[pfRolesToUsersModel[$.tableName[$aOptions.rolesToUsersTableName]]]
 ## aOptions.passwordHashType[apr1;yescrypt;gost-yescrypt]
+## aOptions.trimPassword(false) — обрезать концевые проблеы у паролей
   ^BASE:create[^hash::create[$aOptions]
     $.tableName[^ifdef[$aOptions.tableName]{auth_users}]
   ]
 
   $self.passwordHashType[^ifdef[$aOptions.passwordHashType]{apr1}]
+  $self._trimPassword(^aOptions.trimPassword.bool(false))
 
   $self._cryptoProvider[$aOptions.cryptoProvider]
   ^self.assert(def $self._cryptoProvider){Не передан объект с криптопровайдером.}
@@ -419,6 +421,11 @@ pfModelTable
       ^case[gost-yescrypt]{^$gy^$j9T^$^self.makeSalt(16)}
     }]
   }
+
+  ^if($self._trimPassword){
+    $aPassword[^aPassword.trim[both]]
+  }
+
   $result[^math:crypt[$aPassword;$aSalt]]
 
 @makeSalt[aLen]
