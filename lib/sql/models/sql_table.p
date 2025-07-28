@@ -352,7 +352,7 @@ pfClass
 ##   + Все опции pfSQL.
   ^self.cleanMethodArgument[aOptions;aSQLOptions]
   $lResultType[^if(def $aOptions.asHashOn){table}{^self.__getResultType[$aOptions]}]
-  $result[^self.CSQL.[$lResultType]{^self.__normalizeWhitespaces{^self.__allSQLExpression[$lResultType;$aOptions;$aSQLOptions]}}[][$aSQLOptions]]
+  $result[^self.CSQL.[$lResultType]{^self.__untaintSQL{^self.__allSQLExpression[$lResultType;$aOptions;$aSQLOptions]}}[][$aSQLOptions]]
 
   ^if($result is table && def $aOptions.asHashOn){
     $result[^result.hash[$aOptions.asHashOn;$.type[table] $.distinct(true)]]
@@ -361,10 +361,8 @@ pfClass
 @allSQL[aOptions;aSQLOptions]
 ## Возвращает текст запроса из метода all.
   ^self.cleanMethodArgument[aOptions;aSQLOptions]
-  ^CSQL.connect{
-    $lResultType[^self.__getResultType[$aOptions]]
-    $result[^self.__normalizeWhitespaces{^self.__allSQLExpression[$lResultType;$aOptions;$aSQLOptions]}[$.apply(true)]]
-  }
+  $lResultType[^self.__getResultType[$aOptions]]
+  $result[^self.__untaintSQL{^self.__allSQLExpression[$lResultType;$aOptions;$aSQLOptions]}]
 
 @union[*aConds]
 ## Выполняет несколько запросов и объединяет их в один результат.
@@ -399,7 +397,7 @@ pfClass
 # Если нужны сложные варианты используйте aggregate.
   $aConds[^hash::create[$aConds] $.orderBy[] $.having[]]
   $lExpression[^self._selectExpression[COUNT(*)][;$aConds;$aSQLOptions]]
-  $result[^self.CSQL.int{^self.__normalizeWhitespaces{$lExpression}}[][$aSQLOptions]]
+  $result[^self.CSQL.int{^self.__untaintSQL{$lExpression}}[][$aSQLOptions]]
 
 @aggregate[*aConds]
 ## Выборки с группировкой
@@ -411,7 +409,7 @@ pfClass
   $lConds[^self.__getAgrConds[$aConds]]
   $lResultType[^if(def $lConds.options.asHashOn){table}{^self.__getResultType[$lConds.options]}]
   $lExpression[^self.__aggregateSQLExpression[$lResultType;$lConds]]
-  $result[^self.CSQL.[$lResultType]{^self.__normalizeWhitespaces{$lExpression}}[][$lConds.sqlOptions]]
+  $result[^self.CSQL.[$lResultType]{^self.__untaintSQL{$lExpression}}[][$lConds.sqlOptions]]
 
   ^if($result is table && def $lConds.options.asHashOn){
     $result[^result.hash[$lConds.options.asHashOn;$.type[table] $.distinct(true)]]
@@ -419,12 +417,10 @@ pfClass
 
 @aggregateSQL[*aConds]
 ## Возвращает текст запроса из метода aggregate.
-  ^CSQL.connect{
-    $lConds[^self.__getAgrConds[$aConds]]
-    $lResultType[^self.__getResultType[$lConds.options]]
-    $lExpression[^self.__aggregateSQLExpression[$lResultType;$lConds]]
-    $result[^self.CSQL.connect{^self.__normalizeWhitespaces{$lExpression}[$.apply(true)]}]
-  }
+  $lConds[^self.__getAgrConds[$aConds]]
+  $lResultType[^self.__getResultType[$lConds.options]]
+  $lExpression[^self.__aggregateSQLExpression[$lResultType;$lConds]]
+  $result[^self.CSQL.connect{^self.__untaintSQL{$lExpression}}]
 
 #----- Манипуляции с данными -----
 
@@ -437,7 +433,7 @@ pfClass
     ^self.assert(!$self._readOnlyTable){Модель $self.CLASS_NAME в режиме read only (только чтение данных)}
     ^self.cleanMethodArgument[aData;aSQLOptions]
     ^self.asContext[update]{
-      $result[^self.CSQL.void{^self.__normalizeWhitespaces{^self._builder.insertStatement[$self.TABLE_NAME;$self._fields;^if($aData is table){$aData.fields}{$aData};
+      $result[^self.CSQL.void{^self.__untaintSQL{^self._builder.insertStatement[$self.TABLE_NAME;$self._fields;^if($aData is table){$aData.fields}{$aData};
         ^hash::create[$aSQLOptions]
         $.skipFields[$self._skipOnInsert]
         $.schema[$self.SCHEMA]
@@ -456,7 +452,7 @@ pfClass
   ^self.assert(def $aPrimaryKeyValue){Не задано значение первичного ключа}
   ^self.cleanMethodArgument[aData]
   $result[^self.CSQL.void{
-    ^self.asContext[update]{^self.__normalizeWhitespaces{
+    ^self.asContext[update]{^self.__untaintSQL{
       ^self._builder.updateStatement[$self.TABLE_NAME;$self._fields;^if($aData is table){$aData.fields}{$aData}][$self.PRIMARYKEY = ^self.fieldValue[$self._fields.[$self._primaryKey];$aPrimaryKeyValue]][
         $.skipAbsent(true)
         $.skipFields[$self._skipOnUpdate]
@@ -490,7 +486,7 @@ pfClass
   ^self.assert(def $self._primaryKey){Не определен первичный ключ для таблицы ${TABLE_NAME}.}
   ^self.assert(def $aPrimaryKeyValue){Не задано значение первичного ключа}
   $result[^self.CSQL.void{
-    ^self.asContext[update]{^self.__normalizeWhitespaces{
+    ^self.asContext[update]{^self.__untaintSQL{
       DELETE FROM ^if(def $self.SCHEMA){^self._builder.quoteIdentifier[$self.SCHEMA].}^self._builder.quoteIdentifier[$self.TABLE_NAME] WHERE $self.PRIMARYKEY = ^self.fieldValue[$self._fields.[$self._primaryKey];$aPrimaryKeyValue]
     }}
   }[][$aSQLOptions]]
@@ -506,7 +502,7 @@ pfClass
   $aValue(^if(def $aValue){$aValue}{1})
   $lFieldName[^self._builder.sqlFieldName[$self._fields.[$aFieldName]]]]
   $result[^self.CSQL.void{
-    ^self.asContext[update]{^self.__normalizeWhitespaces{
+    ^self.asContext[update]{^self.__untaintSQL{
       UPDATE ^if(def $self.SCHEMA){^self._builder.quoteIdentifier[$self.SCHEMA].}^self._builder.quoteIdentifier[$self.TABLE_NAME]
          SET $lFieldName = $lFieldName ^if($aValue < 0){-}{+} ^self.fieldValue[$self._fields.[$aFieldName]](^math:abs($aValue))
        WHERE $self.PRIMARYKEY = ^self.fieldValue[$self._fields.[$self._primaryKey];$aPrimaryKeyValue]
@@ -521,7 +517,7 @@ pfClass
   ^self.assert(!$self._readOnlyTable){Модель $self.CLASS_NAME в режиме read only (только чтение данных)}
   ^self.cleanMethodArgument[aOptions;aData]
   $result[^self.CSQL.void{
-    ^self.asContext[update]{^self.__normalizeWhitespaces{
+    ^self.asContext[update]{^self.__untaintSQL{
       ^self._builder.updateStatement[$self.TABLE_NAME;$self._fields;$aData][
         ^self._allWhere[$aOptions]
       ][
@@ -538,21 +534,19 @@ pfClass
 ## Возвращает текст запроса метода modifyAll
   ^self.assert(!$self._readOnlyTable){Модель $self.CLASS_NAME в режиме read only (только чтение данных)}
   ^self.cleanMethodArgument[aOptions;aData]
-  ^CSQL.connect{
-    $result[
-      ^self.asContext[update]{^self.__normalizeWhitespaces{
-        ^self._builder.updateStatement[$self.TABLE_NAME;$self._fields;$aData][
-          ^self._allWhere[$aOptions]
-        ][
-          $.schema[$self.SCHEMA]
-          $.skipAbsent(true)
-          $.skipFields[$self._skipOnUpdate]
-          $.emptySetExpression[]
-          $.fieldValueFunction[$self.fieldValue]
-        ]
-      }}
-    ]
-  }
+  $result[
+    ^self.asContext[update]{^self.__untaintSQL{
+      ^self._builder.updateStatement[$self.TABLE_NAME;$self._fields;$aData][
+        ^self._allWhere[$aOptions]
+      ][
+        $.schema[$self.SCHEMA]
+        $.skipAbsent(true)
+        $.skipFields[$self._skipOnUpdate]
+        $.emptySetExpression[]
+        $.fieldValueFunction[$self.fieldValue]
+      ]
+    }}
+  ]
 
 @deleteAll[aOptions]
 ## Удаляем все записи из таблицы
@@ -560,7 +554,7 @@ pfClass
   ^self.assert(!$self._readOnlyTable){Модель $self.CLASS_NAME в режиме read only (только чтение данных)}
   ^self.cleanMethodArgument[]
   $result[^self.CSQL.void{
-    ^self.asContext[update]{^self.__normalizeWhitespaces{
+    ^self.asContext[update]{^self.__untaintSQL{
       DELETE FROM ^if(def $self.SCHEMA){^self._builder.quoteIdentifier[$self.SCHEMA].}^self._builder.quoteIdentifier[$self.TABLE_NAME]
        WHERE ^self._allWhere[$aOptions]
     }}
@@ -903,11 +897,9 @@ pfClass
 
   $result[^result.foreach[_;v]{$v.expr^if(def $v.alias){ AS ^self._builder.quoteIdentifier[$v.alias]}}[, ]]
 
-@__normalizeWhitespaces[aQuery;aOptions]
-  $result[^untaint[optimized-as-is]{^untaint[sql]{$aQuery}}]
-
-  ^if(^aOptions.apply.bool(false)){
-    $result[^apply-taint[$result]]
+@__untaintSQL[aQuery]
+  ^CSQL.connect{
+    $result[^apply-taint[sql][$aQuery]]
   }
 
 #----------------------------------------------------------------------------------------------------------------------
