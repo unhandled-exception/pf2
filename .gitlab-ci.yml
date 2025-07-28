@@ -45,8 +45,6 @@ run-tests:
     - cp ut/_libs/ubuntu_24.04/x64/libmysqlclient8.so $HOME/bin/lib/system/
     - echo "Start test containers"
     - /bin/bash ut/start_test_containers.sh
-    - sleep 15
-    - docker container ls
     - echo "Run tests"
     - cd $CI_PROJECT_DIR
     - $HOME/bin/parser3.cgi ut/run_tests.p -v -r

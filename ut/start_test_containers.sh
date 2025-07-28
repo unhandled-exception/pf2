@@ -10,6 +10,9 @@ fi
 MYSQL_8_IMAGE="mysql:8.4"
 POSTGRES_IMAGE="postgres:17"
 
+# docker pull kennethreitz/httpbin
+docker run --rm --name=pf2-ut-httpbin -p 8880:80 -d kennethreitz/httpbin
+
 # sudo docker pull mysql/mysql-server:$MYSQL_IMAGE_TAG
 docker run --rm --name=pf2-ut-mysql-57 -p 8306:3306 \
     -e MYSQL_USER=test \
@@ -30,9 +33,19 @@ docker run --rm --name=pf2-ut-postgres -p 8432:5432 \
     -e POSTGRES_USER=test \
     -e POSTGRES_PASSWORD=test \
     -e POSTGRES_DB=pg_test \
-    -d "$POSTGRES_IMAGE" \
-&& sleep 4 \
-&& psql postgres://test:test@${DB_HOST}:8432/pg_test -c 'create extension if not exists pgcrypto'
+    -d "$POSTGRES_IMAGE"
 
-# docker pull kennethreitz/httpbin
-docker run --rm --name=pf2-ut-httpbin -p 8880:80 -d kennethreitz/httpbin
+echo "waiting for postgres container..."
+for ((i=0 ; i<20 ; i++))
+do
+    echo -n "${i}: "
+    if ( psql postgres://test:test@${DB_HOST}:8432/pg_test -c 'select 1' > /dev/null ) ; then
+      break
+    fi
+
+    sleep 5
+done
+
+psql postgres://test:test@${DB_HOST}:8432/pg_test -c 'create extension if not exists pgcrypto'
+
+docker container ls
