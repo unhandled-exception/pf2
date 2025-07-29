@@ -1210,6 +1210,9 @@ pfResponse
   ^BASE:create[;$.type[redirect] $.status[^self.ifdef[$aStatus]{302}]]
   $self.headers.location[^untaint{$aLocation}]
 
+@GET_location[]
+  $result[$self.headers.location]
+
 #--------------------------------------------------------------------------------------------------
 
 @CLASS
