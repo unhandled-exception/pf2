@@ -989,7 +989,8 @@ pfClass
 ##   now, auto_now — текущие дата время (если не задано значение поля)
 ##   curtime, auto_curtime — текущее время (если не задано значение поля)
 ##   curdate, auto_curdate — текущая дата (если не задано значение поля)
-##   json — сереиализует значение в json
+##   json, json_null — сереиализует значение в json, если значение пустое, то null
+##   json_not_null — сереиализует значение в json, если значение пустое, то '{}'
 ##   null — если не задано значение, то возвращает null
 ##   uint_null — преобразуем зачение в целое без знака, если не задано значение, то возвращаем null
 ##   uid, auto_uid — уникальный идентификатор (math:uuid)
@@ -1150,8 +1151,12 @@ pfClass
         $result[^if(def $aValue){'^if($aValue is date){^aValue.sql-string[time]}{^taint[$aValue]}'}{NULL}]
       }
 
-      ^case[json]{
-        $result[^if(def $aValue || $aValue is hash){'^taint[^json:string[$aValue]]'}{NULL}]
+      ^case[json;json_null]{
+        $result[^if(def $aValue || $aValue is hash){'^taint[^json:string[$aValue;$.one-line(true)]]'}{NULL}]
+      }
+
+      ^case[json_not_null]{
+        $result[^if(def $aValue || $aValue is hash){'^taint[^json:string[$aValue;$.one-line(true)]]'}{'{}'}]
       }
 
       ^case[uid;auto_uid;uuid;uuid_auto]{
