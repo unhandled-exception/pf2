@@ -134,3 +134,25 @@ pfTestCase
   ^self.assertRaises[assert.fail]{
     ^sut.sqlFieldName[unexistant]
   }
+
+@test_sql_json_processors[]
+  ^self.sut.addFields[
+    $.j1[$.processor[json]]
+    $.j2[$.processor[json_null]]
+    $.j3[$.processor[json_not_null]]
+  ]
+
+  ^self.assertEq[^self.sut.fieldValue[j1;];NULL]
+  ^self.assertEq[^self.sut.fieldValue[j1;value];'"value"']
+  ^self.assertEq[^self.sut.fieldValue[j1;^hash::create[]];'{}']
+  ^self.assertEq[^self.sut.fieldValue[j1;$.k1[v1] $.k2[v2]];'{ "k1":"v1", "k2":"v2" }']
+
+  ^self.assertEq[^self.sut.fieldValue[j2;];NULL]
+  ^self.assertEq[^self.sut.fieldValue[j2;value];'"value"']
+  ^self.assertEq[^self.sut.fieldValue[j2;^hash::create[]];'{}']
+  ^self.assertEq[^self.sut.fieldValue[j2;$.k1[v1] $.k2[v2]];'{ "k1":"v1", "k2":"v2" }']
+
+  ^self.assertEq[^self.sut.fieldValue[j3;];'{}']
+  ^self.assertEq[^self.sut.fieldValue[j3;value];'"value"']
+  ^self.assertEq[^self.sut.fieldValue[j3;^hash::create[]];'{}']
+  ^self.assertEq[^self.sut.fieldValue[j3;$.k1[v1] $.k2[v2]];'{ "k1":"v1", "k2":"v2" }']
