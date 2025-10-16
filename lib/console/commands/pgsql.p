@@ -33,10 +33,10 @@ pfConsoleCommandWithSubcommands
   $self._settings[^self._parseConnectString[$self.CSQL.connectString]]
   ^self.assert($self._settings){"$self.CSQL.connectString" is an invalid connect string.}
 
-  ^self.assignSubcommand[dump file_name.sql [--gzip|--bzip2] [--tables=t1,tp*] [--ignore=t1,tp*] [--only-data] [--no-owner] [--clean] [--no-acl] [--format=plain] [--jobs=n] [--lock-wait-timeout=n] [--column-inserts];$dump][
+  ^self.assignSubcommand[dump file_name.sql [--gzip|--bzip2] [--tables=t1,tp*] [--ignore=t1,tp*] [--only-data] [--no-owner] [--clean] [--no-acl] [--format=plain] [--jobs=n] [--lock-wait-timeout=n] [--column-inserts] [--restrict-key=restrict_key];$dump][
     $.help[Dump data to file.]
   ]
-  ^self.assignSubcommand[schema [file_name] [--no-owner] [--clean] [--no-acl];$schema;
+  ^self.assignSubcommand[schema [file_name] [--no-owner] [--clean] [--no-acl] [--restrict-key=restrict_key];$schema;
     $.help[Dump a database schema.]
   ]
     ^self.assignSubcommand[table_schema table_name;$table_schema;
@@ -79,6 +79,7 @@ pfConsoleCommandWithSubcommands
 ## aSwitches.lock-timeout — таймаут ожидания лока базы в милисекундах
 ## aSwitches.column-inserts — Выгружать данные таблиц в виде команд INSERT с явным указанием столбцов
 ## aSwitches.compress[уровень|метод[:строка_информации]] — Указывает метод и/или уровень сжатия. В качестве метода сжатия можно выбрать gzip, lz4, zstd или none (без сжатия). В качестве дополнительной информации можно передать параметры сжатия.
+## aSwitches.restrict-key — использовать предоставленную строку в качестве ключа \restrict psql в выводе выгрузки
 
   $lFile[^aArgs.1.trim[]]
   ^if(def $lFile){
@@ -98,6 +99,10 @@ pfConsoleCommandWithSubcommands
       ^if(^aSwitches.contains[no-acl]){
         ^lOptions.append{--no-acl}
       }
+    }
+
+    ^if(^aSwitches.contains[restrict-key]){
+      ^lOptions.append{--restrict-key=$aSwitches.[restrict-key]}
     }
 
     ^if(^aSwitches.contains[column-inserts]){
@@ -170,6 +175,7 @@ pfConsoleCommandWithSubcommands
 ## aSwitches.no-owner — убрать владльца из схемы
 ## aSwitches.clean — выдать команды на очистку базы
 ## aSwitches.no-acl — не выдавать grant/revoke-команды.
+## aSwitches.restrict-key — использовать предоставленную строку в качестве ключа \restrict psql в выводе выгрузки
   $lOptions[^self._defaultPsqlOptions[]]
   ^lOptions.append{--schema-only}
 
@@ -183,6 +189,10 @@ pfConsoleCommandWithSubcommands
 
   ^if(^aSwitches.contains[no-acl]){
     ^lOptions.append{--no-acl}
+  }
+
+  ^if(^aSwitches.contains[restrict-key]){
+    ^lOptions.append{--restrict-key=$aSwitches.[restrict-key]}
   }
 
   $lFile[^aArgs.1.trim[]]
