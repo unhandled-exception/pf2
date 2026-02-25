@@ -202,11 +202,6 @@ locals
 @BASE
 pfMixin
 
-@auto[]
-  $self.__pfChainMixin__[
-    $.classDefRegex[^regex::create[^^([^^@:]*)(?:@([^^:]+))?(?::+(.+))?^$]]
-  ]
-
 @__init__[aThis;aOptions]
 ## aOptions.exportFields[$.name1[] $.name2[var_name]] — список полей объекта, которые надо передать параметрами модулую.
 ## aOptions.exportModulesProperty(false)
@@ -556,9 +551,9 @@ static
      $result(^math:abs($n - $m))
    }
 
-
 @parseClassDef[aClassDef] -> [$.className $.constructor $.package $.classDef]
 ## Метод может быть вызван из других классов для разбора пути к пакетам.
+## Формат: path/to/package.p@className::constructor
   $aClassDef[^aClassDef.trim[]]
   $result[$.classDef[$aClassDef]]
   ^aClassDef.match[$self.__pfString__.classDefRegex][]{
