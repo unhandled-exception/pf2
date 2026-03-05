@@ -211,7 +211,7 @@ pfConsoleCommandWithSubcommands
   }
 
 @table_schema[aArgs;aSwitches]
-## aArgs.1 — имя таблицы
+## aArgs.1 — имя таблицы или представления
   ^if(!def $aArgs.1){
     ^self.usage[]
     ^return[]
@@ -224,9 +224,23 @@ pfConsoleCommandWithSubcommands
 
   ^if(!^self.CSQL.int{
       select count(*)
-        from information_schema.tables
-       where table_schema not in ('pg_catalog', 'information_schema')
-             and table_name = '^taint[$aArgs.1]'
+      from
+      (
+        select tablename
+          from pg_tables
+         where schemaname not in ('pg_catalog', 'information_schema')
+               and tablename = '^taint[$aArgs.1]'
+        union
+        select matviewname
+          from pg_matviews
+         where schemaname not in ('pg_catalog', 'information_schema')
+               and matviewname = '^taint[$aArgs.1]'
+        union
+        select viewname
+          from pg_views
+         where schemaname not in ('pg_catalog', 'information_schema')
+               and viewname = '^taint[$aArgs.1]'
+      )
   }){
     ^self.print[Table "$aArgs.1" not found.]
     ^return[]
@@ -257,23 +271,31 @@ pfConsoleCommandWithSubcommands
   }
 
 @tables[aArgs;aSwitches]
-## aArgs.1 — префикс таблиц
+## aArgs.1 — префикс таблиц или представлений
   $lPrefix[^aArgs.1.trim[]]
   $lTables[^self.CSQL.hash{
-    select table_name,
-           table_catalog,
-           table_schema
-      from information_schema.tables
-     where table_schema not in ('pg_catalog', 'information_schema')
-           ^if(def $aArgs.1){
-             and table_name like '^taint[$aArgs.1]%'
-           }
-     order by table_schema, table_name
+    select * from (
+      select tablename as table_name, schemaname as table_schema, 'T' as kind
+        from pg_tables
+        where schemaname not in ('pg_catalog', 'information_schema')
+              and tablename like '^taint[$aArgs.1]%'
+      union
+      select matviewname as table_name, schemaname as table_schema, 'M' as kind
+        from pg_matviews
+        where schemaname not in ('pg_catalog', 'information_schema')
+              and matviewname like '^taint[$aArgs.1]%'
+      union
+      select viewname as table_name, schemaname as table_schema, 'V' as kind
+        from pg_views
+        where schemaname not in ('pg_catalog', 'information_schema')
+              and viewname like '^taint[$aArgs.1]%'
+    )
+    order by table_schema, table_name
   }]
   ^if($lTables){
     ^self.print[Found ^lTables._count[] tables^if(def $lPrefix){ starts with "$lPrefix"}:]
     ^lTables.foreach[name;v]{
-      ^self.print[— ^if($v.table_schema ne "public"){${v.table_schema}.}$name]
+      ^self.print[— ^if($v.table_schema ne "public"){${v.table_schema}.}$name [$v.kind]]
     }
   }{
      ^self.print[Tables not found.]
