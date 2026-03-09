@@ -33,7 +33,7 @@ pfConsoleCommandWithSubcommands
   $self._settings[^self._parseConnectString[$self.CSQL.connectString]]
   ^self.assert($self._settings){"$self.CSQL.connectString" is an invalid connect string.}
 
-  ^self.assignSubcommand[dump file_name.sql [--gzip|--bzip2] [--tables=t1,tp*] [--ignore=t1,tp*] [--only-data] [--no-owner] [--clean] [--no-acl] [--format=plain] [--jobs=n] [--lock-wait-timeout=n] [--column-inserts] [--restrict-key=restrict_key];$dump][
+  ^self.assignSubcommand[dump file_name.sql [--gzip|--bzip2] [--tables=t1,tp*] [--ignore=t1,tp*] [--only-data] [--no-owner] [--clean] [--no-acl] [--format=plain] [--jobs=n] [--lock-wait-timeout=n] [--column-inserts] [--restrict-key=restrict_key] [--ignore-schema=sch1,sch*2];$dump][
     $.help[Dump data to file.]
   ]
   ^self.assignSubcommand[schema [file_name] [--no-owner] [--clean] [--no-acl] [--restrict-key=restrict_key];$schema;
@@ -80,6 +80,7 @@ pfConsoleCommandWithSubcommands
 ## aSwitches.column-inserts — Выгружать данные таблиц в виде команд INSERT с явным указанием столбцов
 ## aSwitches.compress[уровень|метод[:строка_информации]] — Указывает метод и/или уровень сжатия. В качестве метода сжатия можно выбрать gzip, lz4, zstd или none (без сжатия). В качестве дополнительной информации можно передать параметры сжатия.
 ## aSwitches.restrict-key — использовать предоставленную строку в качестве ключа \restrict psql в выводе выгрузки
+## aSwitches.ignore-schema — не выгружать таблицы (добавляет параметр exclude-schema)
 
   $lFile[^aArgs.1.trim[]]
   ^if(def $lFile){
@@ -143,6 +144,13 @@ pfConsoleCommandWithSubcommands
       }
     }
 
+    ^if(^aSwitches.contains[ignore-schema]){
+      $lTables[^aSwitches.ignore-schema.trim[both;"]]
+      $lTables[^lTables.split[,;lv]]
+      ^lTables.foreach[_;v]{
+        ^lOptions.append{--exclude-schema=^v.piece.trim[]}
+      }
+    }
 
     $lEnv[^hash::create[]]
     ^if($aSwitches.format eq "plain"){
