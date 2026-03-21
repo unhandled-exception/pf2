@@ -62,6 +62,16 @@ locals
         $.base64[AES_DECRYPT(FROM_BASE64('{data}'), '{key}', 0x00000000000000000000000000000000)]
       ]
     ]
+    $.mariadb10[
+      $.encrypt[
+        $.hex[LOWER(HEX(AES_ENCRYPT('{data}', '{key}'))]
+        $.base64[REPLACE(TO_BASE64(AES_ENCRYPT('{data}', '{key}')), '\n', '')]
+      ]
+      $.decrypt[
+        $.hex[AES_DECRYPT(UNHEX('{data}'), '{key}')]
+        $.base64[AES_DECRYPT(FROM_BASE64('{data}'), '{key}')]
+      ]
+    ]
     $.pgsql[
       $.encrypt[
         $.hex[LOWER(ENCODE(ENCRYPT(CONVERT_TO('{data}', 'utf8'), CONVERT_TO('{key}', 'utf8'), 'aes-cbc/pad:pkcs'), 'hex'))]
@@ -77,6 +87,7 @@ locals
   $self._sqlFunctions.postgresql[$self._sqlFunctions.pgsql]
   $self._sqlFunctions.mysql8[$self._sqlFunctions.mysql]
   $self._sqlFunctions.mysql57[$self._sqlFunctions.mysql]
+  $self._sqlFunctions.mariadb[$self._sqlFunctions.mariadb]
 
   $self._serializer[^self.ifdef[$aOptions.serializer]{hex}]
   $self._hashAlgorythm[^self.ifdef[$aOptions.hashAlgorythm]{sha256}]
