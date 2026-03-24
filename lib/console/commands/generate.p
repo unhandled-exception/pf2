@@ -18,10 +18,11 @@ locals
 pfConsoleCommandWithSubcommands
 
 @create[aOptions]
-## aOptions.sql — ссылка на класс соединение с БД.
-## aOptions.core - ссылка на модель данных.
-## aOptions.formWidgets[bootstrap3] — виджеты для генерации форм.
-## aOptions.modelClassPrefix[] — префикс класса модели.
+## aOptions.sql — ссылка на класс соединение с БД
+## aOptions.core - ссылка на модель данных
+## aOptions.formWidgets[bootstrap3] — виджеты для генерации форм
+## aOptions.modelClassPrefix[] — префикс класса модели
+## aOptions.serverType[$aOptions.sql.serverType] — позволяет переопределить тип сервера
   ^self.cleanMethodArgument[]
   ^BASE:create[$aOptions]
   ^pfModelChainMixin:mixin[$self;$aOptions]
@@ -39,6 +40,7 @@ pfConsoleCommandWithSubcommands
   ^self.assert(^_formWidgets.contains[$self._defaultFormWidget]){"$self._defaultFormWidget" is an unknown form widgets type.}
 
   $self._modelClassPrefix[$aOptions.modelClassPrefix]
+  $self._serverType[^ifdef[$aOptions.serverType;$aOptions.sql.serverType]]
 
   ^self.assignSubcommand[model [schema.]table_name;$model;
     $.help[Generate a model class by table DDL.]
@@ -57,6 +59,7 @@ pfConsoleCommandWithSubcommands
     ^switch[$aServerType]{
       ^case[mysql]{^pfMySQLTableModelGenerator::create[$aTableName;$lOptions]}
       ^case[pgsql;postgresql]{^pfPostgresTableModelGenerator::create[$aTableName;$lOptions]}
+      ^case[postgres18MatviewIS]{^pfPostgres18MatviewISTableModelGenerator::create[$aTableName;$lOptions]}
       ^case[DEFAULT]{
         ^self.fail["$CSQL.serverType" is an unknown sql-server type.]
       }
@@ -75,7 +78,7 @@ pfConsoleCommandWithSubcommands
     }{
        $lTableName[$lParts.0]
      }
-    $lGenerator[^self._getModelGenerator[$CSQL.serverType;$lTableName;$lSchema]]
+    $lGenerator[^self._getModelGenerator[$self._serverType;$lTableName;$lSchema]]
     ^self.print[^lGenerator.generate[]]
   }{
      ^if($exception.type eq "table.not.found"){

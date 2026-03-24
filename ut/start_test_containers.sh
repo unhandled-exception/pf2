@@ -8,7 +8,7 @@ if [[ `uname -m` == 'arm64' ]]; then
 fi
 
 MYSQL_8_IMAGE="mysql:8.4"
-POSTGRES_IMAGE="postgres:17"
+POSTGRES_IMAGE="postgres:18"
 
 # docker pull kennethreitz/httpbin
 docker run --rm --name=pf2-ut-httpbin -p 8880:80 -d kennethreitz/httpbin

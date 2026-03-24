@@ -82,6 +82,7 @@
 * pfSQLModelGenerator <- pfClass
 * pfMySQLTableModelGenerator <- pfSQLModelGenerator
 * pfPostgresTableModelGenerator <- pfSQLModelGenerator
+* pfPostgres18MatviewISTableModelGenerator <- pfPostgresTableModelGenerator
 
 ### [./lib/sql/models/generics/queue/sql_queue.p](./lib/sql/models/generics/queue/sql_queue.p)
 * pfSQLQueue <- pfSQLTable
