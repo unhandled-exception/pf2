@@ -32,13 +32,14 @@ pfTestCase
 
 @test_keyToPGLiteral[]
   $lTests[
-    $.0[$.key[123456789] $.result[x'25f9e794323b4538'::bigint]]
-    $.1[$.key[000000000000000000000000000000000000000000] $.result[x'f573e011b414bf3f'::bigint]]
-    $.2[$.key[-1000000] $.result[x'115e589db5ec8ec6'::bigint]]
-    $.3[$.key[3924098320498230jf098fufjs98w34uj9sfe8jf98j98fsj98sfj9w8m94038jjf4q398fj398j349843jf98j] $.result[x'5761121f59bdba64'::bigint]]
+    $.0[$.key[123456789] $.result[1014187944]]
+    $.1[$.key[000000000000000000000000000000000000000000] $.result[1561298764]]
+    $.2[$.key[-1000000] $.result[1663849553]]
+    $.3[$.key[3924098320498230jf098fufjs98w34uj9sfe8jf98j98fsj98sfj9w8m94038jjf4q398fj398j349843jf98j] $.result[-1380298563]]
   ]
+
   ^lTests.foreach[;t]{
-    ^self.assertEq[^self.sut1.keyToPGLiteral[$t.key];$t.result]
+    ^self.assertEq[^self.connection1.string[select ^self.sut1.keyToPGLiteral[$t.key]];$t.result]
   }
 
 @test_lock_keys[]

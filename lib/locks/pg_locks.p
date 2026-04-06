@@ -15,8 +15,7 @@ pfClass
   $self.CSQL[$aCSQL]
 
 @keyToPGLiteral[aKey]
-  $lKey[^math:md5[$aKey]]
-  $result[x'^lKey.left(16)'::bigint]
+  $result[hashtext('^taint[$aKey]')::bigint]
 
 @tryAdvisoryLock[aKey]
 ## Пытается взять сессионную блокировку и возвращает удалось взять лок или нет
