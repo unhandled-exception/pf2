@@ -44,7 +44,7 @@ pfClass
 
 @_makeName[aName]
   $aName[^aName.lower[]]
-  $result[^aName.match[_(\w)][g]{^match.1.upper[]}]
+  $result[^aName.match[_(\w)][g']{^if(def $match.prematch){^match.1.upper[]}{$match.match}}]
   $result[^result.match[Id^$][][ID]]
   $result[^result.match[Ip^$][][IP]]
   $result[^result.match[Uuid^$][][UUID]]

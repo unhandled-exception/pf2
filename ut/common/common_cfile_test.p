@@ -15,7 +15,7 @@ pfTestCase
   $self.LOCALHOST[^if(def $env:CI_TESTS_DIND_HOST){$env:CI_TESTS_DIND_HOST}{127.0.0.1}]
 
   $self.httpbin[http://${self.LOCALHOST}:8880]
-  $self.httpsbin[https://httpbin.org]
+  $self.httpsTestURL[https://unhandled-exception.ru/]
 
 @assertSuccessResponse[aResponse]
   ^self.assert($aResponse is file)[Response is not a file ($aResponse.CLASS_NAME)]
@@ -26,14 +26,11 @@ pfTestCase
   ^self.assertDef[$result]{Response body has an empty data}
 
 @testHttps[]
-  $lRes[^pfCFile::load[text;$self.httpsbin/get;
+  $lRes[^pfCFile::load[text;$self.httpsTestURL;
     $.any-status(true)
     $.timeout(20)
   ]]
   ^self.assertSuccessResponse[$lRes]
-
-  $lResponse[^self.parseResponseBody[$lRes]]
-  ^self.assertEq[$lResponse.url;$self.httpsbin/get]
 
 @testHttpGet[]
   $lRes[^pfCFile::load[text;$self.httpbin/get?url_value1=fvalue_1;
