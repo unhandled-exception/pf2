@@ -9,6 +9,10 @@ PF2 помогает разработчикам писать веб-прилож
 * Олег Волчков ([oleg@volchkov.net](mailto:oleg@volchkov.net), [unhandled-exception.ru](http://unhandled-exception.ru))
 * Алексей Марьин ([groundzero.ru](http://groundzero.ru))
 
+Репозитории:
+* [Основной репозиторий на Гитхабе](https://github.com/unhandled-exception/pf2)
+* [Резервное зеркало на Gitverse](https://gitverse.ru/unhandled_exception/pf2)
+
 ## Установка и простое приложение
 
 В [папку с классами](http://www.parser.ru/docs/lang/app1pathclass.htm) загрузите библиотеку. Папка должна называться pf2. Папку со своими классами и классами pf2 положите вне веб пространства.
