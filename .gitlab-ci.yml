@@ -11,7 +11,8 @@ run-tests:
     - docker:dind
 
   variables:
-    PARSER3_DIST_URL: "https://www.parser.ru/f/1/download/parser350/parser3_5_0_debian12x64.tar.gz"
+    # PARSER3_DIST_URL: "https://www.parser.ru/f/1/download/parser350/parser3_5_0_debian12x64.tar.gz"
+    PARSER3_DIST_URL: "https://www.parser.ru/f/1/download/nightly/parser3_5_2b_debian12x64.tar.gz"
     DOCKER_HOST: tcp://docker:2375
     DOCKER_DRIVER: overlay2
     CI_TESTS_DIND_HOST: docker
