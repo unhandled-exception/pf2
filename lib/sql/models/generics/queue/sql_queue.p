@@ -56,7 +56,7 @@ pfSQLTable
   $lTail[FOR UPDATE]
   ^switch[$self.CSQL.serverType]{
     ^case[pgsql;postgresql]{
-      $lTail[$lTail OF "$self.TABLE_NAME"]
+      $lTail[$lTail OF $self.FULL_TABLE_NAME]
     }
   }
 

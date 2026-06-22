@@ -251,6 +251,11 @@ pfClass
   ^self.assert(def $self._tableName){Не задано имя таблицы в классе $self.CLASS_NAME}
   $result[$self._tableName]
 
+@GET_FULL_TABLE_NAME[]
+## Возвращает полное имя таблицы со схемой и в кавычках
+  ^self.assert(def $self._tableName){Не задано имя таблицы в классе $self.CLASS_NAME}
+  $result[^if(def $self.SCHEMA){^self._builder.quoteIdentifier[$self.SCHEMA].}^self._builder.quoteIdentifier[$self.TABLE_NAME]]
+
 @GET_TABLE_ALIAS[]
   ^if(!def $self._tableAlias){
     $self._tableAlias[$self.TABLE_NAME]
