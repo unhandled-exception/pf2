@@ -334,29 +334,41 @@ pfConsoleCommandWithSubcommands
   ^self.CSQL.void{SET statement_timeout = 0}
   ^self.CSQL.void{SET lock_timeout = 36000000}
 
-# Достаем таблицы для вакуума
-  $lTables[^self.CSQL.hash{
-    select table_name,
-           table_catalog,
-           table_schema
-      from information_schema.tables
-     where table_schema not in ('pg_catalog', 'information_schema')
-           and table_type = 'BASE TABLE'
-           ^if(def $aArgs.1){
-             and table_name like '^taint[$aArgs.1]%'
-           }
-     order by table_schema, table_name
-  }]
+  $lTables[^self.CSQL.table{
+    select * from (
+      SELECT n.nspname AS table_schema,
+             c.relname AS table_name,
+             'T' as kind
+        FROM pg_class c
+             LEFT JOIN pg_namespace n ON n.oid = c.relnamespace
+        WHERE n.nspname not in ('pg_catalog', 'information_schema')
+#             Только обычные таблицы, без партиционированных
+              and c.relkind = ANY (ARRAY['r'::"char"])
+              ^if(def $aArgs.1){
+                and c.relname like '^taint[$aArgs.1]%'
+              }
+      union
+      select schemaname as table_schema,
+             matviewname as table_name,
+             'M' as kind
+        from pg_matviews
+        where schemaname not in ('pg_catalog', 'information_schema')
+              ^if(def $aArgs.1){
+                and matviewname like '^taint[$aArgs.1]%'
+              }
+    )
+    order by table_schema, table_name
+  }]]
 
   ^if($lTables && ^aSwitches.contains[cluster]){
     ^self.print[Cluster tables.]
     ^self.CSQL.void{CLUSTER}
   }
 
-  ^self.print[Vacuum and analyze tables:]
-  ^lTables.foreach[t;v]{
-    ^self.print[— ${v.table_schema}.${t}]
-    ^self.CSQL.void{VACUUM ANALYZE "^taint[${v.table_schema}]"."^taint[${t}]"}
+  ^self.print[Vacuum and analyze regular tables and materialized views:]
+  ^lTables.foreach[;t]{
+    ^self.print[— "${t.table_schema}"."${t.table_name}" ($t.kind)]
+    ^self.CSQL.void{VACUUM ANALYZE "^taint[${t.table_schema}]"."^taint[${t.table_name}]"}
   }
   ^self.print[Done.]
 
