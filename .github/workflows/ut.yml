@@ -29,7 +29,7 @@ jobs:
           ln -fs `pwd`/parser3.cgi $HOME/bin/
           ln -fs `pwd`/lib $HOME/bin/lib
 
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: "Prepare MySQL 8 drivers"
         run: |

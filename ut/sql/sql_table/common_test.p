@@ -135,6 +135,31 @@ pfTestCase
     ^sut.sqlFieldName[unexistant]
   }
 
+@test_allOrder__orderByContext_option[]
+  ^self.sut.addFields[
+    $.simple[]
+    $.dbField[$.dbField[db_field]]
+    $.exField[$.expression[sum(db_field_1)]]
+    $.exDBField[$.expression[max(db_field_2)] $.dbField[db_field_2]]
+    $.fexField[$.expression[min(db_field_3)] $.fieldExpression[db_field_3]]
+  ]
+
+  $self.sut._defaultOrderBy[
+    $.simple[]
+    $.dbField[]
+    $.exField[]
+    $.exDBField[]
+    $.fexField[]
+  ]
+
+# Без опции сортируем по алиасам
+  ^self.assertEq[^self.sut._allOrder[];"test_table"."simple" , "test_table"."db_field" , "exField" , "exDBField" , "fexField" ]
+  ^self.assertEq[^self.sut._allOrder[$.__orderByContext[]];"test_table"."simple" , "test_table"."db_field" , "exField" , "exDBField" , "fexField" ]
+
+# С опцией сортируем с учётом контекста
+  ^self.assertEq[^self.sut._allOrder[$.__orderByContext[select]];"test_table"."simple" , "test_table"."db_field" , sum(db_field_1) , max(db_field_2) , min(db_field_3) ]
+  ^self.assertEq[^self.sut._allOrder[$.__orderByContext[group]];"test_table"."simple" , "test_table"."db_field" , "exField" , "exDBField" , "fexField" ]
+
 @test_sql_json_processors[]
   ^self.sut.addFields[
     $.j1[$.processor[json]]
