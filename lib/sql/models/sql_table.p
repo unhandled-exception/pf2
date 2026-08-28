@@ -646,12 +646,13 @@ pfClass
 
 @_allOrder[aOptions]
 ## aOptions.orderBy
+## aOptions.__orderByContext[group] — новый контекст для выражения, чтобы явно поменять дефолтный group (_allOrder[$.orderBy[$lOrderBy] $.__orderByContext[select]]))
   ^if(^aOptions.contains[orderBy]){
     $lOrder[$aOptions.orderBy]
   }(def $self._defaultOrderBy){
     $lOrder[$self._defaultOrderBy]
   }
-  ^self.asContext[group]{
+  ^self.asContext[^ifdef[$aOptions.__orderByContext]{group}]{
     ^switch(true){
       ^case($lOrder is hash){
         $result[^lOrder.foreach[k;v]{^if(^self._fields.contains[$k]){^self.sqlFieldName[$k] ^switch[^v.lower[]]{^case[desc;-]{DESC} ^case[asc;+]{ASC}}}}[, ]]}
