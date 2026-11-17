@@ -12,13 +12,18 @@ locals
 pfTestCase
 
 @setUp[]
-  $self.DB_HOST[^if(def $env:CI_TESTS_DIND_HOST){$env:CI_TESTS_DIND_HOST}{127.0.0.1}]
+  ^if(def $env:GITLAB_CI){
+    $self._testPGHost[pf2-ut-postgres-db]
+  }{
+    $self._testPGHost[127.0.0.1:9432]
+  }
 
-  $self.connection1[^pfSQLConnection::create[postgresql://test:test@${DB_HOST}:8432/pg_test;
+  $self.connection1[^pfSQLConnection::create[postgresql://test:test@${self._testPGHost}/pg_test;
     $.enableQueriesLog(true)
     $.enableMemoryCache(true)
   ]]
-  $self.connection2[^pfSQLConnection::create[postgresql2://test:test@${DB_HOST}:8432/pg_test;
+
+  $self.connection2[^pfSQLConnection::create[postgresql2://test:test@${self._testPGHost}/pg_test;
     $.enableQueriesLog(true)
     $.enableMemoryCache(true)
   ]]
