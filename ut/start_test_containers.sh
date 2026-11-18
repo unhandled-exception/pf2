@@ -1,16 +1,22 @@
 #!/bin/bash
 
-MYSQL_57_IMAGE="dh-mirror.gitverse.ru/mysql/mysql-server:5.7"
-if [[ `uname -m` == 'arm64' ]]; then
-  MYSQL_57_IMAGE="dh-mirror.gitverse.ru/beercan1989/arm-mysql:5.7"
+IMAGE_PREFIX="dh-mirror.gitverse.ru/"
+if [ -n "$GITHUB_ACTIONS" ] && [ "$GITHUB_ACTIONS" = "true" ]; then
+  IMAGE_PREFIX=""
 fi
 
-MYSQL_8_IMAGE="dh-mirror.gitverse.ru/mysql:8.4"
-POSTGRES_IMAGE="dh-mirror.gitverse.ru/postgres:18"
+MYSQL_57_IMAGE="${IMAGE_PREFIX}mysql/mysql-server:5.7"
+if [[ `uname -m` == 'arm64' ]]; then
+  MYSQL_57_IMAGE="${IMAGE_PREFIX}beercan1989/arm-mysql:5.7"
+fi
+
+MYSQL_8_IMAGE="${IMAGE_PREFIX}mysql:8.4"
+POSTGRES_IMAGE="${IMAGE_PREFIX}postgres:18"
+HTTPBIN_IMAGE="${IMAGE_PREFIX}mccutchen/go-httpbin"
 
 docker run --rm --name=pf2-ut-httpbin \
     -p 127.0.0.1:8080:8080 \
-    -d dh-mirror.gitverse.ru/mccutchen/go-httpbin
+    -d "$HTTPBIN_IMAGE"
 
 docker run --rm --name=pf2-ut-mysql-db-57 \
     -e MYSQL_USER=test \
