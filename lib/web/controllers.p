@@ -474,6 +474,7 @@ locals
 ## aOptions.as[] — имя шаблона (используется в reverse)
 ## aOptions.defaults[] — хеш со значениями переменных шаблона "по-умолчанию"
 ## aOptions.where[] — хеш с регулярными выражениями для проверки переменных шаблона
+## aOptions.httpMethod[] — метод для которого срабатывает маршрут. Если не определить, то метод не проверям
   ^self.cleanMethodArgument[]
   $result[]
   $lCompiledPattern[^self.compilePattern[$aPattern;$aOptions]]
@@ -490,6 +491,7 @@ locals
     $.defaults[^hash::create[$aOptions.defaults]]
     $.where[^hash::create[$aOptions.where]]
     $.as[$lRouteTo.as]
+    $.httpMethod[^aOptions.httpMethod.trim[]]
   ]
   $lRoute.processor[$lRouteTo.processor]
   $self.routes.[^math:uid64[]][$lRoute]
@@ -517,13 +519,13 @@ locals
     $result.appendToReverseIndex(false)
     $result.as[$aOptions.as]
   }($aRouteTo is hash){
-    $result.processor[^self.createProcessor[^aRouteTo.at[first;key];^aRouteTo.at[first;value]]]
+    $result.processor[^self.createProcessor[^aRouteTo.at[first;key];^aRouteTo.at[first;value];$aOptions]]
     $result.appendToReverseIndex(false)
     $result.as[^self.ifdef[$aOptions.as]{$aRouteTo.as}]
   }{
     $lParsedRouteTo[^aRouteTo.match[$self._pfRouterProcessorRegexp]]
     $result.routeTo[$lParsedRouteTo.2]
-    $result.processor[^self.createProcessor[$lParsedRouteTo.1;$lParsedRouteTo.2]]
+    $result.processor[^self.createProcessor[$lParsedRouteTo.1;$lParsedRouteTo.2;$aOption]]
     $result.as[^self.ifdef[$aOptions.as]{$result.routeTo}]
   }
   $result.as[^self.trimPath[$result.as]]
@@ -537,6 +539,10 @@ locals
 
   ^if(def $aAction || $self.hasRootRoute){
     ^self.routes.foreach[k;it]{
+      ^if(def $it.httpMethod && ^it.httpMethod.lower[] ne $aRequest.method){
+        ^continue[]
+      }
+
       $lParsedPath[^self.parsePathByRoute[$result.action;$it;$.args[$self._defaults]]]
       ^if($lParsedPath){
         $result.args[$lParsedPath.args]
@@ -683,6 +689,9 @@ locals
   $self.controller[$aRouter.controller]
 
 @process[aAction;aRequest;aPrefix;aOptions]
+  $result[]
+
+@string[]
   $result[]
 
 #--------------------------------------------------------------------------------------------------
@@ -844,14 +853,23 @@ locals
 
 ## ^router.assign[/some/action;call->someActionHandler]
 ## ^router.assign[/some/action;call::someActionHandler]
+## ^router.assign[/some/action;call::someActionHandler;$.httpMethod[post]]
 
 @create[aRouter;aProcessorData;aOptions]
 ## aProcessorData[function name] — имя функции для экшна
+## aOptions.httpMethod[get|post|<empty>] — вызывать метод только для http-метода
   ^BASE:create[$aRouter;$aProcessorData;$aOptions]
   $self.functionName[$aProcessorData]
+  $self.httpMethod[^aOptions.httpMethod.trim[]]
 
 @process[aAction;aRequest;aPrefix;aOptions]
+  ^if(def $self.httpMethod && $self.httpMethod ne $aRequest.method){
+    ^lController.abort(404)[Action "$lAction <${aRequest.method}>" not found.]
+  }
   $result[^self.controller.[$self.functionName][$aRequest]]
+
+@string[]
+  $result[^^${self.functionName}[]^if(def $self.httpMethod){ <${self.httpMethod}>}]
 
 #--------------------------------------------------------------------------------------------------
 
