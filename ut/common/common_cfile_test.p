@@ -12,9 +12,12 @@ pfTestCase
 
 @setUp[]
   ^BASE:setUp[]
-  $self.LOCALHOST[^if(def $env:CI_TESTS_DIND_HOST){$env:CI_TESTS_DIND_HOST}{127.0.0.1}]
+  ^if(def $env:GITLAB_CI){
+    $self.httpbin[http://pf2-ut-httpbin:8080]
+  }{
+    $self.httpbin[http://localhost:8080]
+  }
 
-  $self.httpbin[http://${self.LOCALHOST}:8880]
   $self.httpsTestURL[https://unhandled-exception.ru/]
 
 @assertSuccessResponse[aResponse]
@@ -59,7 +62,7 @@ pfTestCase
 
   $lResponse[^self.parseResponseBody[$lRes]]
   ^self.assertEq[$lResponse.url;$self.httpbin/post?url_value1=fvalue_1]
-  ^self.assertEq[^lResponse.form.foreach[k;v]{$k=$v}[,];field1=value1,field2=value2]
+  ^self.assertEq[^lResponse.form.foreach[k;v]{$k=^json:string[$v;$.one-line(true)]}[,];field1=[ "value1" ],field2=[ "value2" ]]
 
 @testHttpPostBody[]
   $lRes[^pfCFile::load[text;$self.httpbin/post?url_value1=fvalue_1;
@@ -147,9 +150,9 @@ pfTestCase
   ^self.assertSuccessResponse[$lRes]
   $lResponse[^self.parseResponseBody[$lRes]]
   $lExpectedHeaders[
-    $.Referer[test referer]
-    $.User-Agent[PF2 tests]
-    $.X-Pf2-Header[value345]
+    $.Referer[^array::create[test referer]]
+    $.User-Agent[^array::create[PF2 tests]]
+    $.X-Pf2-Header[^array::create[value345]]
   ]
   ^self.assertHashEquals[
     ^lResponse.headers.select[k;](^lExpectedHeaders.contains[$k])
